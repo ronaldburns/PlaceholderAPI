@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 import org.spongepowered.api.entity.living.player.Player;
 
 import me.rojo8399.placeholderapi.expansions.PlayerExpansion;
+import me.rojo8399.placeholderapi.expansions.RankUpperExpansion;
 import me.rojo8399.placeholderapi.expansions.ServerExpansion;
 
 public class PlaceholderAPI {
@@ -16,6 +17,8 @@ public class PlaceholderAPI {
 	private final static Pattern BRACKET_PLACEHOLDER_PATTERN = Pattern.compile("[{]([^{}]+)[}]");
 
 	public static String setPlaceholders(Player p, String text) {
+
+		
 
 		Matcher placeholderMatcher = PLACEHOLDER_PATTERN.matcher(text);
 
@@ -32,17 +35,26 @@ public class PlaceholderAPI {
 			String id = format.substring(0, index);
 			String identifier = format.substring(index + 1);
 
-			String value = "";
+			String value;
 
 			switch (id) {
 			case "player":
-				value = PlayerExpansion.onPlaceholderRequest(p, identifier);
+					value = PlayerExpansion.onPlaceholderRequest(p, identifier);
+					break;
 			case "server":
-				value = ServerExpansion.onPlaceholderRequest(identifier);
+					value = ServerExpansion.onPlaceholderRequest(identifier);
+					break;
+			case "rankupper":
+					value = RankUpperExpansion.onPlaceholderRequest(p, identifier);
+					break;
+			default:
+				value = null;
+				break;
 			}
-			
-			PlaceholderAPIPlugin.getInstance().getLogger().debug("Format: " + format + ", ID: " + id + ", Value : " + value);
-			
+
+			PlaceholderAPIPlugin.getInstance().getLogger()
+					.debug("Format: " + format + ", ID: " + id + ", Value : " + value);
+
 			if (value == null) {
 				value = "%" + format + "%";
 			}

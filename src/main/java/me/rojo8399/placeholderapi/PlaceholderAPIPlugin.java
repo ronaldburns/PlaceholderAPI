@@ -97,20 +97,18 @@ public class PlaceholderAPIPlugin {
                 mapDefault();
             }
         }
-
+		
 	}
 
 	@Listener
 	public void onClientJoinEvent(ClientConnectionEvent.Join e) {
 		// This is just a test!
 		Player p = e.getTargetEntity();
-		e.setMessage(Text.of(PlaceholderAPI.setPlaceholders(p,
-				"%player_name% just joined testing! Server ram is at %server_ram_used%/%server_ram_total% MB!")));
+		e.setMessage(Text.of(PlaceholderAPI.setPlaceholders(p, "%player_name% just joined testing! Server ram is at %server_ram_used%/%server_ram_total% MB! Your RankUpper group is %rankupper_group%")));
 	}
 
 	@Listener
 	public void onGameInitializationEvent(GameInitializationEvent event) {
-
 		// Reigster Listeners and Commands
 	}
 
@@ -155,6 +153,14 @@ public class PlaceholderAPIPlugin {
 		return HoconConfigurationLoader.builder()
 				.setURL(game.getAssetManager().getAsset(this, "config.conf").get().getUrl()).build()
 				.load(loader.getDefaultOptions());
+	}
+	
+	public Config getConfig() {
+		return config;
+	}
+	
+	public Game getGame() {
+		return game;
 	}
 
 	public Logger getLogger() {

@@ -1,11 +1,13 @@
 package me.rojo8399.placeholderapi.expansions;
 
-import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.Game;
+import org.spongepowered.api.entity.living.player.User;
 
+import br.net.fabiozumbi12.rankupper.PermsAPI;
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.configs.Config;
 
-public class PlayerExpansion extends Expansion {
+public class RankUpperExpansion extends Expansion {
 
 	@Override
 	public boolean canRegister() {
@@ -14,7 +16,7 @@ public class PlayerExpansion extends Expansion {
 
 	@Override
 	public String getIdentifier() {
-		return "player";
+		return "rankupper";
 	}
 
 	@Override
@@ -27,14 +29,16 @@ public class PlayerExpansion extends Expansion {
 		return "1.0";
 	}
 
-	public static String onPlaceholderRequest(Player p, String identifier) {
-
+	public static String onPlaceholderRequest(User p, String identifier) {
+		
 		Config config = PlaceholderAPIPlugin.getInstance().getConfig();
-
-		if (config.expansions.player) {
+		Game game = PlaceholderAPIPlugin.getInstance().getGame();
+		
+		if (config.expansions.rankupper && game.getPluginManager().getPlugin("rankupper").isPresent()) {
 			switch (identifier) {
-			case "name":
-				return p.getName();
+			case "group":
+				PermsAPI permsAPI = new PermsAPI(game);
+				return permsAPI.getGroup(p);
 			default:
 				return null;
 			}
