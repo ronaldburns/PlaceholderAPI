@@ -40,11 +40,10 @@ public class SoundExpansion extends Expansion {
 
 		String[] i = identifier.split("-");
 
-
 		Optional<SoundType> sound = game.getRegistry().getType(SoundType.class, i[0]);
 		Vector3d position = p.getLocation().getPosition();
-		Double volume = Double.valueOf(i[1]);
-		Double pitch = Double.valueOf(i[2]);
+		Double volume = Double.valueOf((i[1] == null) ? String.valueOf(1) : i[1]);
+		Double pitch = Double.valueOf((i[2] == null) ? String.valueOf(1) : i[2]);
 
 		if (config.expansions.sound && sound.isPresent()) {
 			p.playSound(sound.get(), position, volume, pitch);
