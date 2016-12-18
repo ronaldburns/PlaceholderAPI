@@ -8,6 +8,7 @@ import org.spongepowered.api.entity.living.player.Player;
 import me.rojo8399.placeholderapi.expansions.PlayerExpansion;
 import me.rojo8399.placeholderapi.expansions.RankUpperExpansion;
 import me.rojo8399.placeholderapi.expansions.ServerExpansion;
+import me.rojo8399.placeholderapi.expansions.SoundExpansion;
 
 public class PlaceholderAPI {
 
@@ -47,6 +48,9 @@ public class PlaceholderAPI {
 			case "rankupper":
 					value = RankUpperExpansion.onPlaceholderRequest(p, identifier);
 					break;
+			case "sound":
+				value = SoundExpansion.onPlaceholderRequest(p, identifier);
+				break;
 			default:
 				value = null;
 				break;

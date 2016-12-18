@@ -15,5 +15,6 @@ public class Config {
 		@Setting public boolean player;
 		@Setting public boolean server;
 		@Setting public boolean rankupper;
+		@Setting public boolean sound;
 	}
 }

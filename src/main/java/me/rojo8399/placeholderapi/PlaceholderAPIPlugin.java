@@ -104,7 +104,7 @@ public class PlaceholderAPIPlugin {
 	public void onClientJoinEvent(ClientConnectionEvent.Join e) {
 		// This is just a test!
 		Player p = e.getTargetEntity();
-		e.setMessage(Text.of(PlaceholderAPI.setPlaceholders(p, "%player_name% just joined testing! Server ram is at %server_ram_used%/%server_ram_total% MB! Your RankUpper group is %rankupper_group%")));
+		e.setMessage(Text.of(PlaceholderAPI.setPlaceholders(p, "%player_name% just joined testing! Server ram is at %server_ram_used%/%server_ram_total% MB! %sound_ENTITY_ELDER_GUARDIAN_AMBIENT-1-1%")));
 	}
 
 	@Listener
