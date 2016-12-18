@@ -1,9 +1,16 @@
 package me.rojo8399.placeholderapi.expansions;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Optional;
 
+import org.spongepowered.api.CatalogType;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.effect.sound.SoundType;
+import org.spongepowered.api.effect.sound.SoundTypes;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
 
@@ -41,11 +48,23 @@ public class SoundExpansion extends Expansion {
 
 		String[] i = identifier.split("-");
 		
-		Optional<SoundType> sound = game.getRegistry().getType(SoundType.class, i[0]);
+		HashMap<String, String> soundConverter = new HashMap<String, String>();
+
+		Arrays.stream(SoundTypes.class.getDeclaredFields()).filter(x -> Modifier.isStatic(x.getModifiers()))
+				.sorted(Comparator.comparing(Field::getName)).forEach(x -> {
+					try {
+						x.setAccessible(true);
+						soundConverter.put(x.getName(), ((CatalogType) x.get(null)).getId());
+					} catch (IllegalAccessException ex) {
+						PlaceholderAPIPlugin.getInstance().getLogger()
+								.error("Field: " + x.getName() + " - could not get.");
+					}
+				});
+
+		Optional<SoundType> sound = game.getRegistry().getType(SoundType.class, soundConverter.get(i[0]));
 		Vector3d position = p.getLocation().getPosition();
 		Double volume = Double.valueOf(i[1]);
 		Double pitch = Double.valueOf(i[2]);
-		
 
 		if (config.expansions.sound && sound.isPresent()) {
 			p.playSound(sound.get(), position, volume, pitch);

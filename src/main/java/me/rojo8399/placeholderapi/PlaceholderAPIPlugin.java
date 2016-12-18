@@ -7,6 +7,8 @@ import java.nio.file.Path;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.asset.Asset;
+import org.spongepowered.api.command.args.GenericArguments;
+import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.DefaultConfig;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
@@ -21,6 +23,7 @@ import org.spongepowered.api.text.format.TextColors;
 
 import com.google.inject.Inject;
 
+import me.rojo8399.placeholderapi.commands.ParseCommand;
 import me.rojo8399.placeholderapi.configs.Config;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
@@ -43,7 +46,6 @@ public class PlaceholderAPIPlugin {
 	@Inject
 	Game game;
 
-	@SuppressWarnings("unused")
 	@Inject
 	private PluginContainer plugin;
 
@@ -88,28 +90,43 @@ public class PlaceholderAPIPlugin {
 		}
 		updateConfig(root.getNode("version").getInt());
 		try {
-            config = root.getValue(Config.type);
-        } catch (ObjectMappingException ex) {
-            logger.error("Invalid config file!");
-            try {
-                throw ex;
-            } finally {
-                mapDefault();
-            }
-        }
-		
+			config = root.getValue(Config.type);
+		} catch (ObjectMappingException ex) {
+			logger.error("Invalid config file!");
+			try {
+				throw ex;
+			} finally {
+				mapDefault();
+			}
+		}
+
 	}
 
 	@Listener
 	public void onClientJoinEvent(ClientConnectionEvent.Join e) {
 		// This is just a test!
 		Player p = e.getTargetEntity();
-		e.setMessage(Text.of(PlaceholderAPI.setPlaceholders(p, "%player_name% just joined testing! Server ram is at %server_ram_used%/%server_ram_total% MB! %sound_ENTITY_ELDER_GUARDIAN_AMBIENT-1-1%")));
+		e.setMessage(Text.of(PlaceholderAPI.setPlaceholders(p,
+				"%player_name% just joined testing! Server ram is at %server_ram_used%/%server_ram_total% MB! %sound_ENTITY_ELDER_GUARDIAN_AMBIENT-1-1%")));
 	}
 
 	@Listener
 	public void onGameInitializationEvent(GameInitializationEvent event) {
 		// Reigster Listeners and Commands
+
+		CommandSpec parseCmd = CommandSpec.builder()
+				.arguments(GenericArguments.onlyOne(GenericArguments.player(Text.of("player"))),
+						GenericArguments.remainingJoinedStrings(Text.of("placeholders")))
+				.executor(new ParseCommand())
+				.build();
+
+		// placeholderapi
+		CommandSpec baseCmd = CommandSpec.builder()
+				.child(parseCmd, "parse", "p")
+				.build();
+
+		game.getCommandManager().register(plugin, baseCmd, "placeholderapi", "papi");
+
 	}
 
 	@Listener
@@ -129,7 +146,7 @@ public class PlaceholderAPIPlugin {
 				Text.builder().color(TextColors.GREEN).append(Text.of("Reloaded PlaceholderAPI")).build()));
 		logger.info("Reloaded PlaceholderAPI");
 	}
-	
+
 	private void updateConfig(int v) {
 		switch (v) {
 		case 1:
@@ -154,11 +171,11 @@ public class PlaceholderAPIPlugin {
 				.setURL(game.getAssetManager().getAsset(this, "config.conf").get().getUrl()).build()
 				.load(loader.getDefaultOptions());
 	}
-	
+
 	public Config getConfig() {
 		return config;
 	}
-	
+
 	public Game getGame() {
 		return game;
 	}
