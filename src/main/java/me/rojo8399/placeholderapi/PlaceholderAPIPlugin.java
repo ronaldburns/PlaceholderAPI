@@ -15,7 +15,6 @@ import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.GameReloadEvent;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
-import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.Text;
@@ -103,17 +102,10 @@ public class PlaceholderAPIPlugin {
 	}
 
 	@Listener
-	public void onClientJoinEvent(ClientConnectionEvent.Join e) {
-		// This is just a test!
-		Player p = e.getTargetEntity();
-		e.setMessage(Text.of(PlaceholderAPI.setPlaceholders(p,
-				"%player_name% just joined testing! Server ram is at %server_ram_used%/%server_ram_total% MB! %sound_ENTITY_ELDER_GUARDIAN_AMBIENT-1-1%")));
-	}
-
-	@Listener
 	public void onGameInitializationEvent(GameInitializationEvent event) {
 		// Reigster Listeners and Commands
 
+		// placeholderapi parse {player} [placeholders]
 		CommandSpec parseCmd = CommandSpec.builder()
 				.arguments(GenericArguments.onlyOne(GenericArguments.player(Text.of("player"))),
 						GenericArguments.remainingJoinedStrings(Text.of("placeholders")))
