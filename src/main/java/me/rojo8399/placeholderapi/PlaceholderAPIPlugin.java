@@ -6,7 +6,6 @@ import java.nio.file.Path;
 
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
-import org.spongepowered.api.Sponge;
 import org.spongepowered.api.asset.Asset;
 import org.spongepowered.api.config.DefaultConfig;
 import org.spongepowered.api.entity.living.player.Player;
@@ -60,9 +59,9 @@ public class PlaceholderAPIPlugin {
 	public void onGamePreInitializationEvent(GamePreInitializationEvent event)
 			throws IOException, ObjectMappingException {
 		instance = this;
-		plugin = Sponge.getPluginManager().getPlugin(PLUGIN_ID).get();
-
+		plugin = game.getPluginManager().getPlugin(PLUGIN_ID).get();
 		Asset conf = game.getAssetManager().getAsset(this, "config.conf").get();
+
 		if (!Files.exists(path)) {
 			try {
 				conf.copyToFile(path);
@@ -76,6 +75,28 @@ public class PlaceholderAPIPlugin {
 
 			}
 		}
+		ConfigurationNode root;
+		try {
+			root = loader.load();
+		} catch (IOException ex) {
+			logger.error("Could not load the config file!");
+			try {
+				throw ex;
+			} finally {
+				mapDefault();
+			}
+		}
+		updateConfig(root.getNode("version").getInt());
+		try {
+            config = root.getValue(Config.type);
+        } catch (ObjectMappingException ex) {
+            logger.error("Invalid config file!");
+            try {
+                throw ex;
+            } finally {
+                mapDefault();
+            }
+        }
 
 	}
 
@@ -83,7 +104,8 @@ public class PlaceholderAPIPlugin {
 	public void onClientJoinEvent(ClientConnectionEvent.Join e) {
 		// This is just a test!
 		Player p = e.getTargetEntity();
-		e.setMessage(Text.of(PlaceholderAPI.setPlaceholders(p, "%player_name% just joined testing! Server ram is at %server_ram_used%/%server_ram_total% MB!")));
+		e.setMessage(Text.of(PlaceholderAPI.setPlaceholders(p,
+				"%player_name% just joined testing! Server ram is at %server_ram_used%/%server_ram_total% MB!")));
 	}
 
 	@Listener
@@ -110,20 +132,31 @@ public class PlaceholderAPIPlugin {
 		logger.info("Reloaded PlaceholderAPI");
 	}
 	
+	private void updateConfig(int v) {
+		switch (v) {
+		case 1:
+			// We're good!
+		case 2:
+			// How dafuq
+		}
+	}
+
 	private void mapDefault() throws IOException, ObjectMappingException {
 		try {
 			config = loadDefault().getValue(Config.type);
-		} catch (IOException ex) {
+		} catch (IOException | ObjectMappingException ex) {
 			logger.error("Could not load the embedded default config! Disabling plugin.");
-            game.getEventManager().unregisterPluginListeners(this);
-            throw ex;
+			game.getEventManager().unregisterPluginListeners(this);
+			throw ex;
 		}
 	}
-	
+
 	private ConfigurationNode loadDefault() throws IOException {
-		return HoconConfigurationLoader.builder().setURL(game.getAssetManager().getAsset(this, "config.conf").get().getUrl()).build().load(loader.getDefaultOptions());
+		return HoconConfigurationLoader.builder()
+				.setURL(game.getAssetManager().getAsset(this, "config.conf").get().getUrl()).build()
+				.load(loader.getDefaultOptions());
 	}
-	
+
 	public Logger getLogger() {
 		return logger;
 	}
