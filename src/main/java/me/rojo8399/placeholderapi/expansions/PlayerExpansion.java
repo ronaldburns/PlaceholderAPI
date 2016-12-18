@@ -2,6 +2,8 @@ package me.rojo8399.placeholderapi.expansions;
 
 import org.spongepowered.api.entity.living.player.Player;
 
+import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
+
 public class PlayerExpansion extends Expansion {
 	
 	@Override
@@ -25,17 +27,13 @@ public class PlayerExpansion extends Expansion {
 	}
 
 	public static String onPlaceholderRequest(Player p, String identifier) {
-		
-		if (identifier == null) {
-			return "";
-		}
-		
+		PlaceholderAPIPlugin.getInstance().getLogger().debug("PlayerExpansion Called");
 		switch (identifier) {
 		case "name":
 			return p.getName();
+		default:
+			return null;
 		}
-		
-		return null;
 	}	
 	
 }

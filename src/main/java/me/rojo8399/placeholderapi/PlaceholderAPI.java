@@ -32,42 +32,19 @@ public class PlaceholderAPI {
 			String id = format.substring(0, index);
 			String identifier = format.substring(index + 1);
 
-			String value = null;
+			String value = "";
 
 			switch (id) {
 			case "player":
 				value = PlayerExpansion.onPlaceholderRequest(p, identifier);
-			}
-
-			text = text.replace("%" + format + "%", Matcher.quoteReplacement(value));
-
-		}
-
-		return text;
-	}
-
-	public static String setPlaceholders(String text) {
-
-		Matcher placeholderMatcher = PLACEHOLDER_PATTERN.matcher(text);
-
-		while (placeholderMatcher.find()) {
-
-			String format = placeholderMatcher.group(1);
-
-			int index = format.indexOf("_");
-
-			if (index <= 0 || index >= format.length()) {
-				continue;
-			}
-
-			String id = format.substring(0, index);
-			String identifier = format.substring(index + 1);
-
-			String value = null;
-
-			switch (id) {
 			case "server":
 				value = ServerExpansion.onPlaceholderRequest(identifier);
+			}
+			
+			PlaceholderAPIPlugin.getInstance().getLogger().debug("Format: " + format + ", ID: " + id + ", Value : " + value);
+			
+			if (value == null) {
+				value = "%" + format + "%";
 			}
 
 			text = text.replace("%" + format + "%", Matcher.quoteReplacement(value));

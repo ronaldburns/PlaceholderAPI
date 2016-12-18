@@ -28,13 +28,7 @@ public class ServerExpansion extends Expansion {
 		return "1.0";
 	}
 
-	public static String onPlaceholderRequest(String identifier) {
-		
-		if (identifier == null) {
-			return "";
-		}
-		
-		
+	public static String onPlaceholderRequest(String identifier) {		
 		switch (identifier) {
 		case "online":
 			return String.valueOf(Sponge.getServer().getOnlinePlayers().size());
@@ -46,9 +40,9 @@ public class ServerExpansion extends Expansion {
 			return String.valueOf(runtime.totalMemory() / MB);
 		case "ram_max":
 			return String.valueOf(runtime.maxMemory() / MB);
+		default:
+			return null;
 		}
-		
-		return null;
 	}	
 	
 }

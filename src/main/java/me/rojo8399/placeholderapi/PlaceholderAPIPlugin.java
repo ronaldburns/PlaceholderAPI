@@ -5,8 +5,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.slf4j.Logger;
+import org.spongepowered.api.Game;
 import org.spongepowered.api.Sponge;
-import org.spongepowered.api.config.ConfigDir;
+import org.spongepowered.api.asset.Asset;
+import org.spongepowered.api.config.DefaultConfig;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.GameReloadEvent;
@@ -20,64 +22,108 @@ import org.spongepowered.api.text.format.TextColors;
 
 import com.google.inject.Inject;
 
-import me.rojo8399.placeholderapi.config.Config;
+import me.rojo8399.placeholderapi.configs.Config;
+import ninja.leaping.configurate.ConfigurationNode;
+import ninja.leaping.configurate.commented.CommentedConfigurationNode;
+import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
+import ninja.leaping.configurate.loader.ConfigurationLoader;
+import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 
 @Plugin(id = PlaceholderAPIPlugin.PLUGIN_ID)
 public class PlaceholderAPIPlugin {
 
-	public static final String PLUGIN_ID = "placeholders";
-	public static final String PLUGIN_NAME = "Placeholders";
+	public static final String PLUGIN_ID = "placeholderapi";
+	public static final String PLUGIN_NAME = "PlaceholderAPI";
 	public static final String PLUGIN_VERSION = "1.0";
-	
+
 	private static PlaceholderAPIPlugin instance;
-	
+
 	@Inject
-	private Logger logger;
-	
+	Logger logger;
+
+	@Inject
+	Game game;
+
 	@SuppressWarnings("unused")
 	@Inject
 	private PluginContainer plugin;
 
 	@Inject
-	@ConfigDir(sharedRoot = false)
-	private Path configDir;
-	
+	@DefaultConfig(sharedRoot = false)
+	Path path;
+	@Inject
+	@DefaultConfig(sharedRoot = false)
+	ConfigurationLoader<CommentedConfigurationNode> loader;
+	Config config;
+
 	@Listener
-	public void onGamePreInitializationEvent(GamePreInitializationEvent event) {
+	public void onGamePreInitializationEvent(GamePreInitializationEvent event)
+			throws IOException, ObjectMappingException {
 		instance = this;
 		plugin = Sponge.getPluginManager().getPlugin(PLUGIN_ID).get();
 
-		// Create Configuration Directory for CustomPlayerCount
-		if (!Files.exists(configDir)) {
+		Asset conf = game.getAssetManager().getAsset(this, "config.conf").get();
+		if (!Files.exists(path)) {
 			try {
-				Files.createDirectories(configDir);
-			} catch (IOException e) {
-				e.printStackTrace();
+				conf.copyToFile(path);
+			} catch (IOException ex) {
+				logger.error("Could not copy the config file!");
+				try {
+					throw ex;
+				} finally {
+					mapDefault();
+				}
+
 			}
 		}
 
-		Config.getConfig().setup();
 	}
-	
+
 	@Listener
 	public void onClientJoinEvent(ClientConnectionEvent.Join e) {
+		// This is just a test!
 		Player p = e.getTargetEntity();
-		e.setMessage(Text.of(PlaceholderAPI.setPlaceholders(p, "%player_name% just joined! Server ram is at %ram_used%/%ram_total% MB!")));
+		e.setMessage(Text.of(PlaceholderAPI.setPlaceholders(p, "%player_name% just joined testing! Server ram is at %server_ram_used%/%server_ram_total% MB!")));
 	}
-	
+
 	@Listener
 	public void onGameInitializationEvent(GameInitializationEvent event) {
-		
+
 		// Reigster Listeners and Commands
 	}
 
 	@Listener
-	public void onReload(GameReloadEvent event) {
-		Config.getConfig().load();
-		event.getCause().first(Player.class).ifPresent(p -> p.sendMessage(Text.builder().color(TextColors.GREEN).append(Text.of("Reloading PlaceholderAPI...")).build()));
-		getLogger().info("Reloading PlaceholderAPI...");
-	}
+	public void onReload(GameReloadEvent event) throws IOException, ObjectMappingException {
+		try {
+			config = loader.load().getValue(Config.type);
+		} catch (IOException ex) {
+			logger.error("Could not reload config!");
+			throw ex;
+		} catch (ObjectMappingException ex) {
+			logger.error("Invalid Config!");
+			throw ex;
+		}
 
+		// Send Messages to console and player
+		event.getCause().first(Player.class).ifPresent(p -> p.sendMessage(
+				Text.builder().color(TextColors.GREEN).append(Text.of("Reloaded PlaceholderAPI")).build()));
+		logger.info("Reloaded PlaceholderAPI");
+	}
+	
+	private void mapDefault() throws IOException, ObjectMappingException {
+		try {
+			config = loadDefault().getValue(Config.type);
+		} catch (IOException ex) {
+			logger.error("Could not load the embedded default config! Disabling plugin.");
+            game.getEventManager().unregisterPluginListeners(this);
+            throw ex;
+		}
+	}
+	
+	private ConfigurationNode loadDefault() throws IOException {
+		return HoconConfigurationLoader.builder().setURL(game.getAssetManager().getAsset(this, "config.conf").get().getUrl()).build().load(loader.getDefaultOptions());
+	}
+	
 	public Logger getLogger() {
 		return logger;
 	}
@@ -86,8 +132,4 @@ public class PlaceholderAPIPlugin {
 		return instance;
 	}
 
-	public Path getConfigDir() {
-		return configDir;
-	}
-	
 }
