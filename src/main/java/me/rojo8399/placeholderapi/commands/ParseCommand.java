@@ -19,7 +19,10 @@ public class ParseCommand implements CommandExecutor {
 		String[] placeholders = args.<String>getOne(Text.of("placeholders")).get().split(" ");
 
 		for (String placeholder : placeholders) {
-			src.sendMessage(Text.of(PlaceholderAPI.setPlaceholders(p, placeholder)));
+			String t = PlaceholderAPI.setPlaceholders(p, placeholder);
+			if (!t.replace(" ", "").equals("")) {
+				src.sendMessage(Text.of(t));
+			}
 		}
 
 		return CommandResult.success();
