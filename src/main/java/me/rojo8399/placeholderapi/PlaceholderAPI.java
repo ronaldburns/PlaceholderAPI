@@ -1,5 +1,7 @@
 package me.rojo8399.placeholderapi;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,6 +19,15 @@ public class PlaceholderAPI {
 	@SuppressWarnings("unused")
 	private final static Pattern BRACKET_PLACEHOLDER_PATTERN = Pattern.compile("[{]([^{}]+)[}]");
 
+	
+	
+	/**
+	 * set placeholders in the text specified
+	 * placeholders are matched with the pattern {<placeholder>} when set with this method
+	 * @param player Player to set the placeholders for
+	 * @param text text to set the placeholder values to
+	 * @return original text with all valid placeholders set to the correct values if the String contains valid placeholders
+	 */
 	public static String setPlaceholders(Player p, String text) {
 
 		
@@ -68,6 +79,28 @@ public class PlaceholderAPI {
 		}
 
 		return text;
+	}
+
+	
+	/**
+	 * set placeholders in the list<String> text provided
+	 * placeholders are matched with the pattern {<placeholder>} when set with this method
+	 * @param p Player to set the placeholders for
+	 * @param text text to set the placeholder values in
+	 * @return original list with all valid placeholders set to the correct values if the list contains any valid placeholders
+	 */
+	public static List<String> setPlaceholders(Player player, List<String> text) {
+		if (text == null) {
+			return text;
+		}
+		
+		List<String> temp = new ArrayList<String>();
+		for (String line : text) {
+			temp.add(setPlaceholders(player, line));
+		}
+		
+		return temp;
+		
 	}
 
 }
