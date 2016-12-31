@@ -11,7 +11,7 @@ import com.flowpowered.math.vector.Vector3d;
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.configs.Config;
 
-public class SoundExpansion extends Expansion {
+public class SoundExpansion implements Expansion {
 
 	@Override
 	public boolean canRegister() {
@@ -33,7 +33,8 @@ public class SoundExpansion extends Expansion {
 		return "1.0";
 	}
 
-	public static String onPlaceholderRequest(Player p, String identifier) {
+	@Override
+	public String onPlaceholderRequest(Player p, String identifier) {
 
 		Config config = PlaceholderAPIPlugin.getInstance().getConfig();
 		Game game = PlaceholderAPIPlugin.getInstance().getGame();

@@ -5,7 +5,7 @@ import org.spongepowered.api.entity.living.player.Player;
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.configs.Config;
 
-public class PlayerExpansion extends Expansion {
+public class PlayerExpansion implements Expansion {
 
 	@Override
 	public boolean canRegister() {
@@ -27,7 +27,8 @@ public class PlayerExpansion extends Expansion {
 		return "1.0";
 	}
 
-	public static String onPlaceholderRequest(Player p, String identifier) {
+	@Override
+	public String onPlaceholderRequest(Player p, String identifier) {
 
 		Config config = PlaceholderAPIPlugin.getInstance().getConfig();
 
