@@ -1,11 +1,12 @@
 package me.rojo8399.placeholderapi.expansions;
 
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.entity.living.player.Player;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.configs.Config;
 
-public class ServerExpansion extends Expansion {
+public class ServerExpansion implements Expansion {
 
 	private static Runtime runtime = Runtime.getRuntime();
 	private static int MB = 1024 * 1024;
@@ -30,7 +31,8 @@ public class ServerExpansion extends Expansion {
 		return "1.0";
 	}
 
-	public static String onPlaceholderRequest(String identifier) {
+	@Override
+	public String onPlaceholderRequest(Player player, String identifier) {
 
 		Config config = PlaceholderAPIPlugin.getInstance().getConfig();
 

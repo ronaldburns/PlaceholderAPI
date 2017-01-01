@@ -24,6 +24,9 @@ import com.google.inject.Inject;
 
 import me.rojo8399.placeholderapi.commands.ParseCommand;
 import me.rojo8399.placeholderapi.configs.Config;
+import me.rojo8399.placeholderapi.expansions.PlayerExpansion;
+import me.rojo8399.placeholderapi.expansions.ServerExpansion;
+import me.rojo8399.placeholderapi.expansions.SoundExpansion;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
@@ -60,9 +63,13 @@ public class PlaceholderAPIPlugin {
 	public void onGamePreInitializationEvent(GamePreInitializationEvent event)
 			throws IOException, ObjectMappingException {
 		instance = this;
+		PlaceholderService s;
+		game.getServiceManager().setProvider(this, PlaceholderService.class, s = new PlaceholderServiceImpl());
 		plugin = game.getPluginManager().getPlugin(PLUGIN_ID).get();
 		Asset conf = game.getAssetManager().getAsset(this, "config.conf").get();
-
+		s.registerPlaceholder(new PlayerExpansion());
+		s.registerPlaceholder(new ServerExpansion());
+		s.registerPlaceholder(new SoundExpansion());
 		if (!Files.exists(path)) {
 			try {
 				conf.copyToFile(path);
@@ -73,7 +80,6 @@ public class PlaceholderAPIPlugin {
 				} finally {
 					mapDefault();
 				}
-
 			}
 		}
 		ConfigurationNode root;
@@ -109,13 +115,10 @@ public class PlaceholderAPIPlugin {
 		CommandSpec parseCmd = CommandSpec.builder()
 				.arguments(GenericArguments.onlyOne(GenericArguments.player(Text.of("player"))),
 						GenericArguments.remainingJoinedStrings(Text.of("placeholders")))
-				.executor(new ParseCommand())
-				.build();
+				.executor(new ParseCommand()).build();
 
 		// placeholderapi
-		CommandSpec baseCmd = CommandSpec.builder()
-				.child(parseCmd, "parse", "p")
-				.build();
+		CommandSpec baseCmd = CommandSpec.builder().child(parseCmd, "parse", "p").build();
 
 		game.getCommandManager().register(plugin, baseCmd, "placeholderapi", "papi");
 

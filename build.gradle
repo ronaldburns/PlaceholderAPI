@@ -1,16 +1,27 @@
 apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'eclipse'
 
 repositories {
     jcenter()
     mavenCentral()
+    maven {
+        name = 'sponge'
+        url = 'http://repo.spongepowered.org/maven'
+    }
 }
+
+compileJava.options.encoding = 'UTF-8'
+
+group = 'me.rojo8399.placeholderapi'
+version = '1.0'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+archivesBaseName = "PlaceholderAPI"
 
 // In this section you declare the dependencies for your production and test code
 dependencies {
-    compile 'org.slf4j:slf4j-api:1.7.21'
-    compile 'org.reflections:reflections:0.9.10'
-    compile 'ninja.leaping.configurate:configurate-hocon:3.2'
-    compile 'com.flowpowered:flow-math:1.0.4-SNAPSHOT'
-    
-    testCompile 'junit:junit:4.12'
+    compile 'org.spongepowered:spongeapi:5.0.0'
 }
