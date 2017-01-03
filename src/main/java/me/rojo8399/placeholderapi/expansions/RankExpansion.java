@@ -2,7 +2,6 @@ package me.rojo8399.placeholderapi.expansions;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.service.permission.Subject;
@@ -62,7 +61,7 @@ public class RankExpansion implements Expansion {
 				return false;
 			}
 			return true;
-		}).collect(Collectors.toList()).get(0);
+		}).findFirst().orElse(subject);
 	}
 
 	/*
