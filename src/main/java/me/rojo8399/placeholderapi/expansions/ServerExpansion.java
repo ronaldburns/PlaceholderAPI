@@ -1,5 +1,7 @@
 package me.rojo8399.placeholderapi.expansions;
 
+import java.util.Optional;
+
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
 
@@ -32,12 +34,15 @@ public class ServerExpansion implements Expansion {
 	}
 
 	@Override
-	public String onPlaceholderRequest(Player player, String identifier) {
+	public String onPlaceholderRequest(Player player, Optional<String> identifier) {
 
 		Config config = PlaceholderAPIPlugin.getInstance().getConfig();
 
 		if (config.expansions.server) {
-			switch (identifier) {
+			if (!identifier.isPresent()) {
+				return null;
+			}
+			switch (identifier.get()) {
 			case "online":
 				return String.valueOf(Sponge.getServer().getOnlinePlayers().size());
 			case "ram_used":
@@ -48,6 +53,8 @@ public class ServerExpansion implements Expansion {
 				return String.valueOf(runtime.totalMemory() / MB);
 			case "ram_max":
 				return String.valueOf(runtime.maxMemory() / MB);
+			case "cores":
+				return String.valueOf(runtime.availableProcessors());
 			default:
 				return null;
 			}

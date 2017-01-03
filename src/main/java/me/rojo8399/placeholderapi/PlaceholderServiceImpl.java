@@ -29,16 +29,21 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			String format = placeholderMatcher.group(1);
 			format = format.substring(1, format.length() - 1);
 			int index = format.indexOf("_");
-			if (index <= 0 || index >= format.length()) {
+			if (index == 0 || index == format.length()) {
 				continue;
 			}
-			String id = format.substring(0, index);
+			boolean noToken = false;
+			if (index == -1) {
+				noToken = true;
+				index = format.length();
+			}
+			String id = format.substring(0, index).toLowerCase();
 			if (!expansions.containsKey(id)) {
 				continue;
 			}
-			String token = format.substring(index + 1);
+			String token = noToken ? null : format.substring(index + 1);
 			Expansion exp = expansions.get(id);
-			String value = exp.onPlaceholderRequest(player, token);
+			String value = exp.onPlaceholderRequest(player, Optional.ofNullable(token.toLowerCase()));
 			PlaceholderAPIPlugin.getInstance().getLogger()
 					.debug("Format: " + format + ", ID: " + id + ", Value : " + value);
 			if (value == null) {
@@ -54,15 +59,16 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 		if (!expansion.canRegister()) {
 			return false;
 		}
-		if (expansions.containsKey(expansion.getIdentifier())) {
+		if (expansions.containsKey(expansion.getIdentifier().toLowerCase())) {
 			return false;
 		}
-		expansions.put(expansion.getIdentifier(), expansion);
+		expansions.put(expansion.getIdentifier().toLowerCase(), expansion);
 		return true;
 	}
 
 	@Override
-	public boolean registerPlaceholder(final Object plugin, final BiFunction<Player, String, String> function) {
+	public boolean registerPlaceholder(final Object plugin,
+			final BiFunction<Player, Optional<String>, String> function) {
 		if (plugin == null) {
 			return false;
 		}
@@ -80,7 +86,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 
 			@Override
 			public String getIdentifier() {
-				return c.getId();
+				return c.getId().toLowerCase();
 			}
 
 			@Override
@@ -94,7 +100,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			}
 
 			@Override
-			public String onPlaceholderRequest(Player player, String token) {
+			public String onPlaceholderRequest(Player player, Optional<String> token) {
 				return function.apply(player, token);
 			}
 

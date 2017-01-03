@@ -25,6 +25,7 @@ import com.google.inject.Inject;
 import me.rojo8399.placeholderapi.commands.ParseCommand;
 import me.rojo8399.placeholderapi.configs.Config;
 import me.rojo8399.placeholderapi.expansions.PlayerExpansion;
+import me.rojo8399.placeholderapi.expansions.RankExpansion;
 import me.rojo8399.placeholderapi.expansions.ServerExpansion;
 import me.rojo8399.placeholderapi.expansions.SoundExpansion;
 import ninja.leaping.configurate.ConfigurationNode;
@@ -70,6 +71,7 @@ public class PlaceholderAPIPlugin {
 		s.registerPlaceholder(new PlayerExpansion());
 		s.registerPlaceholder(new ServerExpansion());
 		s.registerPlaceholder(new SoundExpansion());
+		s.registerPlaceholder(new RankExpansion());
 		if (!Files.exists(path)) {
 			try {
 				conf.copyToFile(path);
