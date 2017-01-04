@@ -6,6 +6,9 @@ import java.util.Optional;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.service.permission.Subject;
 
+import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
+import me.rojo8399.placeholderapi.configs.Config;
+
 public class RankExpansion implements Expansion {
 
 	/*
@@ -73,6 +76,10 @@ public class RankExpansion implements Expansion {
 	 */
 	@Override
 	public String onPlaceholderRequest(Player player, Optional<String> token) {
+		Config config = PlaceholderAPIPlugin.getInstance().getConfig();
+		if (!config.expansions.rank) {
+			return null;
+		}
 		if (!token.isPresent()) {
 			return getParentGroup(player).getIdentifier();
 		}

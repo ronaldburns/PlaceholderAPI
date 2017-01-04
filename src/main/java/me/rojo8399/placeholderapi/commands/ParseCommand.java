@@ -8,6 +8,7 @@ import org.spongepowered.api.command.spec.CommandExecutor;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
+import org.spongepowered.api.text.serializer.TextSerializers;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.PlaceholderService;
@@ -27,8 +28,13 @@ public class ParseCommand implements CommandExecutor {
 		}
 		for (String placeholder : placeholders) {
 			String t = service.replacePlaceholders(p, placeholder);
+			if (t == null) {
+				t = "";
+			}
 			if (!t.replace(" ", "").equals("")) {
-				src.sendMessage(Text.of(t));
+				src.sendMessage(TextSerializers.FORMATTING_CODE.deserialize(t));
+			} else {
+				src.sendMessage(Text.of(TextColors.RED, "No value present!"));
 			}
 		}
 		return CommandResult.success();

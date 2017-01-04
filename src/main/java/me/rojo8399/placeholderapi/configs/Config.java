@@ -14,7 +14,7 @@ public class Config {
 	public static class Expansions {
 		@Setting public boolean player;
 		@Setting public boolean server;
-		@Setting public boolean rankupper;
+		@Setting public boolean rank;
 		@Setting public boolean sound;
 	}
 }
