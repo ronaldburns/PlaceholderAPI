@@ -1,5 +1,7 @@
 package me.rojo8399.placeholderapi.expansions;
 
+import java.util.Optional;
+
 import org.spongepowered.api.entity.living.player.Player;
 
 public interface Expansion {
@@ -39,6 +41,6 @@ public interface Expansion {
 	 * 
 	 * @return the result of the parse
 	 */
-	public String onPlaceholderRequest(Player player, String token);
+	public String onPlaceholderRequest(Player player, Optional<String> token);
 
 }

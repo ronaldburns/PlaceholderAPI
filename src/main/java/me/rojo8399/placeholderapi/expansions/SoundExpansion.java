@@ -34,12 +34,16 @@ public class SoundExpansion implements Expansion {
 	}
 
 	@Override
-	public String onPlaceholderRequest(Player p, String identifier) {
+	public String onPlaceholderRequest(Player p, Optional<String> identifier) {
+
+		if (!identifier.isPresent()) {
+			return null;
+		}
 
 		Config config = PlaceholderAPIPlugin.getInstance().getConfig();
 		Game game = PlaceholderAPIPlugin.getInstance().getGame();
 
-		String[] i = identifier.split("-");
+		String[] i = identifier.get().split("-");
 
 		Optional<SoundType> sound = game.getRegistry().getType(SoundType.class, i[0]);
 		Vector3d position = p.getLocation().getPosition();
