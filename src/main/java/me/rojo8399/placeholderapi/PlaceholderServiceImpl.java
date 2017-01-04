@@ -15,7 +15,7 @@ import me.rojo8399.placeholderapi.expansions.Expansion;
 
 public class PlaceholderServiceImpl implements PlaceholderService {
 
-	private final static Pattern PLACEHOLDER_PATTERN = Pattern.compile("[%]([^% ]*)[%]");
+	private final static Pattern PLACEHOLDER_PATTERN = Pattern.compile("[%]([^% ]+)[%]");
 
 	PlaceholderServiceImpl() {
 	}
