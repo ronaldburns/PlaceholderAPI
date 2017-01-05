@@ -15,7 +15,7 @@ import me.rojo8399.placeholderapi.expansions.Expansion;
 
 public class PlaceholderServiceImpl implements PlaceholderService {
 
-	private final static Pattern PLACEHOLDER_PATTERN = Pattern.compile("[%]([^%]+)[%]");
+	private final static Pattern PLACEHOLDER_PATTERN = Pattern.compile("[%]([^% ]+)[%]");
 
 	PlaceholderServiceImpl() {
 	}
@@ -27,7 +27,6 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 		Matcher placeholderMatcher = PLACEHOLDER_PATTERN.matcher(text);
 		while (placeholderMatcher.find()) {
 			String format = placeholderMatcher.group(1);
-			format = format.substring(1, format.length() - 1);
 			int index = format.indexOf("_");
 			if (index == 0 || index == format.length()) {
 				continue;
@@ -43,7 +42,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			}
 			String token = noToken ? null : format.substring(index + 1);
 			Expansion exp = expansions.get(id);
-			String value = exp.onPlaceholderRequest(player, Optional.ofNullable(token.toLowerCase()));
+			String value = exp.onPlaceholderRequest(player, Optional.ofNullable(token).map(s -> s.toLowerCase()));
 			PlaceholderAPIPlugin.getInstance().getLogger()
 					.debug("Format: " + format + ", ID: " + id + ", Value : " + value);
 			if (value == null) {

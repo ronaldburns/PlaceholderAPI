@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.text.serializer.TextSerializers;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.configs.Config;
@@ -45,6 +46,10 @@ public class ServerExpansion implements Expansion {
 			switch (identifier.get()) {
 			case "online":
 				return String.valueOf(Sponge.getServer().getOnlinePlayers().size());
+			case "max_players":
+				return String.valueOf(Sponge.getServer().getMaxPlayers());
+			case "motd":
+				return TextSerializers.FORMATTING_CODE.serialize(Sponge.getServer().getMotd());
 			case "ram_used":
 				return String.valueOf((runtime.totalMemory() - runtime.freeMemory()) / MB);
 			case "ram_free":
