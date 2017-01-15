@@ -39,7 +39,7 @@ public class PlaceholderAPIPlugin {
 
 	public static final String PLUGIN_ID = "placeholderapi";
 	public static final String PLUGIN_NAME = "PlaceholderAPI";
-	public static final String PLUGIN_VERSION = "1.0";
+	public static final String PLUGIN_VERSION = "2.0";
 
 	private static PlaceholderAPIPlugin instance;
 
