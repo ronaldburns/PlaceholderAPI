@@ -39,13 +39,13 @@ import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 
-@Plugin(id = PlaceholderAPIPlugin.PLUGIN_ID, version = PlaceholderAPIPlugin.PLUGIN_VERSION)
+@Plugin(id = PlaceholderAPIPlugin.PLUGIN_ID, name = PlaceholderAPIPlugin.PLUGIN_NAME, version = PlaceholderAPIPlugin.PLUGIN_VERSION, authors = {"rojo8399", "Wundero"})
+
 public class PlaceholderAPIPlugin {
 
 	public static final String PLUGIN_ID = "placeholderapi";
 	public static final String PLUGIN_NAME = "PlaceholderAPI";
 	public static final String PLUGIN_VERSION = "2.1";
-
 	private static PlaceholderAPIPlugin instance;
 
 	@Inject
