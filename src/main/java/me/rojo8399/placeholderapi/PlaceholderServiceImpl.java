@@ -1,8 +1,6 @@
 package me.rojo8399.placeholderapi;
 
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -20,7 +18,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	PlaceholderServiceImpl() {
 	}
 
-	private Map<String, Expansion> expansions = new ConcurrentHashMap<>();
+	private Registry registry = new Registry();
 
 	@Override
 	public String replacePlaceholders(Player player, String text) {
@@ -37,11 +35,11 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 				index = format.length();
 			}
 			String id = format.substring(0, index).toLowerCase();
-			if (!expansions.containsKey(id)) {
+			if (!registry.has(id)) {
 				continue;
 			}
 			String token = noToken ? null : format.substring(index + 1);
-			Expansion exp = expansions.get(id);
+			Expansion exp = registry.get(id);
 			String value = exp.onPlaceholderRequest(player, Optional.ofNullable(token).map(s -> s.toLowerCase()));
 			PlaceholderAPIPlugin.getInstance().getLogger()
 					.debug("Format: " + format + ", ID: " + id + ", Value : " + value);
@@ -55,14 +53,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 
 	@Override
 	public boolean registerPlaceholder(Expansion expansion) {
-		if (!expansion.canRegister()) {
-			return false;
-		}
-		if (expansions.containsKey(expansion.getIdentifier().toLowerCase())) {
-			return false;
-		}
-		expansions.put(expansion.getIdentifier().toLowerCase(), expansion);
-		return true;
+		return registry.register(expansion);
 	}
 
 	@Override
