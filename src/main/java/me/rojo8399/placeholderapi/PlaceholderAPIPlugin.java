@@ -7,7 +7,12 @@ import java.nio.file.Path;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.asset.Asset;
+import org.spongepowered.api.command.CommandException;
+import org.spongepowered.api.command.CommandResult;
+import org.spongepowered.api.command.CommandSource;
+import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.args.GenericArguments;
+import org.spongepowered.api.command.spec.CommandExecutor;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.DefaultConfig;
 import org.spongepowered.api.entity.living.player.Player;
@@ -35,12 +40,12 @@ import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 
 @Plugin(id = PlaceholderAPIPlugin.PLUGIN_ID, name = PlaceholderAPIPlugin.PLUGIN_NAME, version = PlaceholderAPIPlugin.PLUGIN_VERSION, authors = {"rojo8399", "Wundero"})
+
 public class PlaceholderAPIPlugin {
 
 	public static final String PLUGIN_ID = "placeholderapi";
 	public static final String PLUGIN_NAME = "PlaceholderAPI";
-	public static final String PLUGIN_VERSION = "2.0";
-
+	public static final String PLUGIN_VERSION = "2.1";
 	private static PlaceholderAPIPlugin instance;
 
 	@Inject
@@ -117,10 +122,20 @@ public class PlaceholderAPIPlugin {
 		CommandSpec parseCmd = CommandSpec.builder()
 				.arguments(GenericArguments.onlyOne(GenericArguments.player(Text.of("player"))),
 						GenericArguments.remainingJoinedStrings(Text.of("placeholders")))
-				.executor(new ParseCommand()).build();
+				.executor(new ParseCommand()).permission("placeholderapi.admin").build();
 
 		// placeholderapi
-		CommandSpec baseCmd = CommandSpec.builder().child(parseCmd, "parse", "p").build();
+		CommandSpec baseCmd = CommandSpec.builder().child(parseCmd, "parse", "p").executor(new CommandExecutor() {
+
+			//send plugin name + version
+			@Override
+			public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
+				src.sendMessage(Text.of(TextColors.GREEN, PLUGIN_NAME, TextColors.GRAY, " version ", TextColors.AQUA,
+						PLUGIN_VERSION, TextColors.GRAY, "."));
+				return CommandResult.success();
+			}
+
+		}).build();
 
 		game.getCommandManager().register(plugin, baseCmd, "placeholderapi", "papi");
 
