@@ -203,61 +203,6 @@ public class PlaceholderAPIPlugin {
 		}
 	}
 
-	private void loadExpansions() throws IOException {
-		File dir = new File(this.path.toFile().getParentFile(), "expansions");
-		if (dir.exists() && !dir.isDirectory()) {
-			dir.delete();
-		}
-		if (!dir.exists()) {
-			dir.mkdirs();
-			return;
-		}
-		for (File exp : dir.listFiles()) {
-			if (exp.isDirectory()) {
-				continue;
-			}
-			if (!exp.getName().endsWith(".class")) {
-				continue;
-			}
-			Class<?> clazz;
-			try {
-				byte[] content = getClassContent(exp);
-				Method def = ClassLoader.class.getDeclaredMethod("defineClass", String.class, byte[].class, int.class,
-						int.class, ProtectionDomain.class);
-				boolean a = def.isAccessible();
-				def.setAccessible(true);
-				clazz = (Class<?>) def.invoke(this.getClass().getClassLoader(), null, content, 0, content.length,
-						this.getClass().getProtectionDomain());
-				def.setAccessible(a);
-			} catch (Exception e1) {
-				continue;
-			}
-
-			if (!Expansion.class.isAssignableFrom(clazz)) {
-				continue;
-			}
-			Expansion e = null;
-			try {
-				e = (Expansion) clazz.newInstance();
-			} catch (Exception ex) {
-				continue;
-			}
-			s.registerPlaceholder(e);
-		}
-	}
-
-	private static byte[] getClassContent(File f) {
-		try {
-			FileInputStream input = new FileInputStream(f);
-			byte[] content = new byte[(int) f.length()];
-			input.read(content);
-			input.close();
-			return content;
-		} catch (Exception e) {
-			return new byte[0];
-		}
-	}
-
 	@Listener
 	public void onGameInitializationEvent(GameInitializationEvent event) {
 		// Reigster Listeners and Commands
