@@ -1,6 +1,7 @@
 package me.rojo8399.placeholderapi;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 
 import org.spongepowered.api.entity.living.player.Player;
@@ -58,6 +59,22 @@ public interface PlaceholderService {
 	 */
 	public String replacePlaceholdersLegacy(Player player, String text);
 
+	/**
+	 * Return the Expansion represented by a key.
+	 * 
+	 * @param the identifier of the expansion.
+	 * 
+	 * @return the expansion, if present.
+	 */
+	public Optional<Expansion> getExpansion(String id);
+	
+	/**
+	 * Return all registered expansions.
+	 * 
+	 * @return the set of expansions.
+	 */
+	public Set<Expansion> getExpansions();
+	
 	/**
 	 * Register a placeholder.
 	 * 

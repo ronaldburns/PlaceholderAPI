@@ -1,9 +1,14 @@
 package me.rojo8399.placeholderapi;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.ProtectionDomain;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
@@ -29,6 +34,8 @@ import org.spongepowered.api.text.format.TextColors;
 
 import com.google.inject.Inject;
 
+import me.rojo8399.placeholderapi.commands.InfoCommand;
+import me.rojo8399.placeholderapi.commands.ListCommand;
 import me.rojo8399.placeholderapi.commands.ParseCommand;
 import me.rojo8399.placeholderapi.configs.Config;
 import me.rojo8399.placeholderapi.expansions.Expansion;
@@ -116,11 +123,12 @@ public class PlaceholderAPIPlugin {
 				mapDefault();
 			}
 		}
-		//Does not work yet.
-		/*
-		 * try { loadExpansions(); } catch (Exception e) {
-		 * logger.error("Error loading expansions!"); throw e; }
-		 */
+		try {
+			loadExpansions();
+		} catch (Exception e) {
+			logger.error("Error loading expansions!");
+			throw e;
+		}
 	}
 
 	@SuppressWarnings("unused")
@@ -163,6 +171,61 @@ public class PlaceholderAPIPlugin {
 		}
 	}
 
+	private void loadExpansions() throws IOException {
+		File dir = new File(this.path.toFile().getParentFile(), "expansions");
+		if (dir.exists() && !dir.isDirectory()) {
+			dir.delete();
+		}
+		if (!dir.exists()) {
+			dir.mkdirs();
+			return;
+		}
+		for (File exp : dir.listFiles()) {
+			if (exp.isDirectory()) {
+				continue;
+			}
+			if (!exp.getName().endsWith(".class")) {
+				continue;
+			}
+			Class<?> clazz;
+			try {
+				byte[] content = getClassContent(exp);
+				Method def = ClassLoader.class.getDeclaredMethod("defineClass", String.class, byte[].class, int.class,
+						int.class, ProtectionDomain.class);
+				boolean a = def.isAccessible();
+				def.setAccessible(true);
+				clazz = (Class<?>) def.invoke(this.getClass().getClassLoader(), null, content, 0, content.length,
+						this.getClass().getProtectionDomain());
+				def.setAccessible(a);
+			} catch (Exception e1) {
+				continue;
+			}
+
+			if (!Expansion.class.isAssignableFrom(clazz)) {
+				continue;
+			}
+			Expansion e = null;
+			try {
+				e = (Expansion) clazz.newInstance();
+			} catch (Exception ex) {
+				continue;
+			}
+			s.registerPlaceholder(e);
+		}
+	}
+
+	private static byte[] getClassContent(File f) {
+		try {
+			FileInputStream input = new FileInputStream(f);
+			byte[] content = new byte[(int) f.length()];
+			input.read(content);
+			input.close();
+			return content;
+		} catch (Exception e) {
+			return new byte[0];
+		}
+	}
+
 	@Listener
 	public void onGameInitializationEvent(GameInitializationEvent event) {
 		// Reigster Listeners and Commands
@@ -172,6 +235,15 @@ public class PlaceholderAPIPlugin {
 				.arguments(GenericArguments.onlyOne(GenericArguments.player(Text.of("player"))),
 						GenericArguments.remainingJoinedStrings(Text.of("placeholders")))
 				.executor(new ParseCommand()).permission("placeholderapi.admin").build();
+		Map<String, String> map = new HashMap<>();
+		for (Expansion e : s.getExpansions()) {
+			map.put(e.getIdentifier(), e.getIdentifier());
+		}
+		CommandSpec listCmd = CommandSpec.builder().permission("placeholderapi.admin").executor(new ListCommand())
+				.build();
+		CommandSpec infoCmd = CommandSpec.builder()
+				.arguments(GenericArguments.choices(Text.of("placeholder"), map, false))
+				.permission("placeholderapi.admin").executor(new InfoCommand()).build();
 
 		// placeholderapi
 		CommandSpec baseCmd = CommandSpec.builder().executor(new CommandExecutor() {
@@ -182,8 +254,7 @@ public class PlaceholderAPIPlugin {
 						PLUGIN_VERSION, TextColors.GRAY, "."));
 				return CommandResult.success();
 			}
-
-		}).child(parseCmd, "parse", "p").build();
+		}).child(parseCmd, "parse", "p").child(listCmd, "list", "l").child(infoCmd, "info", "i").build();
 		game.getCommandManager().register(plugin, baseCmd, "placeholderapi", "papi");
 
 	}
