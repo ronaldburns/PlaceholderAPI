@@ -12,6 +12,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.asset.Asset;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
@@ -128,7 +129,46 @@ public class PlaceholderAPIPlugin {
 			logger.error("Error loading expansions!");
 			throw e;
 		}
+	}
 
+	@SuppressWarnings("unused")
+	private void loadExpansions() throws IOException {
+		File dir = new File(this.path.toFile().getParentFile(), "expansions");
+		if (dir.exists() && !dir.isDirectory()) {
+			dir.delete();
+		}
+		if (!dir.exists()) {
+			dir.mkdirs();
+			return;
+		}
+		for (File exp : dir.listFiles()) {
+			if (exp.isDirectory()) {
+				continue;
+			}
+			if (!exp.getName().endsWith(".class")) {
+				continue;
+			}
+			System.out.println(exp.getName());
+			Class<?> clazz;
+			try {
+				clazz = Sponge.class.getClassLoader().loadClass(exp.getAbsolutePath());
+			} catch (Exception e) {
+				e.printStackTrace(System.out);
+				continue;
+			}
+			System.out.println(clazz.getSimpleName());
+			if (!Expansion.class.isAssignableFrom(clazz)) {
+				continue;
+			}
+			Expansion e = null;
+			try {
+				e = (Expansion) clazz.newInstance();
+			} catch (Exception ex) {
+				ex.printStackTrace(System.out);
+				continue;
+			}
+			s.registerPlaceholder(e);
+		}
 	}
 
 	private void loadExpansions() throws IOException {
@@ -214,7 +254,6 @@ public class PlaceholderAPIPlugin {
 						PLUGIN_VERSION, TextColors.GRAY, "."));
 				return CommandResult.success();
 			}
-
 		}).child(parseCmd, "parse", "p").child(listCmd, "list", "l").child(infoCmd, "info", "i").build();
 		game.getCommandManager().register(plugin, baseCmd, "placeholderapi", "papi");
 

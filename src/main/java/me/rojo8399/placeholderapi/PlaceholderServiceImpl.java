@@ -159,5 +159,4 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	public Optional<Expansion> getExpansion(String id) {
 		return Optional.ofNullable(registry.get(id));
 	}
-
 }
