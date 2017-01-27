@@ -135,7 +135,6 @@ public class PlaceholderAPIPlugin {
 				logger.error("Error loading expansions!");
 			}
 		}).submit(this);
-
 	}
 
 	private void loadExpansions() throws IOException {
@@ -232,7 +231,6 @@ public class PlaceholderAPIPlugin {
 						PLUGIN_VERSION, TextColors.GRAY, "."));
 				return CommandResult.success();
 			}
-
 		}).child(parseCmd, "parse", "p").child(listCmd, "list", "l").child(infoCmd, "info", "i").build();
 		game.getCommandManager().register(plugin, baseCmd, "placeholderapi", "papi");
 
