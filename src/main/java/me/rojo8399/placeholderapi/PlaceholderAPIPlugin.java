@@ -7,8 +7,13 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.ProtectionDomain;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
@@ -28,6 +33,7 @@ import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
+import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 
@@ -122,12 +128,13 @@ public class PlaceholderAPIPlugin {
 				mapDefault();
 			}
 		}
-		try {
-			loadExpansions();
-		} catch (Exception e) {
-			logger.error("Error loading expansions!");
-			throw e;
-		}
+		Task.builder().async().execute(() -> {
+			try {
+				loadExpansions();
+			} catch (Exception e) {
+				logger.error("Error loading expansions!");
+			}
+		}).submit(this);
 
 	}
 
@@ -140,12 +147,22 @@ public class PlaceholderAPIPlugin {
 			dir.mkdirs();
 			return;
 		}
+		List<String> loaded = new ArrayList<>();
 		for (File exp : dir.listFiles()) {
 			if (exp.isDirectory()) {
 				continue;
 			}
-			if (!exp.getName().endsWith(".class")) {
+			if (!exp.getName().endsWith(".class") && !exp.getName().endsWith(".java")) {
 				continue;
+			}
+			String wofe = exp.getName().substring(0, exp.getName().lastIndexOf("."));
+			if (loaded.contains(wofe)) {
+				continue;
+			}
+			if (exp.getName().endsWith(".java")) {
+				JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+				compiler.run(null, null, null, exp.getPath());
+				exp = new File(exp.getParentFile(), exp.getName().replace(".java", ".class"));
 			}
 			Class<?> clazz;
 			try {
@@ -171,6 +188,7 @@ public class PlaceholderAPIPlugin {
 				continue;
 			}
 			s.registerPlaceholder(e);
+			loaded.add(wofe);
 		}
 	}
 
