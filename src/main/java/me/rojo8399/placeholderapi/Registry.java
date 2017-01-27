@@ -20,6 +20,9 @@ public class Registry {
 		if (e == null || !e.canRegister()) {
 			return false;
 		}
+		if (e.getIdentifier() == null || e.getIdentifier().isEmpty()) {
+			return false;
+		}
 		if (registry.containsKey(e.getIdentifier().toLowerCase())) {
 			return false;
 		}

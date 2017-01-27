@@ -1,11 +1,13 @@
 package me.rojo8399.placeholderapi;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.asset.Asset;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
@@ -29,6 +31,7 @@ import com.google.inject.Inject;
 
 import me.rojo8399.placeholderapi.commands.ParseCommand;
 import me.rojo8399.placeholderapi.configs.Config;
+import me.rojo8399.placeholderapi.expansions.Expansion;
 import me.rojo8399.placeholderapi.expansions.PlayerExpansion;
 import me.rojo8399.placeholderapi.expansions.RankExpansion;
 import me.rojo8399.placeholderapi.expansions.ServerExpansion;
@@ -39,7 +42,8 @@ import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 
-@Plugin(id = PlaceholderAPIPlugin.PLUGIN_ID, name = PlaceholderAPIPlugin.PLUGIN_NAME, version = PlaceholderAPIPlugin.PLUGIN_VERSION, authors = {"rojo8399", "Wundero"})
+@Plugin(id = PlaceholderAPIPlugin.PLUGIN_ID, name = PlaceholderAPIPlugin.PLUGIN_NAME, version = PlaceholderAPIPlugin.PLUGIN_VERSION, authors = {
+		"rojo8399", "Wundero" })
 
 public class PlaceholderAPIPlugin {
 
@@ -65,11 +69,12 @@ public class PlaceholderAPIPlugin {
 	ConfigurationLoader<CommentedConfigurationNode> loader;
 	Config config;
 
+	PlaceholderService s;
+
 	@Listener
 	public void onGamePreInitializationEvent(GamePreInitializationEvent event)
 			throws IOException, ObjectMappingException {
 		instance = this;
-		PlaceholderService s;
 		game.getServiceManager().setProvider(this, PlaceholderService.class, s = new PlaceholderServiceImpl());
 		plugin = game.getPluginManager().getPlugin(PLUGIN_ID).get();
 		Asset conf = game.getAssetManager().getAsset(this, "config.conf").get();
@@ -111,7 +116,51 @@ public class PlaceholderAPIPlugin {
 				mapDefault();
 			}
 		}
+		//Does not work yet.
+		/*
+		 * try { loadExpansions(); } catch (Exception e) {
+		 * logger.error("Error loading expansions!"); throw e; }
+		 */
+	}
 
+	@SuppressWarnings("unused")
+	private void loadExpansions() throws IOException {
+		File dir = new File(this.path.toFile().getParentFile(), "expansions");
+		if (dir.exists() && !dir.isDirectory()) {
+			dir.delete();
+		}
+		if (!dir.exists()) {
+			dir.mkdirs();
+			return;
+		}
+		for (File exp : dir.listFiles()) {
+			if (exp.isDirectory()) {
+				continue;
+			}
+			if (!exp.getName().endsWith(".class")) {
+				continue;
+			}
+			System.out.println(exp.getName());
+			Class<?> clazz;
+			try {
+				clazz = Sponge.class.getClassLoader().loadClass(exp.getAbsolutePath());
+			} catch (Exception e) {
+				e.printStackTrace(System.out);
+				continue;
+			}
+			System.out.println(clazz.getSimpleName());
+			if (!Expansion.class.isAssignableFrom(clazz)) {
+				continue;
+			}
+			Expansion e = null;
+			try {
+				e = (Expansion) clazz.newInstance();
+			} catch (Exception ex) {
+				ex.printStackTrace(System.out);
+				continue;
+			}
+			s.registerPlaceholder(e);
+		}
 	}
 
 	@Listener
@@ -125,9 +174,8 @@ public class PlaceholderAPIPlugin {
 				.executor(new ParseCommand()).permission("placeholderapi.admin").build();
 
 		// placeholderapi
-		CommandSpec baseCmd = CommandSpec.builder().child(parseCmd, "parse", "p").executor(new CommandExecutor() {
-
-			//send plugin name + version
+		CommandSpec baseCmd = CommandSpec.builder().executor(new CommandExecutor() {
+			// send plugin name + version
 			@Override
 			public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
 				src.sendMessage(Text.of(TextColors.GREEN, PLUGIN_NAME, TextColors.GRAY, " version ", TextColors.AQUA,
@@ -135,8 +183,7 @@ public class PlaceholderAPIPlugin {
 				return CommandResult.success();
 			}
 
-		}).build();
-
+		}).child(parseCmd, "parse", "p").build();
 		game.getCommandManager().register(plugin, baseCmd, "placeholderapi", "papi");
 
 	}

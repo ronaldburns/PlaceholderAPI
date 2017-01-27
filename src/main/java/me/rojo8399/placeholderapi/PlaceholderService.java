@@ -4,6 +4,9 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.TextTemplate;
+import org.spongepowered.api.text.serializer.TextSerializer;
 
 import me.rojo8399.placeholderapi.expansions.Expansion;
 
@@ -18,7 +21,42 @@ public interface PlaceholderService {
 	 *            The text to parse.
 	 * @return The parsed text.
 	 */
-	public String replacePlaceholders(Player player, String text);
+	public Text replacePlaceholders(Player player, String text);
+	
+	/**
+	 * Replace all placeholders in a texttemplate.
+	 * 
+	 * @param player
+	 * 			The player to parse with respect to.
+	 * @param template
+	 * 			The template to parse.
+	 * @return The parsed text.
+	 */
+	public Text replacePlaceholders(Player player, TextTemplate template);
+	
+	/**
+	 * Replace all placeholders in a string then serialize it.
+	 * 
+	 * @param player
+	 * 			The player to parse with respect to.
+	 * @param text
+	 * 			The text to parse.
+	 * @param serializer
+	 * 			The serializer to serialize the text with.
+	 * @return The parsed text.
+	 */
+	public Text replacePlaceholders(Player player, String text, TextSerializer serializer);
+	
+	/**
+	 * Replace all placeholders in a string.
+	 * 
+	 * @param player
+	 *            The player to parse with respect to.
+	 * @param text
+	 *            The text to parse.
+	 * @return The parsed text.
+	 */
+	public String replacePlaceholdersLegacy(Player player, String text);
 
 	/**
 	 * Register a placeholder.
