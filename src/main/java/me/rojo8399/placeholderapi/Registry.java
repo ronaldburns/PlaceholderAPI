@@ -1,7 +1,9 @@
 package me.rojo8399.placeholderapi;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import me.rojo8399.placeholderapi.expansions.Expansion;
 
@@ -14,6 +16,10 @@ public class Registry {
 
 	public boolean has(String id) {
 		return registry.containsKey(id.toLowerCase());
+	}
+
+	public Set<Expansion> getAll() {
+		return registry.values().stream().map(r -> r.getExpansion()).collect(Collectors.toSet());
 	}
 
 	public boolean register(Expansion e) {

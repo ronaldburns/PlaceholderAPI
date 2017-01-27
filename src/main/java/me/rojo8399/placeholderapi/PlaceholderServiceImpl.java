@@ -3,6 +3,7 @@ package me.rojo8399.placeholderapi;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -147,6 +148,16 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	@Override
 	public Text replacePlaceholders(Player player, String text, TextSerializer serializer) {
 		return serializer.deserialize(replacePlaceholdersLegacy(player, text));
+	}
+
+	@Override
+	public Set<Expansion> getExpansions() {
+		return registry.getAll();
+	}
+	
+	@Override
+	public Optional<Expansion> getExpansion(String id) {
+		return Optional.ofNullable(registry.get(id));
 	}
 
 }

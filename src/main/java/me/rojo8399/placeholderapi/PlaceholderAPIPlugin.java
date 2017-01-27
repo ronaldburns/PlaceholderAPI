@@ -1,13 +1,17 @@
 package me.rojo8399.placeholderapi;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.ProtectionDomain;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
-import org.spongepowered.api.Sponge;
 import org.spongepowered.api.asset.Asset;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
@@ -29,6 +33,8 @@ import org.spongepowered.api.text.format.TextColors;
 
 import com.google.inject.Inject;
 
+import me.rojo8399.placeholderapi.commands.InfoCommand;
+import me.rojo8399.placeholderapi.commands.ListCommand;
 import me.rojo8399.placeholderapi.commands.ParseCommand;
 import me.rojo8399.placeholderapi.configs.Config;
 import me.rojo8399.placeholderapi.expansions.Expansion;
@@ -116,14 +122,15 @@ public class PlaceholderAPIPlugin {
 				mapDefault();
 			}
 		}
-		//Does not work yet.
-		/*
-		 * try { loadExpansions(); } catch (Exception e) {
-		 * logger.error("Error loading expansions!"); throw e; }
-		 */
+		try {
+			loadExpansions();
+		} catch (Exception e) {
+			logger.error("Error loading expansions!");
+			throw e;
+		}
+
 	}
 
-	@SuppressWarnings("unused")
 	private void loadExpansions() throws IOException {
 		File dir = new File(this.path.toFile().getParentFile(), "expansions");
 		if (dir.exists() && !dir.isDirectory()) {
@@ -140,15 +147,20 @@ public class PlaceholderAPIPlugin {
 			if (!exp.getName().endsWith(".class")) {
 				continue;
 			}
-			System.out.println(exp.getName());
 			Class<?> clazz;
 			try {
-				clazz = Sponge.class.getClassLoader().loadClass(exp.getAbsolutePath());
-			} catch (Exception e) {
-				e.printStackTrace(System.out);
+				byte[] content = getClassContent(exp);
+				Method def = ClassLoader.class.getDeclaredMethod("defineClass", String.class, byte[].class, int.class,
+						int.class, ProtectionDomain.class);
+				boolean a = def.isAccessible();
+				def.setAccessible(true);
+				clazz = (Class<?>) def.invoke(this.getClass().getClassLoader(), null, content, 0, content.length,
+						this.getClass().getProtectionDomain());
+				def.setAccessible(a);
+			} catch (Exception e1) {
 				continue;
 			}
-			System.out.println(clazz.getSimpleName());
+
 			if (!Expansion.class.isAssignableFrom(clazz)) {
 				continue;
 			}
@@ -156,10 +168,21 @@ public class PlaceholderAPIPlugin {
 			try {
 				e = (Expansion) clazz.newInstance();
 			} catch (Exception ex) {
-				ex.printStackTrace(System.out);
 				continue;
 			}
 			s.registerPlaceholder(e);
+		}
+	}
+
+	private static byte[] getClassContent(File f) {
+		try {
+			FileInputStream input = new FileInputStream(f);
+			byte[] content = new byte[(int) f.length()];
+			input.read(content);
+			input.close();
+			return content;
+		} catch (Exception e) {
+			return new byte[0];
 		}
 	}
 
@@ -172,6 +195,15 @@ public class PlaceholderAPIPlugin {
 				.arguments(GenericArguments.onlyOne(GenericArguments.player(Text.of("player"))),
 						GenericArguments.remainingJoinedStrings(Text.of("placeholders")))
 				.executor(new ParseCommand()).permission("placeholderapi.admin").build();
+		Map<String, String> map = new HashMap<>();
+		for (Expansion e : s.getExpansions()) {
+			map.put(e.getIdentifier(), e.getIdentifier());
+		}
+		CommandSpec listCmd = CommandSpec.builder().permission("placeholderapi.admin").executor(new ListCommand())
+				.build();
+		CommandSpec infoCmd = CommandSpec.builder()
+				.arguments(GenericArguments.choices(Text.of("placeholder"), map, false))
+				.permission("placeholderapi.admin").executor(new InfoCommand()).build();
 
 		// placeholderapi
 		CommandSpec baseCmd = CommandSpec.builder().executor(new CommandExecutor() {
@@ -183,7 +215,7 @@ public class PlaceholderAPIPlugin {
 				return CommandResult.success();
 			}
 
-		}).child(parseCmd, "parse", "p").build();
+		}).child(parseCmd, "parse", "p").child(listCmd, "list", "l").child(infoCmd, "info", "i").build();
 		game.getCommandManager().register(plugin, baseCmd, "placeholderapi", "papi");
 
 	}
