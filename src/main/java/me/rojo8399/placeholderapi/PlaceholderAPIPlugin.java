@@ -7,12 +7,16 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.ProtectionDomain;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
-import org.spongepowered.api.Sponge;
 import org.spongepowered.api.asset.Asset;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
@@ -29,6 +33,7 @@ import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
+import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 
@@ -123,15 +128,15 @@ public class PlaceholderAPIPlugin {
 				mapDefault();
 			}
 		}
-		try {
-			loadExpansions();
-		} catch (Exception e) {
-			logger.error("Error loading expansions!");
-			throw e;
-		}
+		Task.builder().async().execute(() -> {
+			try {
+				loadExpansions();
+			} catch (Exception e) {
+				logger.error("Error loading expansions!");
+			}
+		}).submit(this);
 	}
 
-	@SuppressWarnings("unused")
 	private void loadExpansions() throws IOException {
 		File dir = new File(this.path.toFile().getParentFile(), "expansions");
 		if (dir.exists() && !dir.isDirectory()) {
@@ -141,22 +146,37 @@ public class PlaceholderAPIPlugin {
 			dir.mkdirs();
 			return;
 		}
+		List<String> loaded = new ArrayList<>();
 		for (File exp : dir.listFiles()) {
 			if (exp.isDirectory()) {
 				continue;
 			}
-			if (!exp.getName().endsWith(".class")) {
+			if (!exp.getName().endsWith(".class") && !exp.getName().endsWith(".java")) {
 				continue;
 			}
-			System.out.println(exp.getName());
+			String wofe = exp.getName().substring(0, exp.getName().lastIndexOf("."));
+			if (loaded.contains(wofe)) {
+				continue;
+			}
+			if (exp.getName().endsWith(".java")) {
+				JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+				compiler.run(null, null, null, exp.getPath());
+				exp = new File(exp.getParentFile(), exp.getName().replace(".java", ".class"));
+			}
 			Class<?> clazz;
 			try {
-				clazz = Sponge.class.getClassLoader().loadClass(exp.getAbsolutePath());
-			} catch (Exception e) {
-				e.printStackTrace(System.out);
+				byte[] content = getClassContent(exp);
+				Method def = ClassLoader.class.getDeclaredMethod("defineClass", String.class, byte[].class, int.class,
+						int.class, ProtectionDomain.class);
+				boolean a = def.isAccessible();
+				def.setAccessible(true);
+				clazz = (Class<?>) def.invoke(this.getClass().getClassLoader(), null, content, 0, content.length,
+						this.getClass().getProtectionDomain());
+				def.setAccessible(a);
+			} catch (Exception e1) {
 				continue;
 			}
-			System.out.println(clazz.getSimpleName());
+
 			if (!Expansion.class.isAssignableFrom(clazz)) {
 				continue;
 			}
@@ -164,10 +184,22 @@ public class PlaceholderAPIPlugin {
 			try {
 				e = (Expansion) clazz.newInstance();
 			} catch (Exception ex) {
-				ex.printStackTrace(System.out);
 				continue;
 			}
 			s.registerPlaceholder(e);
+			loaded.add(wofe);
+		}
+	}
+
+	private static byte[] getClassContent(File f) {
+		try {
+			FileInputStream input = new FileInputStream(f);
+			byte[] content = new byte[(int) f.length()];
+			input.read(content);
+			input.close();
+			return content;
+		} catch (Exception e) {
+			return new byte[0];
 		}
 	}
 

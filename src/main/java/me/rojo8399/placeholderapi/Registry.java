@@ -37,6 +37,9 @@ public class Registry {
 	}
 
 	public Expansion get(String id) {
+		if (!has(id)) {
+			return null;
+		}
 		return getEntry(id).getExpansion();
 	}
 
