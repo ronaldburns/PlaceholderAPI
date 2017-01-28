@@ -136,7 +136,7 @@ public class PlaceholderAPIPlugin {
 			}
 		}).submit(this);
 	}
-
+  
 	private void loadExpansions() throws IOException {
 		File dir = new File(this.path.toFile().getParentFile(), "expansions");
 		if (dir.exists() && !dir.isDirectory()) {
