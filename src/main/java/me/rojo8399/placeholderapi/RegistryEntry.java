@@ -3,6 +3,8 @@ package me.rojo8399.placeholderapi;
 import me.rojo8399.placeholderapi.expansions.Expansion;
 
 public class RegistryEntry {
+	
+	// TODO add last update data + optional download link
 
 	private final Expansion exp;
 	private final String key;

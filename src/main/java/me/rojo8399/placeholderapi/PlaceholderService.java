@@ -48,6 +48,20 @@ public interface PlaceholderService {
 	 */
 	public Text replacePlaceholders(Player player, String text, TextSerializer serializer);
 	
+
+	/**
+	 * Replace all placeholders in a string then serialize it.
+	 * 
+	 * @param player
+	 * 			The player to parse with respect to.
+	 * @param text
+	 * 			The text to parse.
+	 * @param serializer
+	 * 			The serializer to serialize the text with.
+	 * @return The parsed text.
+	 */
+	public Text replacePlaceholders(Player player, TextTemplate template, TextSerializer serializer);
+	
 	/**
 	 * Replace all placeholders in a string.
 	 * 

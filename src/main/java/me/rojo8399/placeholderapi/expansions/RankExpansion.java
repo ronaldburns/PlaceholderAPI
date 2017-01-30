@@ -51,6 +51,9 @@ public class RankExpansion implements Expansion {
 		return "1.0";
 	}
 
+	/*
+	 * Get the bottommost parent in the inheritance tree.
+	 */
 	private static Subject getParentGroup(Subject subject) {
 		List<Subject> parents = subject.getParents();
 		return parents.stream().filter(parent -> {

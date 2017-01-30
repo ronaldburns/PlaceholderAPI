@@ -37,10 +37,15 @@ public class SoundExpansion implements Expansion {
 	public String onPlaceholderRequest(Player p, Optional<String> identifier) {
 
 		if (!identifier.isPresent()) {
+			// No sound present
 			return null;
 		}
 
 		Config config = PlaceholderAPIPlugin.getInstance().getConfig();
+		if (!config.expansions.sound) {
+			// Placeholder disabled
+			return null;
+		}
 		Game game = PlaceholderAPIPlugin.getInstance().getGame();
 
 		String[] i = identifier.get().split("-");
@@ -50,11 +55,11 @@ public class SoundExpansion implements Expansion {
 		Double volume = Double.valueOf((i[1] == null) ? String.valueOf(1) : i[1]);
 		Double pitch = Double.valueOf((i[2] == null) ? String.valueOf(1) : i[2]);
 
-		if (config.expansions.sound && sound.isPresent()) {
+		if (sound.isPresent()) {
 			p.playSound(sound.get(), position, volume, pitch);
-			return "";
+			return "";// Remove text from replacement
 		} else {
-			return null;
+			return null;// Leave text in replacement
 		}
 
 	}
