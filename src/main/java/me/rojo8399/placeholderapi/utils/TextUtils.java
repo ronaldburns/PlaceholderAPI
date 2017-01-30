@@ -28,7 +28,6 @@ import java.util.regex.Matcher;
 
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
-import org.spongepowered.api.text.serializer.TextSerializers;
 
 import me.rojo8399.placeholderapi.PlaceholderServiceImpl;
 
@@ -47,22 +46,22 @@ public class TextUtils {
 		}
 		String in = i;
 		if (!PlaceholderServiceImpl.PLACEHOLDER_PATTERN.matcher(in).find()) {
-			return TextTemplate.of(TextSerializers.FORMATTING_CODE.deserialize(in));
+			// No placeholders exist
+			return TextTemplate.of(parser.apply(in));
 		}
+		// What is not a placeholder - can be empty
 		String[] textParts = in.split(PlaceholderServiceImpl.PLACEHOLDER_PATTERN.pattern());
-		/*
-		 * if (textParts.length == 0) { return
-		 * TextTemplate.of(TextTemplate.arg(in.substring(1, in.length() - 1)));
-		 * }
-		 */
 		Matcher matcher = PlaceholderServiceImpl.PLACEHOLDER_PATTERN.matcher(in);
+		// Check if empty and create starting template
 		TextTemplate out = textParts.length == 0 ? TextTemplate.of() : TextTemplate.of(parser.apply(textParts[0]));
 		int x = 1;
 		while ((matcher = matcher.reset(in)).find()) {
-			String mg = matcher.group().substring(1);
+			String mg = matcher.group().substring(1); // Get actual placeholder
 			mg = mg.substring(0, mg.length() - 1);
+			// Make arg
 			out = out.concat(TextTemplate.of(TextTemplate.arg(mg)));
 			if (x < textParts.length) {
+				// If there exists a part to insert
 				out = out.concat(TextTemplate.of(parser.apply(textParts[x])));
 			}
 			in = matcher.replaceFirst("");
