@@ -1,5 +1,6 @@
 package me.rojo8399.placeholderapi;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,7 +34,9 @@ import me.rojo8399.placeholderapi.commands.InfoCommand;
 import me.rojo8399.placeholderapi.commands.ListCommand;
 import me.rojo8399.placeholderapi.commands.ParseCommand;
 import me.rojo8399.placeholderapi.configs.Config;
+import me.rojo8399.placeholderapi.configs.JavascriptManager;
 import me.rojo8399.placeholderapi.expansions.Expansion;
+import me.rojo8399.placeholderapi.expansions.JavascriptExpansion;
 import me.rojo8399.placeholderapi.expansions.PlayerExpansion;
 import me.rojo8399.placeholderapi.expansions.RankExpansion;
 import me.rojo8399.placeholderapi.expansions.ServerExpansion;
@@ -62,6 +65,8 @@ public class PlaceholderAPIPlugin {
 	@Inject
 	private PluginContainer plugin;
 
+	private JavascriptManager jsm;
+
 	@Inject
 	@DefaultConfig(sharedRoot = false)
 	Path path;
@@ -80,7 +85,9 @@ public class PlaceholderAPIPlugin {
 		game.getServiceManager().setProvider(this, PlaceholderService.class, s = new PlaceholderServiceImpl());
 		plugin = game.getPluginManager().getPlugin(PLUGIN_ID).get();
 		Asset conf = game.getAssetManager().getAsset(this, "config.conf").get();
+		jsm = new JavascriptManager(new File(path.toFile().getParentFile(), "javascript"));
 		// Register internal placeholders
+		s.registerPlaceholder(new JavascriptExpansion(jsm));
 		s.registerPlaceholder(new PlayerExpansion());
 		s.registerPlaceholder(new ServerExpansion());
 		s.registerPlaceholder(new SoundExpansion());
