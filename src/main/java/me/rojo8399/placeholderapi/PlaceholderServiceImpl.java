@@ -17,6 +17,7 @@ import org.spongepowered.api.text.TextTemplate;
 import org.spongepowered.api.text.serializer.TextSerializer;
 
 import me.rojo8399.placeholderapi.expansions.Expansion;
+import me.rojo8399.placeholderapi.utils.TextUtils;
 
 /**
  * Implement placeholder service - should not need to be replaced but is a
@@ -28,7 +29,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	 * Match against %...% such that it does not have a space in the placeholder
 	 * (helps resove conflicts)
 	 */
-	private final static Pattern PLACEHOLDER_PATTERN = Pattern.compile("[%]([^% ]+)[%]");
+	public final static Pattern PLACEHOLDER_PATTERN = Pattern.compile("[%]([^% ]+)[%]");
 
 	// Package level to prevent instantiation but allow the plugin to create one
 	PlaceholderServiceImpl() {
@@ -63,7 +64,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			}
 			String token = noToken ? null : format.substring(index + 1);
 			Expansion exp = registry.get(id);
-			String value = exp.onPlaceholderRequest(player, Optional.ofNullable(token).map(s -> s.toLowerCase()));
+			String value = exp.onPlaceholderRequestLegacy(player, Optional.ofNullable(token).map(s -> s.toLowerCase()));
 			PlaceholderAPIPlugin.getInstance().getLogger()
 					.debug("Format: " + format + ", ID: " + id + ", Value : " + value);
 			if (value == null) {
@@ -86,8 +87,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	 * Register expansion
 	 */
 	@Override
-	public boolean registerPlaceholder(final Object plugin,
-			final BiFunction<Player, Optional<String>, String> function) {
+	public boolean registerPlaceholder(final Object plugin, final BiFunction<Player, Optional<String>, Text> function) {
 		if (plugin == null) {
 			return false;
 		}
@@ -119,7 +119,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			}
 
 			@Override
-			public String onPlaceholderRequest(Player player, Optional<String> token) {
+			public Text onPlaceholderRequest(Player player, Optional<String> token, Function<String, Text> parser) {
 				return function.apply(player, token);
 			}
 
@@ -132,7 +132,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	 */
 	@Override
 	public Text replacePlaceholders(Player player, String text) {
-		return Text.of(replacePlaceholdersLegacy(player, text));
+		return replacePlaceholders(player, TextUtils.parse(text, Text::of));
 	}
 
 	/**
@@ -183,12 +183,12 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			}
 			String token = noToken ? null : format.substring(index + 1);
 			Expansion exp = registry.get(id);
-			String value = exp.onPlaceholderRequest(player, Optional.ofNullable(token).map(s -> s.toLowerCase()));
+			Text value = exp.onPlaceholderRequest(player, Optional.ofNullable(token).map(s -> s.toLowerCase()), func);
 			PlaceholderAPIPlugin.getInstance().getLogger().debug("Format: " + a + ", ID: " + id + ", Value : " + value);
 			if (value == null) {
-				value = "%" + a + "%";
+				value = func.apply("%" + a + "%");
 			}
-			args.put(a, func.apply(value));
+			args.put(a, value);
 		}
 		return template.apply(args).build();
 	}
@@ -198,7 +198,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	 */
 	@Override
 	public Text replacePlaceholders(Player player, String text, TextSerializer serializer) {
-		return serializer.deserialize(replacePlaceholdersLegacy(player, text));
+		return replacePlaceholders(player, TextUtils.parse(text, serializer::deserialize), serializer);
 	}
 
 	/**

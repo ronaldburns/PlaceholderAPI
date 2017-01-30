@@ -1,9 +1,11 @@
 package me.rojo8399.placeholderapi.expansions;
 
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.serializer.TextSerializers;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
@@ -35,7 +37,7 @@ public class ServerExpansion implements Expansion {
 	}
 
 	@Override
-	public String onPlaceholderRequest(Player player, Optional<String> identifier) {
+	public Text onPlaceholderRequest(Player player, Optional<String> identifier, Function<String, Text> parser) {
 
 		Config config = PlaceholderAPIPlugin.getInstance().getConfig();
 
@@ -45,21 +47,21 @@ public class ServerExpansion implements Expansion {
 			}
 			switch (identifier.get()) {
 			case "online":
-				return String.valueOf(Sponge.getServer().getOnlinePlayers().size());
+				return parser.apply(String.valueOf(Sponge.getServer().getOnlinePlayers().size()));
 			case "max_players":
-				return String.valueOf(Sponge.getServer().getMaxPlayers());
+				return parser.apply(String.valueOf(Sponge.getServer().getMaxPlayers()));
 			case "motd":
-				return TextSerializers.FORMATTING_CODE.serialize(Sponge.getServer().getMotd());
+				return parser.apply(TextSerializers.FORMATTING_CODE.serialize(Sponge.getServer().getMotd()));
 			case "ram_used":
-				return String.valueOf((runtime.totalMemory() - runtime.freeMemory()) / MB);
+				return parser.apply(String.valueOf((runtime.totalMemory() - runtime.freeMemory()) / MB));
 			case "ram_free":
-				return String.valueOf(runtime.freeMemory() / MB);
+				return parser.apply(String.valueOf(runtime.freeMemory() / MB));
 			case "ram_total":
-				return String.valueOf(runtime.totalMemory() / MB);
+				return parser.apply(String.valueOf(runtime.totalMemory() / MB));
 			case "ram_max":
-				return String.valueOf(runtime.maxMemory() / MB);
+				return parser.apply(String.valueOf(runtime.maxMemory() / MB));
 			case "cores":
-				return String.valueOf(runtime.availableProcessors());
+				return parser.apply(String.valueOf(runtime.availableProcessors()));
 			default:
 				return null;
 			}

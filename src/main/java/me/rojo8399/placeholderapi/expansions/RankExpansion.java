@@ -2,9 +2,11 @@ package me.rojo8399.placeholderapi.expansions;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.service.permission.Subject;
+import org.spongepowered.api.text.Text;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.configs.Config;
@@ -78,33 +80,33 @@ public class RankExpansion implements Expansion {
 	 * spongepowered.api.entity.living.player.Player, java.lang.String)
 	 */
 	@Override
-	public String onPlaceholderRequest(Player player, Optional<String> token) {
+	public Text onPlaceholderRequest(Player player, Optional<String> token, Function<String, Text> parser) {
 		Config config = PlaceholderAPIPlugin.getInstance().getConfig();
 		if (!config.expansions.rank) {
 			return null;
 		}
 		if (!token.isPresent()) {
-			return getParentGroup(player).getIdentifier();
+			return parser.apply(getParentGroup(player).getIdentifier());
 		}
 		Subject rank = getParentGroup(player);
 		String t = token.get();
 		switch (t) {
 		case "prefix":
 		case "suffix":
-			return rank.getOption(t).orElse("");
+			return parser.apply(rank.getOption(t).orElse(""));
 		case "name":
-			return rank.getIdentifier();
+			return parser.apply(rank.getIdentifier());
 		}
 		if (t.contains("_") && t.indexOf("_") < t.length()) {
 			if (t.startsWith("option")) {
 				String opt = t.substring(t.indexOf("_") + 1);
-				return rank.getOption(opt).orElse("");
+				return parser.apply(rank.getOption(opt).orElse(""));
 			}
 			// this also covers "permission_..."
 			// return whether the rank has a permission
 			if (t.startsWith("perm")) {
 				String perm = t.substring(t.indexOf("_") + 1);
-				return rank.getPermissionValue(rank.getActiveContexts(), perm).toString();
+				return parser.apply(rank.getPermissionValue(rank.getActiveContexts(), perm).toString());
 			}
 		}
 		return null;

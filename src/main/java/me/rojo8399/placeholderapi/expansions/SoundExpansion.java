@@ -1,10 +1,12 @@
 package me.rojo8399.placeholderapi.expansions;
 
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.spongepowered.api.Game;
 import org.spongepowered.api.effect.sound.SoundType;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.text.Text;
 
 import com.flowpowered.math.vector.Vector3d;
 
@@ -34,7 +36,7 @@ public class SoundExpansion implements Expansion {
 	}
 
 	@Override
-	public String onPlaceholderRequest(Player p, Optional<String> identifier) {
+	public Text onPlaceholderRequest(Player p, Optional<String> identifier, Function<String, Text> func) {
 
 		if (!identifier.isPresent()) {
 			// No sound present
@@ -57,7 +59,7 @@ public class SoundExpansion implements Expansion {
 
 		if (sound.isPresent()) {
 			p.playSound(sound.get(), position, volume, pitch);
-			return "";// Remove text from replacement
+			return Text.EMPTY;// Remove text from replacement
 		} else {
 			return null;// Leave text in replacement
 		}

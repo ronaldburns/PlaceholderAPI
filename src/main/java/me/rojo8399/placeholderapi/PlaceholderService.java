@@ -107,6 +107,6 @@ public interface PlaceholderService {
 	 *            The function that parses placeholders.
 	 * @return Whether the placeholder was successfully registered.
 	 */
-	public boolean registerPlaceholder(Object plugin, BiFunction<Player, Optional<String>, String> function);
+	public boolean registerPlaceholder(Object plugin, BiFunction<Player, Optional<String>, Text> function);
 
 }

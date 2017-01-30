@@ -1,9 +1,10 @@
 package me.rojo8399.placeholderapi.expansions;
 
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.text.serializer.TextSerializers;
+import org.spongepowered.api.text.Text;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.configs.Config;
@@ -31,20 +32,20 @@ public class PlayerExpansion implements Expansion {
 	}
 
 	@Override
-	public String onPlaceholderRequest(Player p, Optional<String> identifier) {
+	public Text onPlaceholderRequest(Player p, Optional<String> identifier, Function<String, Text> parser) {
 		Config config = PlaceholderAPIPlugin.getInstance().getConfig();
 		if (config.expansions.player) {
 			if (!identifier.isPresent()) {
-				return p.getName();
+				return parser.apply(p.getName());
 			}
 			switch (identifier.get()) {
 			case "prefix":
 			case "suffix":
-				return p.getOption(identifier.get()).orElse("");
+				return parser.apply(p.getOption(identifier.get()).orElse(""));
 			case "name":
-				return p.getName();
+				return parser.apply(p.getName());
 			case "displayname":
-				return TextSerializers.FORMATTING_CODE.serialize(p.getDisplayNameData().displayName().get());
+				return p.getDisplayNameData().displayName().get();
 			default:
 				return null;
 			}
