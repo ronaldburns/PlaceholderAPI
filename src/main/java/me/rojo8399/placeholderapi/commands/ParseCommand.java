@@ -27,12 +27,12 @@ public class ParseCommand implements CommandExecutor {
 			throw new CommandException(Text.of(TextColors.RED, "ERROR: Placeholders not registered!"));
 		}
 		for (String placeholder : placeholders) {
-			String t = service.replacePlaceholdersLegacy(p, placeholder);
+			Text t = service.replacePlaceholders(p, placeholder, TextSerializers.FORMATTING_CODE);
 			if (t == null) {
-				t = "";
+				t = Text.EMPTY;
 			}
-			if (!t.replace(" ", "").equals("")) {
-				src.sendMessage(TextSerializers.FORMATTING_CODE.deserialize(t));
+			if (!t.isEmpty()) {
+				src.sendMessage(t);
 			} else {
 				src.sendMessage(Text.of(TextColors.RED, "No value present!"));
 			}
