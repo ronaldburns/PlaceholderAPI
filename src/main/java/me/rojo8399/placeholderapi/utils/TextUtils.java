@@ -50,13 +50,15 @@ public class TextUtils {
 			return TextTemplate.of(TextSerializers.FORMATTING_CODE.deserialize(in));
 		}
 		String[] textParts = in.split(PlaceholderServiceImpl.PLACEHOLDER_PATTERN.pattern());
-		if (textParts.length == 0) {
-			return TextTemplate.of(TextTemplate.arg(in));
-		}
+		/*
+		 * if (textParts.length == 0) { return
+		 * TextTemplate.of(TextTemplate.arg(in.substring(1, in.length() - 1)));
+		 * }
+		 */
 		Matcher matcher = PlaceholderServiceImpl.PLACEHOLDER_PATTERN.matcher(in);
-		TextTemplate out = TextTemplate.of(parser.apply(textParts[0]));
+		TextTemplate out = textParts.length == 0 ? TextTemplate.of() : TextTemplate.of(parser.apply(textParts[0]));
 		int x = 1;
-		while (matcher.reset(in).find()) {
+		while ((matcher = matcher.reset(in)).find()) {
 			String mg = matcher.group().substring(1);
 			mg = mg.substring(0, mg.length() - 1);
 			out = out.concat(TextTemplate.of(TextTemplate.arg(mg)));

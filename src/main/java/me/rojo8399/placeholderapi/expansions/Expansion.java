@@ -73,7 +73,11 @@ public interface Expansion {
 	 */
 	public default String onPlaceholderRequestLegacy(Player player, Optional<String> token,
 			Function<Text, String> textParser) {
-		return textParser.apply(onPlaceholderRequest(player, token));
+		Text t = onPlaceholderRequest(player, token);
+		if(t==null) {
+			return null;
+		}
+		return textParser.apply(t);
 	}
 
 	/**
