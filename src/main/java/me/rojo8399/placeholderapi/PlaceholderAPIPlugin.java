@@ -1,19 +1,10 @@
 package me.rojo8399.placeholderapi;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.ProtectionDomain;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
 
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
@@ -33,7 +24,6 @@ import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
-import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 
@@ -128,98 +118,6 @@ public class PlaceholderAPIPlugin {
 			} finally {
 				mapDefault();
 			}
-		}
-		Task.builder().async().execute(() -> {
-			try {
-				// Since classloading is intense but doesn't require Sponge
-				// resource access, can be done async
-				loadExpansions();
-			} catch (Exception e) {
-				logger.error("Error loading expansions!");
-			}
-		}).submit(this);
-	}
-
-	private void loadExpansions() throws Exception {
-		// Get dir of config and insert folder
-		File dir = new File(this.path.toFile().getParentFile(), "expansions");
-		if (dir.exists() && !dir.isDirectory()) {
-			// Exists but is not a directory so need to remove
-			dir.delete();
-		}
-		if (!dir.exists()) {
-			dir.mkdirs();
-			// No placeholders present, just create folder then ignore
-			return;
-		}
-		// Skip already loaded files in case a .class + .java of the same file
-		// exist
-		List<String> loaded = new ArrayList<>();
-		for (File exp : dir.listFiles()) {
-			// Ignore non .class/.java files
-			if (exp.isDirectory()) {
-				continue;
-			}
-			if (!exp.getName().endsWith(".class") && !exp.getName().endsWith(".java")) {
-				continue;
-			}
-			// Name without file extension
-			String wofe = exp.getName().substring(0, exp.getName().lastIndexOf("."));
-			if (loaded.contains(wofe)) {
-				// Already loaded
-				continue;
-			}
-			if (exp.getName().endsWith(".java")) {
-				// Compile into .class. Compiler will create the file
-				// automatically.
-				JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-				compiler.run(null, null, null, exp.getPath());
-				// Redirect attention to .class to load expansion properly.
-				exp = new File(exp.getParentFile(), exp.getName().replace(".java", ".class"));
-			}
-			Class<?> clazz;
-			// File content
-			byte[] content = getClassContent(exp);
-			// Shady reflection to use this method. Only have to do this because
-			// loadClass does not work.
-			Method def = ClassLoader.class.getDeclaredMethod("defineClass", String.class, byte[].class, int.class,
-					int.class, ProtectionDomain.class);
-			boolean a = def.isAccessible();// Revert unwanted changes.
-			def.setAccessible(true);
-			// Load class from file
-			clazz = (Class<?>) def.invoke(this.getClass().getClassLoader(), null, content, 0, content.length,
-					this.getClass().getProtectionDomain());
-			def.setAccessible(a);
-			// Make sure it is an implementation of Expansion.
-			if (!Expansion.class.isAssignableFrom(clazz)) {
-				continue;
-			}
-			Expansion e = null;
-			try {
-				// We don't care about the class if it is not instantiable, so
-				// we can force this.
-				e = (Expansion) clazz.newInstance();
-			} catch (Exception ex) {
-				continue;
-			}
-			// Load placeholder.
-			s.registerPlaceholder(e);
-			loaded.add(wofe);
-		}
-	}
-
-	/*
-	 * Load file into a byte array.
-	 */
-	private static byte[] getClassContent(File f) {
-		try {
-			FileInputStream input = new FileInputStream(f);
-			byte[] content = new byte[(int) f.length()];
-			input.read(content);
-			input.close();
-			return content;
-		} catch (Exception e) {
-			return new byte[0];
 		}
 	}
 
