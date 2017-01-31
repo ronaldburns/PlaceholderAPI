@@ -1,5 +1,8 @@
 package me.rojo8399.placeholderapi.commands;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -27,11 +30,19 @@ public class InfoCommand implements CommandExecutor {
 	}
 
 	private static Text formatExpansion(Expansion e) {
-		String name = e.getIdentifier();
+		final String name = e.getIdentifier();
 		String version = e.getVersion();
 		String author = e.getAuthor();
+		List<Text> supportedTokens = e.getSupportedTokens().stream().map(s -> {
+			if (s == null) {
+				return Text.of(TextColors.GREEN, "%" + name + "%");
+			}
+			String s2 = name.concat("_" + s);
+			return Text.of(TextColors.GREEN, "%" + s2 + "%");
+		}).collect(Collectors.toList());
 		return Text.of(TextColors.AQUA, name, TextColors.GREEN, " " + version, TextColors.GRAY, " by ", TextColors.GOLD,
-				author, TextColors.GRAY, ".");
+				author, TextColors.GRAY, ".", Text.NEW_LINE, TextColors.GOLD, "Supported placeholders: ", Text.NEW_LINE,
+				Text.joinWith(Text.of(", "), supportedTokens));
 	}
 
 }

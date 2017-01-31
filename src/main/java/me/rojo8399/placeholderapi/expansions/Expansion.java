@@ -1,5 +1,6 @@
 package me.rojo8399.placeholderapi.expansions;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -38,6 +39,13 @@ public interface Expansion {
 	 * @return current version of this expansion
 	 */
 	public String getVersion();
+	
+	/**
+	 * Get all supported tokens. Null token means just the parent token.
+	 * 
+	 * @return the supported tokens.
+	 */
+	public List<String> getSupportedTokens();
 
 	/**
 	 * Parse the token for the player

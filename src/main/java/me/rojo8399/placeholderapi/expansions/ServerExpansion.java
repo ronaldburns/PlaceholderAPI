@@ -1,5 +1,7 @@
 package me.rojo8399.placeholderapi.expansions;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -68,6 +70,16 @@ public class ServerExpansion implements Expansion {
 		} else {
 			return null;
 		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see me.rojo8399.placeholderapi.expansions.Expansion#getSupportedTokens()
+	 */
+	@Override
+	public List<String> getSupportedTokens() {
+		return Arrays.asList("online", "max_players", "motd", "ram_used", "ram_free", "ram_total", "ram_max", "cores");
 	}
 
 }

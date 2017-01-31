@@ -23,6 +23,7 @@
  */
 package me.rojo8399.placeholderapi.expansions;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -116,6 +117,14 @@ public class JavascriptExpansion implements Expansion {
 		} else {
 			return textParser.apply(o.toString());
 		}
+	}
+
+	/* (non-Javadoc)
+	 * @see me.rojo8399.placeholderapi.expansions.Expansion#getSupportedTokens()
+	 */
+	@Override
+	public List<String> getSupportedTokens() {
+		return manager.getScriptNames();
 	}
 
 }

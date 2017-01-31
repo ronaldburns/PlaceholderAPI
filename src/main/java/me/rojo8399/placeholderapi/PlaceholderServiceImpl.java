@@ -1,6 +1,8 @@
 package me.rojo8399.placeholderapi;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -121,6 +123,11 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			@Override
 			public Text onPlaceholderRequest(Player player, Optional<String> token, Function<String, Text> parser) {
 				return function.apply(player, token);
+			}
+
+			@Override
+			public List<String> getSupportedTokens() {
+				return new ArrayList<>();
 			}
 
 		};

@@ -1,5 +1,6 @@
 package me.rojo8399.placeholderapi.expansions;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -110,6 +111,14 @@ public class RankExpansion implements Expansion {
 			}
 		}
 		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see me.rojo8399.placeholderapi.expansions.Expansion#getSupportedTokens()
+	 */
+	@Override
+	public List<String> getSupportedTokens() {
+		return Arrays.asList(null, "prefix", "suffix", "name", "option_[option]", "permission_[permission]");
 	}
 
 }

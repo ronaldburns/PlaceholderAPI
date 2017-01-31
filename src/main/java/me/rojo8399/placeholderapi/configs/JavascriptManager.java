@@ -26,6 +26,7 @@ package me.rojo8399.placeholderapi.configs;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +41,7 @@ import javax.script.ScriptException;
  */
 public class JavascriptManager {
 
-	private Map<String, FileReader> scripts = new HashMap<>();
+	private Map<String, File> scripts = new HashMap<>();
 
 	public JavascriptManager(File scriptFolder) {
 		if (scriptFolder.exists() && scriptFolder.isFile()) {
@@ -50,15 +51,22 @@ public class JavascriptManager {
 			scriptFolder.mkdirs();
 		}
 		for (File sub : scriptFolder.listFiles((f, s) -> s.endsWith(".js"))) {
-			try {
-				scripts.put(sub.getName().replace(".js", "").toLowerCase(), new FileReader(sub));
-			} catch (FileNotFoundException e) {
-			}
+			scripts.put(sub.getName().replace(".js", "").toLowerCase(), sub);
 		}
 	}
 
+	public List<String> getScriptNames() {
+		List<String> out = new ArrayList<>();
+		out.addAll(scripts.keySet());
+		return out;
+	}
+
 	public FileReader getScript(String name) {
-		return scripts.get(name);
+		try {
+			return new FileReader(scripts.get(name));
+		} catch (FileNotFoundException e) {
+			return null;
+		}
 	}
 
 	public Object eval(ScriptEngine engine, String token) {
