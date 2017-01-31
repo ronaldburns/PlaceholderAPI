@@ -33,7 +33,7 @@ public class InfoCommand implements CommandExecutor {
 		final String name = e.getIdentifier();
 		String version = e.getVersion();
 		String author = e.getAuthor();
-		List<Text> supportedTokens = e.getSupportedTokens().stream().map(s -> {
+		List<Text> supportedTokens = e.getSupportedTokens().stream().limit(10).map(s -> {
 			if (s == null) {
 				return Text.of(TextColors.GREEN, "%" + name + "%");
 			}
