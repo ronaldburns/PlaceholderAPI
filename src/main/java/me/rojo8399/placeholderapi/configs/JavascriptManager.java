@@ -62,6 +62,9 @@ public class JavascriptManager {
 	}
 
 	public FileReader getScript(String name) {
+		if (!scripts.containsKey(name)) {
+			return null;
+		}
 		try {
 			return new FileReader(scripts.get(name));
 		} catch (FileNotFoundException e) {
