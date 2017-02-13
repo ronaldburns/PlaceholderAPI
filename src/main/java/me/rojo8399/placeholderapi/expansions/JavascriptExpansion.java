@@ -52,6 +52,16 @@ public class JavascriptExpansion implements Expansion {
 	/*
 	 * (non-Javadoc)
 	 * 
+	 * @see me.rojo8399.placeholderapi.expansions.Expansion#getDescription()
+	 */
+	@Override
+	public String getDescription() {
+		return "Execute javascript scripts.";
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see me.rojo8399.placeholderapi.expansions.Expansion#canRegister()
 	 */
 	@Override
@@ -100,18 +110,25 @@ public class JavascriptExpansion implements Expansion {
 	@Override
 	public Text onPlaceholderRequest(Player player, Optional<String> token, Function<String, Text> textParser) {
 		if (!token.isPresent()) {
+			// No script
 			return null;
 		}
 		if (engine == null) {
+			// Lazily instantiate engine
 			engine = new ScriptEngineManager(null).getEngineByName("Nashorn");
+			// Insert default server variable - constant
 			engine.put("server", PlaceholderAPIPlugin.getInstance().getGame().getServer());
 		}
+		// Insert player + parser objects, which change every time
 		engine.put("player", player);
 		engine.put("parser", textParser);
+		// Evaluate the script
 		Object o = manager.eval(engine, token.get());
 		if (o == null) {
+			// If null do not replace
 			return null;
 		}
+		// Return object out
 		if (o instanceof Text) {
 			return (Text) o;
 		} else {
@@ -119,7 +136,9 @@ public class JavascriptExpansion implements Expansion {
 		}
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see me.rojo8399.placeholderapi.expansions.Expansion#getSupportedTokens()
 	 */
 	@Override

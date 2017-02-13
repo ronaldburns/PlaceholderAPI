@@ -69,5 +69,16 @@ public class TextUtils {
 		}
 		return out;
 	}
+	
+	/**
+	 * Make a text object by repeating a text n times.
+	 */
+	public static Text repeat(Text original, int times) {
+		Text out = original;
+		for(int i = 0; i < times; i++) {
+			out = out.concat(original);
+		}
+		return out;
+	}
 
 }

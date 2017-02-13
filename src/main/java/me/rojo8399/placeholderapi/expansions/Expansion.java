@@ -1,5 +1,6 @@
 package me.rojo8399.placeholderapi.expansions;
 
+import java.net.URL;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -46,6 +47,24 @@ public interface Expansion {
 	 * @return the supported tokens.
 	 */
 	public List<String> getSupportedTokens();
+	
+	/**
+	 * Get the website for this expansion.
+	 * 
+	 * @return the URL for this expansion
+	 */
+	public default URL getURL() {
+		return null;
+	}
+	
+	/**
+	 * Get the description for this expansion.
+	 * 
+	 * @return the description.
+	 */
+	public default String getDescription() {
+		return null;
+	}
 
 	/**
 	 * Parse the token for the player

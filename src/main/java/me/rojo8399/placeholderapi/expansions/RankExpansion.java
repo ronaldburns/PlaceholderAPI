@@ -44,6 +44,11 @@ public class RankExpansion implements Expansion {
 		return "Wundero";
 	}
 
+	@Override
+	public String getDescription() {
+		return "Rank information for a player.";
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -113,7 +118,9 @@ public class RankExpansion implements Expansion {
 		return null;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see me.rojo8399.placeholderapi.expansions.Expansion#getSupportedTokens()
 	 */
 	@Override
