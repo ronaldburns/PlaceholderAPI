@@ -76,9 +76,14 @@ public class PlaceholderAPIPlugin {
 	@Inject
 	@DefaultConfig(sharedRoot = false)
 	ConfigurationLoader<CommentedConfigurationNode> loader;
+	ConfigurationNode root;
 	Config config;
 
 	PlaceholderService s;
+
+	public ConfigurationNode getRootConfig() {
+		return root;
+	}
 
 	@Listener
 	public void onGamePreInitializationEvent(GamePreInitializationEvent event)
@@ -89,7 +94,7 @@ public class PlaceholderAPIPlugin {
 		plugin = game.getPluginManager().getPlugin(PLUGIN_ID).get();
 		Asset conf = game.getAssetManager().getAsset(this, "config.conf").get();
 		jsm = new JavascriptManager(new File(path.toFile().getParentFile(), "javascript"));
-		// Register internal placeholders
+		// Load config
 		if (!Files.exists(path)) {
 			try {
 				conf.copyToFile(path);
@@ -102,7 +107,6 @@ public class PlaceholderAPIPlugin {
 				}
 			}
 		}
-		ConfigurationNode root;
 		try {
 			root = loader.load();
 		} catch (IOException ex) {
@@ -124,6 +128,7 @@ public class PlaceholderAPIPlugin {
 				mapDefault();
 			}
 		}
+		// Load placeholders
 		s.registerPlaceholder(new JavascriptExpansion(jsm));
 		s.registerPlaceholder(new PlayerExpansion());
 		s.registerPlaceholder(new ServerExpansion());
@@ -175,7 +180,7 @@ public class PlaceholderAPIPlugin {
 	@Listener
 	public void onReload(GameReloadEvent event) throws IOException, ObjectMappingException {
 		try {
-			config = loader.load().getValue(Config.type);
+			config = (root = loader.load()).getValue(Config.type);
 		} catch (IOException ex) {
 			logger.error("Could not reload config!");
 			throw ex;
@@ -201,7 +206,7 @@ public class PlaceholderAPIPlugin {
 
 	private void mapDefault() throws IOException, ObjectMappingException {
 		try {
-			config = loadDefault().getValue(Config.type);
+			config = (root = loadDefault()).getValue(Config.type);
 		} catch (IOException | ObjectMappingException ex) {
 			logger.error("Could not load the embedded default config! Disabling plugin.");
 			game.getEventManager().unregisterPluginListeners(this);

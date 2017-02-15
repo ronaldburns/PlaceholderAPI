@@ -59,7 +59,7 @@ public class PlayerExpansion implements Expansion {
 	 */
 	@Override
 	public List<String> getSupportedTokens() {
-		return Arrays.asList(null, "prefix", "suffix", "name", "displayname");
+		return Arrays.asList(null, "prefix", "suffix", "name", "displayname", "world");
 	}
 
 }

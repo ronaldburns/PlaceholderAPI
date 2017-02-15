@@ -5,7 +5,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import me.rojo8399.placeholderapi.expansions.ConfigurableExpansion;
 import me.rojo8399.placeholderapi.expansions.Expansion;
+import ninja.leaping.configurate.ConfigurationNode;
+import ninja.leaping.configurate.objectmapping.ObjectMapper;
+import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 
 public class Registry {
 
@@ -23,7 +27,7 @@ public class Registry {
 	}
 
 	public boolean register(Expansion e) {
-		if (e == null || !e.canRegister()) {
+		if (e == null || (!(e instanceof ConfigurableExpansion) && !e.canRegister())) {
 			return false;
 		}
 		if (e.getIdentifier() == null || e.getIdentifier().isEmpty()) {
@@ -31,6 +35,19 @@ public class Registry {
 		}
 		if (registry.containsKey(e.getIdentifier().toLowerCase())) {
 			return false;
+		}
+		if (e instanceof ConfigurableExpansion) {
+			ConfigurableExpansion ce = (ConfigurableExpansion) e;
+			ConfigurationNode node = PlaceholderAPIPlugin.getInstance().getRootConfig().getNode("expansions",
+					e.getIdentifier());
+			try {
+				e = ce = ObjectMapper.forObject(ce).populate(node);
+			} catch (ObjectMappingException e1) {
+				return false;
+			}
+			if (!e.canRegister()) {
+				return false;
+			}
 		}
 		registry.put(e.getIdentifier(), new RegistryEntry(e));
 		return true;

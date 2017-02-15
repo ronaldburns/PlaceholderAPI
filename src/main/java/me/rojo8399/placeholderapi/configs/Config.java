@@ -8,21 +8,25 @@ import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 @ConfigSerializable
 public class Config {
 	public static final TypeToken<Config> type = TypeToken.of(Config.class);
-	@Setting public Integer version;
-	@Setting public Expansions expansions;
+	@Setting
+	public Integer version;
+	@Setting
+	public Expansions expansions;
+
 	@ConfigSerializable
 	public static class Expansions {
-		@Setting public boolean player = true;
-		@Setting public boolean server = true;
-		@Setting public boolean rank = false;
-		@Setting public boolean sound = false;
-		@Setting public boolean javascript = false;
-		@Setting public boolean currency = false;
-		@Setting public DateExpansion date;
-		@ConfigSerializable
-		public static class DateExpansion {
-			@Setting public boolean enabled = false;
-			@Setting public String format = "uuuu LLL dd HH:mm:ss";
-		}
+		@Setting
+		public boolean player = true;
+		@Setting
+		public boolean server = true;
+		@Setting
+		public boolean rank = false;
+		@Setting
+		public boolean sound = false;
+		@Setting
+		public boolean javascript = false;
+		@Setting
+		public boolean currency = false;
+
 	}
 }

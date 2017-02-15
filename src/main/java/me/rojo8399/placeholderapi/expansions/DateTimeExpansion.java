@@ -10,13 +10,24 @@ import java.util.function.Function;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
 
-import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
+import com.google.common.reflect.TypeToken;
 
-public class DateTimeExpansion implements Expansion {
+import ninja.leaping.configurate.objectmapping.Setting;
+import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
+
+@ConfigSerializable
+public class DateTimeExpansion implements ConfigurableExpansion {
+
+	private static TypeToken<DateTimeExpansion> type = TypeToken.of(DateTimeExpansion.class);
+
+	@Setting
+	public boolean enabled;
+	@Setting
+	public String format = "uuuu LLL dd HH:mm:ss";
 
 	@Override
 	public boolean canRegister() {
-		return PlaceholderAPIPlugin.getInstance().getConfig().expansions.date.enabled;
+		return enabled;
 	}
 
 	@Override
@@ -41,9 +52,13 @@ public class DateTimeExpansion implements Expansion {
 
 	@Override
 	public Text onPlaceholderRequest(Player player, Optional<String> token, Function<String, Text> textParser) {
-		DateTimeFormatter f = DateTimeFormatter
-				.ofPattern(PlaceholderAPIPlugin.getInstance().getConfig().expansions.date.format);
+		DateTimeFormatter f = DateTimeFormatter.ofPattern(format);
 		return textParser.apply(LocalDateTime.now().format(f));
+	}
+
+	@Override
+	public TypeToken<DateTimeExpansion> getToken() {
+		return type;
 	}
 
 }

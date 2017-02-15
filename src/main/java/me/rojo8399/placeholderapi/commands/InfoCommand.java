@@ -38,21 +38,25 @@ public class InfoCommand implements CommandExecutor {
 		final String name = e.getIdentifier();
 		String version = e.getVersion();
 		String author = e.getAuthor();
-		// Note to self: possible NPE on this call VVV so try to enforce proper handling?
-		List<Text> supportedTokens = e.getSupportedTokens().stream().limit(10).map(s -> {
-			if (s == null) {
-				return Text.of(TextColors.GREEN, "%" + name + "%");
-			}
-			String s2 = name.concat("_" + s);
-			return Text.of(TextColors.GREEN, "%" + s2 + "%");
-		}).collect(Collectors.toList());
+		// Note to self: possible NPE on this call VVV so try to enforce proper
+		// handling?
+		List<Text> supportedTokens = e.getSupportedTokens().stream().limit(10).sorted((s1, s2) -> s1.compareTo(s2))
+				.map(s -> {
+					if (s == null) {
+						return Text.of(TextColors.GREEN, "%" + name + "%");
+					}
+					String s2 = name.concat("_" + s);
+					return Text.of(TextColors.GREEN, "%" + s2 + "%");
+				}).collect(Collectors.toList());
 		Text url = e.getURL() == null ? Text.EMPTY
 				: Text.of(Text.NEW_LINE, TextColors.BLUE, TextActions.openUrl(e.getURL()), e.getURL().toString());
 		Text desc = e.getDescription() == null ? Text.EMPTY
 				: Text.of(Text.NEW_LINE, TextColors.AQUA, e.getDescription());
+		Text support = supportedTokens.isEmpty() ? Text.EMPTY
+				: Text.of(Text.NEW_LINE, TextColors.GOLD, "Supported placeholders: ", Text.NEW_LINE,
+						Text.joinWith(Text.of(", "), supportedTokens));
 		return Text.of(TextColors.AQUA, name, TextColors.GREEN, " " + version, TextColors.GRAY, " by ", TextColors.GOLD,
-				author, TextColors.GRAY, ".", desc, url, Text.NEW_LINE, TextColors.GOLD, "Supported placeholders: ",
-				Text.NEW_LINE, Text.joinWith(Text.of(", "), supportedTokens));
+				author, TextColors.GRAY, ".", desc, url, support);
 	}
 
 }
