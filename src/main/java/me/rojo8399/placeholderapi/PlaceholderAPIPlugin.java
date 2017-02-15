@@ -25,6 +25,7 @@ import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
+import org.spongepowered.api.service.economy.EconomyService;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 
@@ -35,6 +36,8 @@ import me.rojo8399.placeholderapi.commands.ListCommand;
 import me.rojo8399.placeholderapi.commands.ParseCommand;
 import me.rojo8399.placeholderapi.configs.Config;
 import me.rojo8399.placeholderapi.configs.JavascriptManager;
+import me.rojo8399.placeholderapi.expansions.CurrencyExpansion;
+import me.rojo8399.placeholderapi.expansions.DateTimeExpansion;
 import me.rojo8399.placeholderapi.expansions.Expansion;
 import me.rojo8399.placeholderapi.expansions.JavascriptExpansion;
 import me.rojo8399.placeholderapi.expansions.PlayerExpansion;
@@ -87,11 +90,6 @@ public class PlaceholderAPIPlugin {
 		Asset conf = game.getAssetManager().getAsset(this, "config.conf").get();
 		jsm = new JavascriptManager(new File(path.toFile().getParentFile(), "javascript"));
 		// Register internal placeholders
-		s.registerPlaceholder(new JavascriptExpansion(jsm));
-		s.registerPlaceholder(new PlayerExpansion());
-		s.registerPlaceholder(new ServerExpansion());
-		s.registerPlaceholder(new SoundExpansion());
-		s.registerPlaceholder(new RankExpansion());
 		if (!Files.exists(path)) {
 			try {
 				conf.copyToFile(path);
@@ -126,6 +124,16 @@ public class PlaceholderAPIPlugin {
 				mapDefault();
 			}
 		}
+		s.registerPlaceholder(new JavascriptExpansion(jsm));
+		s.registerPlaceholder(new PlayerExpansion());
+		s.registerPlaceholder(new ServerExpansion());
+		s.registerPlaceholder(new SoundExpansion());
+		s.registerPlaceholder(new RankExpansion());
+		if (game.getServiceManager().provide(EconomyService.class).isPresent()) {
+			s.registerPlaceholder(
+					new CurrencyExpansion(game.getServiceManager().provideUnchecked(EconomyService.class)));
+		}
+		s.registerPlaceholder(new DateTimeExpansion());
 	}
 
 	@Listener

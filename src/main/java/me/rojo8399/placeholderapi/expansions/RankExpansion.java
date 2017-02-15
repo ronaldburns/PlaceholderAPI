@@ -10,7 +10,6 @@ import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.text.Text;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
-import me.rojo8399.placeholderapi.configs.Config;
 
 public class RankExpansion implements Expansion {
 
@@ -21,7 +20,7 @@ public class RankExpansion implements Expansion {
 	 */
 	@Override
 	public boolean canRegister() {
-		return true;
+		return PlaceholderAPIPlugin.getInstance().getConfig().expansions.rank;
 	}
 
 	/*
@@ -87,10 +86,6 @@ public class RankExpansion implements Expansion {
 	 */
 	@Override
 	public Text onPlaceholderRequest(Player player, Optional<String> token, Function<String, Text> parser) {
-		Config config = PlaceholderAPIPlugin.getInstance().getConfig();
-		if (!config.expansions.rank) {
-			return null;
-		}
 		if (!token.isPresent()) {
 			return parser.apply(getParentGroup(player).getIdentifier());
 		}

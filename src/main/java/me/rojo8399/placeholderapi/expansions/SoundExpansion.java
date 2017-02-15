@@ -13,13 +13,12 @@ import org.spongepowered.api.text.Text;
 import com.flowpowered.math.vector.Vector3d;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
-import me.rojo8399.placeholderapi.configs.Config;
 
 public class SoundExpansion implements Expansion {
 
 	@Override
 	public boolean canRegister() {
-		return true;
+		return PlaceholderAPIPlugin.getInstance().getConfig().expansions.sound;
 	}
 
 	@Override
@@ -44,12 +43,6 @@ public class SoundExpansion implements Expansion {
 			// No sound present
 			return null;
 		}
-
-		Config config = PlaceholderAPIPlugin.getInstance().getConfig();
-		if (!config.expansions.sound) {
-			// Placeholder disabled
-			return null;
-		}
 		Game game = PlaceholderAPIPlugin.getInstance().getGame();
 
 		String[] i = identifier.get().split("-");
@@ -68,7 +61,9 @@ public class SoundExpansion implements Expansion {
 
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see me.rojo8399.placeholderapi.expansions.Expansion#getSupportedTokens()
 	 */
 	@Override

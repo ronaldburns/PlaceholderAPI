@@ -12,9 +12,17 @@ public class Config {
 	@Setting public Expansions expansions;
 	@ConfigSerializable
 	public static class Expansions {
-		@Setting public boolean player;
-		@Setting public boolean server;
-		@Setting public boolean rank;
-		@Setting public boolean sound;
+		@Setting public boolean player = true;
+		@Setting public boolean server = true;
+		@Setting public boolean rank = false;
+		@Setting public boolean sound = false;
+		@Setting public boolean javascript = false;
+		@Setting public boolean currency = false;
+		@Setting public DateExpansion date;
+		@ConfigSerializable
+		public static class DateExpansion {
+			@Setting public boolean enabled = false;
+			@Setting public String format = "uuuu LLL dd HH:mm:ss";
+		}
 	}
 }

@@ -66,7 +66,7 @@ public class JavascriptExpansion implements Expansion {
 	 */
 	@Override
 	public boolean canRegister() {
-		return true;
+		return PlaceholderAPIPlugin.getInstance().getConfig().expansions.javascript;
 	}
 
 	/*
