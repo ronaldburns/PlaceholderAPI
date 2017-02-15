@@ -4,7 +4,9 @@ plugins {
 }
 
 group = 'me.rojo8399' // TODO
-version = '2.0'
+version = '3.0'
+
+compileJava.options.encoding = 'UTF-8'
 
 dependencies {
     compile 'org.slf4j:slf4j-api:1.7.21'

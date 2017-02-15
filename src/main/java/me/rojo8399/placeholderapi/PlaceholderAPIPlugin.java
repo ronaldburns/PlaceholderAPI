@@ -56,7 +56,7 @@ public class PlaceholderAPIPlugin {
 
 	public static final String PLUGIN_ID = "placeholderapi";
 	public static final String PLUGIN_NAME = "PlaceholderAPI";
-	public static final String PLUGIN_VERSION = "2.1";
+	public static final String PLUGIN_VERSION = "3.0";
 	private static PlaceholderAPIPlugin instance;
 
 	@Inject
@@ -117,7 +117,6 @@ public class PlaceholderAPIPlugin {
 				mapDefault();
 			}
 		}
-		updateConfig(root.getNode("version").getInt());
 		try {
 			config = root.getValue(Config.type);
 		} catch (ObjectMappingException ex) {
@@ -128,7 +127,7 @@ public class PlaceholderAPIPlugin {
 				mapDefault();
 			}
 		}
-		// Load placeholders
+		// Register placeholders
 		s.registerPlaceholder(new JavascriptExpansion(jsm));
 		s.registerPlaceholder(new PlayerExpansion());
 		s.registerPlaceholder(new ServerExpansion());
@@ -193,15 +192,6 @@ public class PlaceholderAPIPlugin {
 		event.getCause().first(Player.class).ifPresent(p -> p.sendMessage(
 				Text.builder().color(TextColors.GREEN).append(Text.of("Reloaded PlaceholderAPI")).build()));
 		logger.info("Reloaded PlaceholderAPI");
-	}
-
-	private void updateConfig(int v) {
-		switch (v) {
-		case 1:
-			// We're good!
-		case 2:
-			// How dafuq
-		}
 	}
 
 	private void mapDefault() throws IOException, ObjectMappingException {

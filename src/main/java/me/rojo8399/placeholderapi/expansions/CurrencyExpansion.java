@@ -76,7 +76,7 @@ public class CurrencyExpansion implements Expansion {
 		}
 		Optional<UniqueAccount> o = service.getOrCreateAccount(player.getUniqueId());
 		if (!o.isPresent()) {
-			return null;
+			return textParser.apply("ERROR: Could not get account!");
 		}
 		UniqueAccount acc = o.get();
 		switch (t) {

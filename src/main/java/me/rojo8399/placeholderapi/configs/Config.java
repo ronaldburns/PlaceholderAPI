@@ -9,8 +9,6 @@ import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 public class Config {
 	public static final TypeToken<Config> type = TypeToken.of(Config.class);
 	@Setting
-	public Integer version;
-	@Setting
 	public Expansions expansions;
 
 	@ConfigSerializable
