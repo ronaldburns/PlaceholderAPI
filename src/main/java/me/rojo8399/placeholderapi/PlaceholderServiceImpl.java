@@ -16,6 +16,7 @@ import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
+import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.text.serializer.TextSerializer;
 
 import me.rojo8399.placeholderapi.expansions.Expansion;
@@ -89,7 +90,12 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			}
 			String token = noToken ? null : format.substring(index + 1);
 			Expansion exp = registry.get(id);
-			String value = exp.onPlaceholderRequestLegacy(player, Optional.ofNullable(token).map(s -> s.toLowerCase()));
+			String value = null;
+			try {
+				value = exp.onPlaceholderRequestLegacy(player, Optional.ofNullable(token).map(s -> s.toLowerCase()));
+			} catch (Exception e) {
+				value = "ERROR: " + e.getMessage();
+			}
 			PlaceholderAPIPlugin.getInstance().getLogger()
 					.debug("Format: " + format + ", ID: " + id + ", Value : " + value);
 			if (value == null) {
@@ -213,7 +219,13 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			}
 			String token = noToken ? null : format.substring(index + 1);
 			Expansion exp = registry.get(id);
-			Text value = exp.onPlaceholderRequest(player, Optional.ofNullable(token).map(s -> s.toLowerCase()), func);
+			Text value = null;
+			try {
+				value = exp.onPlaceholderRequest(player, Optional.ofNullable(token).map(s -> s.toLowerCase()), func);
+			} catch (Exception e) {
+				value = Text.of(TextColors.RED, "ERROR: " + e.getMessage());
+			}
+
 			PlaceholderAPIPlugin.getInstance().getLogger().debug("Format: " + a + ", ID: " + id + ", Value : " + value);
 			if (value == null) {
 				value = func.apply("%" + a + "%");

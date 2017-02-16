@@ -74,11 +74,8 @@ public class CurrencyExpansion implements Expansion {
 				toUse = currencies.get(def);
 			}
 		}
-		Optional<UniqueAccount> o = service.getOrCreateAccount(player.getUniqueId());
-		if (!o.isPresent()) {
-			return textParser.apply("ERROR: Could not get account!");
-		}
-		UniqueAccount acc = o.get();
+		// Don't handle nonexistent accounts here, instead throw error
+		UniqueAccount acc = service.getOrCreateAccount(player.getUniqueId()).get();
 		switch (t) {
 		case "balance":
 			return textParser.apply(acc.getBalance(toUse).toPlainString());
