@@ -27,11 +27,33 @@ import me.rojo8399.placeholderapi.utils.TextUtils;
  */
 public class PlaceholderServiceImpl implements PlaceholderService {
 
-	/*
-	 * Match against %...% such that it does not have a space in the placeholder
-	 * (helps resove conflicts)
-	 */
-	public final static Pattern PLACEHOLDER_PATTERN = Pattern.compile("[%]([^% ]+)[%]");
+	private static Pattern generatePattern(String openText, String closeText) {
+		String o = backslash(openText);
+		String c = backslash(closeText);
+		String inco = "[" + o + "]";
+		String exc = "[^" + c + o + " ]";
+		String incc = "[" + c + "]";
+		return Pattern.compile(inco + "(" + exc + "+)" + incc);
+	}
+
+	private static String backslash(String pattern) {
+		String out = "";
+		boolean skip = false;
+		for (Character c : pattern.toCharArray()) {
+			if (skip) {
+				out += c;
+				skip = false;
+				continue;
+			}
+			if (c == '\\') {
+				skip = true;
+				out += "\\";
+				continue;
+			}
+			out += "\\" + c;
+		}
+		return out;
+	}
 
 	// Package level to prevent instantiation but allow the plugin to create one
 	PlaceholderServiceImpl() {
@@ -47,8 +69,9 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	 * Replace string to string placeholders
 	 */
 	@Override
-	public String replacePlaceholdersLegacy(Player player, String text) {
-		Matcher placeholderMatcher = PLACEHOLDER_PATTERN.matcher(text);
+	public String replacePlaceholdersLegacy(Player player, String text, String o, String c) {
+		Pattern p = generatePattern(o, c);
+		Matcher placeholderMatcher = p.matcher(text);
 		while (placeholderMatcher.find()) {
 			String format = placeholderMatcher.group(1);
 			int index = format.indexOf("_");
@@ -138,8 +161,8 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	 * Replace placeholders
 	 */
 	@Override
-	public Text replacePlaceholders(Player player, String text) {
-		return replacePlaceholders(player, TextUtils.parse(text, Text::of));
+	public Text replacePlaceholders(Player player, String text, String o, String c) {
+		return replacePlaceholders(player, TextUtils.parse(text, Text::of, generatePattern(o, c)));
 	}
 
 	/**
@@ -204,8 +227,9 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	 * Replace placeholders
 	 */
 	@Override
-	public Text replacePlaceholders(Player player, String text, TextSerializer serializer) {
-		return replacePlaceholders(player, TextUtils.parse(text, serializer::deserialize), serializer);
+	public Text replacePlaceholders(Player player, String text, TextSerializer serializer, String o, String c) {
+		return replacePlaceholders(player, TextUtils.parse(text, serializer::deserialize, generatePattern(o, c)),
+				serializer);
 	}
 
 	/**

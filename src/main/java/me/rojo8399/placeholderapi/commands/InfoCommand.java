@@ -40,8 +40,8 @@ public class InfoCommand implements CommandExecutor {
 		String author = e.getAuthor();
 		// Note to self: possible NPE on this call VVV so try to enforce proper
 		// handling?
-		List<Text> supportedTokens = e.getSupportedTokens().stream().limit(10).sorted((s1, s2) -> s1.compareTo(s2))
-				.map(s -> {
+		List<Text> supportedTokens = e.getSupportedTokens().stream().limit(10)
+				.sorted((s1, s2) -> s1 == null ? -1 : (s2 == null ? 1 : s1.compareTo(s2))).map(s -> {
 					if (s == null) {
 						return Text.of(TextColors.GREEN, "%" + name + "%");
 					}

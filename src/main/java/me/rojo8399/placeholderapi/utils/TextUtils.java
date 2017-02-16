@@ -25,11 +25,10 @@ package me.rojo8399.placeholderapi.utils;
 
 import java.util.function.Function;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
-
-import me.rojo8399.placeholderapi.PlaceholderServiceImpl;
 
 /**
  * @author Wundero
@@ -40,18 +39,18 @@ public class TextUtils {
 	/**
 	 * Find all variables in a string and parse it into a text template.
 	 */
-	public static TextTemplate parse(final String i, Function<String, Text> parser) {
+	public static TextTemplate parse(final String i, Function<String, Text> parser, Pattern placeholderPattern) {
 		if (i == null) {
 			return null;
 		}
 		String in = i;
-		if (!PlaceholderServiceImpl.PLACEHOLDER_PATTERN.matcher(in).find()) {
+		if (!placeholderPattern.matcher(in).find()) {
 			// No placeholders exist
 			return TextTemplate.of(parser.apply(in));
 		}
 		// What is not a placeholder - can be empty
-		String[] textParts = in.split(PlaceholderServiceImpl.PLACEHOLDER_PATTERN.pattern());
-		Matcher matcher = PlaceholderServiceImpl.PLACEHOLDER_PATTERN.matcher(in);
+		String[] textParts = in.split(placeholderPattern.pattern());
+		Matcher matcher = placeholderPattern.matcher(in);
 		// Check if empty and create starting template
 		TextTemplate out = textParts.length == 0 ? TextTemplate.of() : TextTemplate.of(parser.apply(textParts[0]));
 		int x = 1;
@@ -69,13 +68,13 @@ public class TextUtils {
 		}
 		return out;
 	}
-	
+
 	/**
 	 * Make a text object by repeating a text n times.
 	 */
 	public static Text repeat(Text original, int times) {
 		Text out = original;
-		for(int i = 0; i < times; i++) {
+		for (int i = 0; i < times; i++) {
 			out = out.concat(original);
 		}
 		return out;
