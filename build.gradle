@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'me.rojo8399' // TODO
-version = '3.0'
+version = '3.1'
 
 compileJava.options.encoding = 'UTF-8'
 
