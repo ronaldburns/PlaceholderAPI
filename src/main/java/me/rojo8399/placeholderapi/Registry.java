@@ -33,6 +33,10 @@ public class Registry {
 		if (e.getIdentifier() == null || e.getIdentifier().isEmpty()) {
 			return false;
 		}
+		boolean ru = false;
+		if (e.getIdentifier().contains("_")) {
+			ru = true;
+		}
 		if (registry.containsKey(e.getIdentifier().toLowerCase())) {
 			return false;
 		}
@@ -49,7 +53,7 @@ public class Registry {
 				return false;
 			}
 		}
-		registry.put(e.getIdentifier(), new RegistryEntry(e));
+		registry.put((ru ? e.getIdentifier().replace("_", "") : e.getIdentifier()).toLowerCase(), new RegistryEntry(e));
 		return true;
 	}
 
