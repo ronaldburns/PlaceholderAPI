@@ -110,9 +110,39 @@ public interface PlaceholderService {
 	 *            The player to parse with respect to.
 	 * @param text
 	 *            The text to parse.
+	 * @param openText
+	 *            The opening arguments
 	 * @return The parsed text.
 	 */
 	public String replacePlaceholdersLegacy(Player player, String text, String openText, String closeText);
+
+	/**
+	 * Replace all placeholders in a string.
+	 * 
+	 * @param player
+	 *            The player to parse with respect to.
+	 * @param text
+	 *            The text to parse.
+	 * @param serializer
+	 *            The serializer to use.
+	 * @return the parsed text.
+	 */
+	public default String replacePlaceholdersLegacy(Player player, String text, TextSerializer serializer) {
+		return replacePlaceholdersLegacy(player, text, serializer, "%", "%");
+	}
+
+	/**
+	 * Replace all placeholders in a string.
+	 * 
+	 * @param player
+	 *            The player to parse with respect to.
+	 * @param text
+	 *            The text to parse.
+	 * 
+	 * @return the parsed text.
+	 */
+	public String replacePlaceholdersLegacy(Player player, String text, TextSerializer serializer, String openText,
+			String closeText);
 
 	/**
 	 * Return the Expansion represented by a key.

@@ -71,6 +71,15 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	 */
 	@Override
 	public String replacePlaceholdersLegacy(Player player, String text, String o, String c) {
+		return rptl(player, text, Text::toPlain, o, c);
+	}
+
+	@Override
+	public String replacePlaceholdersLegacy(Player player, String text, TextSerializer serializer, String o, String c) {
+		return rptl(player, text, serializer::serialize, o, o);
+	}
+
+	private String rptl(Player player, String text, Function<Text, String> f, String o, String c) {
 		Pattern p = generatePattern(o, c);
 		Matcher placeholderMatcher = p.matcher(text);
 		while (placeholderMatcher.find()) {
@@ -92,7 +101,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			Expansion exp = registry.get(id);
 			String value = null;
 			try {
-				value = exp.onPlaceholderRequestLegacy(player, Optional.ofNullable(token));
+				value = exp.onPlaceholderRequestLegacy(player, Optional.ofNullable(token), f);
 			} catch (Exception e) {
 				value = "ERROR: " + e.getMessage();
 			}
