@@ -37,7 +37,16 @@ public class PlayerExpansion implements Expansion {
 		if (!identifier.isPresent()) {
 			return parser.apply(p.getName());
 		}
-		switch (identifier.get()) {
+		String token = identifier.get();
+		if (token.startsWith("option_")) {
+			String op = token.substring("option_".length());
+			return parser.apply(p.getOption(op).orElse(""));
+		}
+		if (token.startsWith("perm") && token.contains("_")) {
+			String op = token.substring(token.indexOf("_"));
+			return parser.apply(p.getPermissionValue(p.getActiveContexts(), op).toString());
+		}
+		switch (token) {
 		case "prefix":
 		case "suffix":
 			return parser.apply(p.getOption(identifier.get()).orElse(""));
@@ -59,7 +68,8 @@ public class PlayerExpansion implements Expansion {
 	 */
 	@Override
 	public List<String> getSupportedTokens() {
-		return Arrays.asList(null, "prefix", "suffix", "name", "displayname", "world");
+		return Arrays.asList(null, "prefix", "suffix", "name", "displayname", "world", "option_[option]",
+				"permission_[permission]");
 	}
 
 }

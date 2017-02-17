@@ -42,7 +42,7 @@ public class InfoCommand implements CommandExecutor {
 		// handling?
 		List<Text> supportedTokens = e.getSupportedTokens().stream().limit(10)
 				.sorted((s1, s2) -> s1 == null ? -1 : (s2 == null ? 1 : s1.compareTo(s2))).map(s -> {
-					if (s == null) {
+					if (s == null || s.isEmpty()) {
 						return Text.of(TextColors.GREEN, "%" + name + "%");
 					}
 					String s2 = name.concat("_" + s);
