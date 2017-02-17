@@ -44,9 +44,19 @@ public class Registry {
 			ConfigurableExpansion ce = (ConfigurableExpansion) e;
 			ConfigurationNode node = PlaceholderAPIPlugin.getInstance().getRootConfig().getNode("expansions",
 					e.getIdentifier());
+			if (node.isVirtual()) {
+				try {
+					ObjectMapper.forObject(ce).serialize(node);
+				} catch (Exception e2) {
+				}
+			}
 			try {
 				e = ce = ObjectMapper.forObject(ce).populate(node);
 			} catch (ObjectMappingException e1) {
+				try {
+					ObjectMapper.forObject(ce).serialize(node);
+				} catch (Exception e2) {
+				}
 				return false;
 			}
 			if (!e.canRegister()) {
