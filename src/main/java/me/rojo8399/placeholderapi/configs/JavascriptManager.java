@@ -116,6 +116,7 @@ public class JavascriptManager {
 				return null;
 			}
 			try {
+				engine.put("args", null);
 				return engine.eval(getScript(token));
 			} catch (ScriptException e) {
 				return "ERROR: " + e.getMessage();

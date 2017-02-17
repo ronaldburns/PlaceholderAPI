@@ -92,7 +92,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			Expansion exp = registry.get(id);
 			String value = null;
 			try {
-				value = exp.onPlaceholderRequestLegacy(player, Optional.ofNullable(token).map(s -> s.toLowerCase()));
+				value = exp.onPlaceholderRequestLegacy(player, Optional.ofNullable(token));
 			} catch (Exception e) {
 				value = "ERROR: " + e.getMessage();
 			}
@@ -221,7 +221,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			Expansion exp = registry.get(id);
 			Text value = null;
 			try {
-				value = exp.onPlaceholderRequest(player, Optional.ofNullable(token).map(s -> s.toLowerCase()), func);
+				value = exp.onPlaceholderRequest(player, Optional.ofNullable(token), func);
 			} catch (Exception e) {
 				value = Text.of(TextColors.RED, "ERROR: " + e.getMessage());
 			}
