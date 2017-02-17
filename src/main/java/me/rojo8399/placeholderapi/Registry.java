@@ -47,6 +47,7 @@ public class Registry {
 			if (node.isVirtual()) {
 				try {
 					ObjectMapper.forObject(ce).serialize(node);
+					PlaceholderAPIPlugin.getInstance().saveConfig();
 				} catch (Exception e2) {
 				}
 			}
@@ -55,6 +56,7 @@ public class Registry {
 			} catch (ObjectMappingException e1) {
 				try {
 					ObjectMapper.forObject(ce).serialize(node);
+					PlaceholderAPIPlugin.getInstance().saveConfig();
 				} catch (Exception e2) {
 				}
 				return false;

@@ -56,7 +56,7 @@ public class PlaceholderAPIPlugin {
 
 	public static final String PLUGIN_ID = "placeholderapi";
 	public static final String PLUGIN_NAME = "PlaceholderAPI";
-	public static final String PLUGIN_VERSION = "3.3";
+	public static final String PLUGIN_VERSION = "3.4";
 	private static PlaceholderAPIPlugin instance;
 
 	@Inject
@@ -83,6 +83,13 @@ public class PlaceholderAPIPlugin {
 
 	public ConfigurationNode getRootConfig() {
 		return root;
+	}
+
+	public void saveConfig() {
+		try {
+			loader.save(root);
+		} catch (Exception e) {
+		}
 	}
 
 	@Listener
