@@ -90,6 +90,7 @@ public class JavascriptManager {
 					return null;
 				}
 				try {
+					engine.put("args", null);
 					// evaluate script
 					return engine.eval(getScript(arr[0]));
 				} catch (ScriptException e) {
