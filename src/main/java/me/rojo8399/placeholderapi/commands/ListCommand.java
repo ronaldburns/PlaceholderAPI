@@ -17,17 +17,17 @@ import me.rojo8399.placeholderapi.PlaceholderService;
 
 public class ListCommand implements CommandExecutor {
 
-	@Override
-	public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
-		PlaceholderService service = PlaceholderAPIPlugin.getInstance().getGame().getServiceManager()
-				.provideUnchecked(PlaceholderService.class);
-		List<Text> l = service.getExpansions().stream()
-				.map(e -> Text.of(TextColors.GOLD, TextActions.runCommand("/papi i " + e.getIdentifier()),
-						TextActions.showText(Text.of(TextColors.GREEN, "Click to get more info!")), e.getIdentifier()))
-				.collect(Collectors.toList());
-		src.sendMessage(Text.of(TextColors.GREEN, "Available placeholders:"));
-		src.sendMessage(Text.joinWith(Text.of(", "), l));
-		return CommandResult.success();
-	}
+    @Override
+    public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
+	PlaceholderService service = PlaceholderAPIPlugin.getInstance().getGame().getServiceManager()
+		.provideUnchecked(PlaceholderService.class);
+	List<Text> l = service.getExpansions().stream()
+		.map(e -> Text.of(TextColors.GOLD, TextActions.runCommand("/papi i " + e.getIdentifier()),
+			TextActions.showText(Text.of(TextColors.GREEN, "Click to get more info!")), e.getIdentifier()))
+		.collect(Collectors.toList());
+	src.sendMessage(Text.of(TextColors.GREEN, "Available placeholders:"));
+	src.sendMessage(Text.joinWith(Text.of(", "), l));
+	return CommandResult.success();
+    }
 
 }

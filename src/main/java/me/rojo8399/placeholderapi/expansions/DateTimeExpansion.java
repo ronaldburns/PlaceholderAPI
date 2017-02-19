@@ -18,47 +18,47 @@ import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 @ConfigSerializable
 public class DateTimeExpansion implements ConfigurableExpansion {
 
-	private static TypeToken<DateTimeExpansion> type = TypeToken.of(DateTimeExpansion.class);
+    private static TypeToken<DateTimeExpansion> type = TypeToken.of(DateTimeExpansion.class);
 
-	@Setting
-	public boolean enabled;
-	@Setting
-	public String format = "uuuu LLL dd HH:mm:ss";
+    @Setting
+    public boolean enabled;
+    @Setting
+    public String format = "uuuu LLL dd HH:mm:ss";
 
-	@Override
-	public boolean canRegister() {
-		return enabled;
-	}
+    @Override
+    public boolean canRegister() {
+	return enabled;
+    }
 
-	@Override
-	public String getIdentifier() {
-		return "time";
-	}
+    @Override
+    public String getIdentifier() {
+	return "time";
+    }
 
-	@Override
-	public String getAuthor() {
-		return "Wundero";
-	}
+    @Override
+    public String getAuthor() {
+	return "Wundero";
+    }
 
-	@Override
-	public String getVersion() {
-		return "1.0";
-	}
+    @Override
+    public String getVersion() {
+	return "1.0";
+    }
 
-	@Override
-	public List<String> getSupportedTokens() {
-		return Arrays.asList((String) null);
-	}
+    @Override
+    public List<String> getSupportedTokens() {
+	return Arrays.asList((String) null);
+    }
 
-	@Override
-	public Text onPlaceholderRequest(Player player, Optional<String> token) {
-		DateTimeFormatter f = DateTimeFormatter.ofPattern(format);
-		return TextSerializers.FORMATTING_CODE.deserialize(LocalDateTime.now().format(f));
-	}
+    @Override
+    public Text onPlaceholderRequest(Player player, Optional<String> token) {
+	DateTimeFormatter f = DateTimeFormatter.ofPattern(format);
+	return TextSerializers.FORMATTING_CODE.deserialize(LocalDateTime.now().format(f));
+    }
 
-	@Override
-	public TypeToken<DateTimeExpansion> getToken() {
-		return type;
-	}
+    @Override
+    public TypeToken<DateTimeExpansion> getToken() {
+	return type;
+    }
 
 }

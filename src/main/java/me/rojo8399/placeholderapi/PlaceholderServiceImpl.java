@@ -28,220 +28,220 @@ import me.rojo8399.placeholderapi.utils.TextUtils;
  */
 public class PlaceholderServiceImpl implements PlaceholderService {
 
-	private static Pattern generatePattern(String openText, String closeText) {
-		String o = backslash(openText);
-		String c = backslash(closeText);
-		String inco = "[" + o + "]";
-		String exc = "[^" + c + o + " ]";
-		String incc = "[" + c + "]";
-		return Pattern.compile(inco + "(" + exc + "+)" + incc);
-	}
+    private static Pattern generatePattern(String openText, String closeText) {
+	String o = backslash(openText);
+	String c = backslash(closeText);
+	String inco = "[" + o + "]";
+	String exc = "[^" + c + o + " ]";
+	String incc = "[" + c + "]";
+	return Pattern.compile(inco + "(" + exc + "+)" + incc);
+    }
 
-	private static String backslash(String pattern) {
-		String out = "";
-		boolean skip = false;
-		for (Character c : pattern.toCharArray()) {
-			if (skip) {
-				out += c;
-				skip = false;
-				continue;
-			}
-			if (c == '\\') {
-				skip = true;
-				out += "\\";
-				continue;
-			}
-			out += "\\" + c;
+    private static String backslash(String pattern) {
+	String out = "";
+	boolean skip = false;
+	for (Character c : pattern.toCharArray()) {
+	    if (skip) {
+		out += c;
+		skip = false;
+		continue;
+	    }
+	    if (c == '\\') {
+		skip = true;
+		out += "\\";
+		continue;
+	    }
+	    out += "\\" + c;
+	}
+	return out;
+    }
+
+    // Package level to prevent instantiation but allow the plugin to create one
+    PlaceholderServiceImpl() {
+    }
+
+    /**
+     * Hold the expansions in a separate file - will be more useful
+     * when @Wundero figures out downloadable expansions
+     */
+    private Registry registry = new Registry();
+
+    @Override
+    public String replacePlaceholdersLegacy(Player player, String text, String o, String c) {
+	return rptl(player, text, TextSerializers.FORMATTING_CODE::serialize, o, o);
+    }
+
+    private String rptl(Player player, String text, Function<Text, String> f, String o, String c) {
+	Pattern p = generatePattern(o, c);
+	Matcher placeholderMatcher = p.matcher(text);
+	while (placeholderMatcher.find()) {
+	    String format = placeholderMatcher.group(1);
+	    int index = format.indexOf("_");
+	    if (index == 0 || index == format.length()) {
+		continue;
+	    }
+	    boolean noToken = false;
+	    if (index == -1) {
+		noToken = true;
+		index = format.length();
+	    }
+	    String id = format.substring(0, index).toLowerCase();
+	    if (!registry.has(id)) {
+		continue;
+	    }
+	    String token = noToken ? null : format.substring(index + 1);
+	    Expansion exp = registry.get(id);
+	    String value = null;
+	    try {
+		value = exp.onPlaceholderRequestLegacy(player, Optional.ofNullable(token), f);
+	    } catch (Exception e) {
+		value = "ERROR: " + e.getMessage();
+	    }
+	    PlaceholderAPIPlugin.getInstance().getLogger()
+		    .debug("Format: " + format + ", ID: " + id + ", Value : " + value);
+	    if (value == null) {
+		value = "%" + format + "%";
+	    }
+	    text = text.replace("%" + format + "%", Matcher.quoteReplacement(value));
+	}
+	return text;
+    }
+
+    /**
+     * Register expansion
+     */
+    @Override
+    public boolean registerPlaceholder(Expansion expansion) {
+	return registry.register(expansion);
+    }
+
+    /**
+     * Register expansion
+     */
+    @Override
+    public boolean registerPlaceholder(final Object plugin, final BiFunction<Player, Optional<String>, Text> function) {
+	if (plugin == null) {
+	    return false;
+	}
+	Optional<PluginContainer> cont = Sponge.getPluginManager().fromInstance(plugin);
+	if (!cont.isPresent()) {
+	    return false;
+	}
+	final PluginContainer c = cont.get();
+	Expansion exp = new Expansion() {
+
+	    @Override
+	    public boolean canRegister() {
+		return true;
+	    }
+
+	    @Override
+	    public String getIdentifier() {
+		return c.getId().toLowerCase();
+	    }
+
+	    @Override
+	    public String getAuthor() {
+		return c.getAuthors().toString();
+	    }
+
+	    @Override
+	    public String getVersion() {
+		return c.getVersion().orElse("1.0");
+	    }
+
+	    @Override
+	    public Text onPlaceholderRequest(Player player, Optional<String> token) {
+		return function.apply(player, token);
+	    }
+
+	    @Override
+	    public List<String> getSupportedTokens() {
+		return new ArrayList<>();
+	    }
+
+	};
+	return registerPlaceholder(exp);
+    }
+
+    /**
+     * Replace placeholders
+     */
+    @Override
+    public Text replacePlaceholders(Player player, TextTemplate template) {
+	return rpt(player, template);
+    }
+
+    /*
+     * Replace placeholders then parse value using the function
+     */
+    private Text rpt(Player player, TextTemplate template) {
+	Map<String, Object> args = new HashMap<>();
+	// For every existing argument
+	for (String a : template.getArguments().keySet()) {
+	    String format = a.toLowerCase();
+	    int index = format.indexOf("_");
+	    if (index == 0 || index == format.length()) {
+		// We want to skip this but we cannot leave required arguments
+		// so filler string is used.
+		if (!template.getArguments().get(a).isOptional()) {
+		    args.put(a, template.getOpenArgString() + a + template.getCloseArgString());
 		}
-		return out;
-	}
-
-	// Package level to prevent instantiation but allow the plugin to create one
-	PlaceholderServiceImpl() {
-	}
-
-	/**
-	 * Hold the expansions in a separate file - will be more useful
-	 * when @Wundero figures out downloadable expansions
-	 */
-	private Registry registry = new Registry();
-
-	@Override
-	public String replacePlaceholdersLegacy(Player player, String text, String o, String c) {
-		return rptl(player, text, TextSerializers.FORMATTING_CODE::serialize, o, o);
-	}
-
-	private String rptl(Player player, String text, Function<Text, String> f, String o, String c) {
-		Pattern p = generatePattern(o, c);
-		Matcher placeholderMatcher = p.matcher(text);
-		while (placeholderMatcher.find()) {
-			String format = placeholderMatcher.group(1);
-			int index = format.indexOf("_");
-			if (index == 0 || index == format.length()) {
-				continue;
-			}
-			boolean noToken = false;
-			if (index == -1) {
-				noToken = true;
-				index = format.length();
-			}
-			String id = format.substring(0, index).toLowerCase();
-			if (!registry.has(id)) {
-				continue;
-			}
-			String token = noToken ? null : format.substring(index + 1);
-			Expansion exp = registry.get(id);
-			String value = null;
-			try {
-				value = exp.onPlaceholderRequestLegacy(player, Optional.ofNullable(token), f);
-			} catch (Exception e) {
-				value = "ERROR: " + e.getMessage();
-			}
-			PlaceholderAPIPlugin.getInstance().getLogger()
-					.debug("Format: " + format + ", ID: " + id + ", Value : " + value);
-			if (value == null) {
-				value = "%" + format + "%";
-			}
-			text = text.replace("%" + format + "%", Matcher.quoteReplacement(value));
+		continue;
+	    }
+	    boolean noToken = false;
+	    if (index == -1) {
+		noToken = true;
+		index = format.length();
+	    }
+	    String id = format.substring(0, index).toLowerCase();
+	    if (!registry.has(id)) {
+		// Again, filler string.
+		if (!template.getArguments().get(a).isOptional()) {
+		    args.put(a, template.getOpenArgString() + a + template.getCloseArgString());
 		}
-		return text;
+		continue;
+	    }
+	    String token = noToken ? null : format.substring(index + 1);
+	    Expansion exp = registry.get(id);
+	    Text value = null;
+	    try {
+		value = exp.onPlaceholderRequest(player, Optional.ofNullable(token));
+	    } catch (Exception e) {
+		value = Text.of(TextColors.RED, "ERROR: " + e.getMessage());
+	    }
+
+	    PlaceholderAPIPlugin.getInstance().getLogger().debug("Format: " + a + ", ID: " + id + ", Value : " + value);
+	    if (value == null) {
+		value = Text.of("%" + a + "%");
+	    }
+	    args.put(a, value);
 	}
+	return template.apply(args).build();
+    }
 
-	/**
-	 * Register expansion
-	 */
-	@Override
-	public boolean registerPlaceholder(Expansion expansion) {
-		return registry.register(expansion);
-	}
+    /**
+     * Replace placeholders
+     */
+    @Override
+    public Text replacePlaceholders(Player player, String text, String o, String c) {
+	return replacePlaceholders(player,
+		TextUtils.parse(text, TextSerializers.FORMATTING_CODE::deserialize, generatePattern(o, c)));
+    }
 
-	/**
-	 * Register expansion
-	 */
-	@Override
-	public boolean registerPlaceholder(final Object plugin, final BiFunction<Player, Optional<String>, Text> function) {
-		if (plugin == null) {
-			return false;
-		}
-		Optional<PluginContainer> cont = Sponge.getPluginManager().fromInstance(plugin);
-		if (!cont.isPresent()) {
-			return false;
-		}
-		final PluginContainer c = cont.get();
-		Expansion exp = new Expansion() {
+    /**
+     * Get all placeholders
+     */
+    @Override
+    public Set<Expansion> getExpansions() {
+	return registry.getAll();
+    }
 
-			@Override
-			public boolean canRegister() {
-				return true;
-			}
-
-			@Override
-			public String getIdentifier() {
-				return c.getId().toLowerCase();
-			}
-
-			@Override
-			public String getAuthor() {
-				return c.getAuthors().toString();
-			}
-
-			@Override
-			public String getVersion() {
-				return c.getVersion().orElse("1.0");
-			}
-
-			@Override
-			public Text onPlaceholderRequest(Player player, Optional<String> token) {
-				return function.apply(player, token);
-			}
-
-			@Override
-			public List<String> getSupportedTokens() {
-				return new ArrayList<>();
-			}
-
-		};
-		return registerPlaceholder(exp);
-	}
-
-	/**
-	 * Replace placeholders
-	 */
-	@Override
-	public Text replacePlaceholders(Player player, TextTemplate template) {
-		return rpt(player, template);
-	}
-
-	/*
-	 * Replace placeholders then parse value using the function
-	 */
-	private Text rpt(Player player, TextTemplate template) {
-		Map<String, Object> args = new HashMap<>();
-		// For every existing argument
-		for (String a : template.getArguments().keySet()) {
-			String format = a.toLowerCase();
-			int index = format.indexOf("_");
-			if (index == 0 || index == format.length()) {
-				// We want to skip this but we cannot leave required arguments
-				// so filler string is used.
-				if (!template.getArguments().get(a).isOptional()) {
-					args.put(a, template.getOpenArgString() + a + template.getCloseArgString());
-				}
-				continue;
-			}
-			boolean noToken = false;
-			if (index == -1) {
-				noToken = true;
-				index = format.length();
-			}
-			String id = format.substring(0, index).toLowerCase();
-			if (!registry.has(id)) {
-				// Again, filler string.
-				if (!template.getArguments().get(a).isOptional()) {
-					args.put(a, template.getOpenArgString() + a + template.getCloseArgString());
-				}
-				continue;
-			}
-			String token = noToken ? null : format.substring(index + 1);
-			Expansion exp = registry.get(id);
-			Text value = null;
-			try {
-				value = exp.onPlaceholderRequest(player, Optional.ofNullable(token));
-			} catch (Exception e) {
-				value = Text.of(TextColors.RED, "ERROR: " + e.getMessage());
-			}
-
-			PlaceholderAPIPlugin.getInstance().getLogger().debug("Format: " + a + ", ID: " + id + ", Value : " + value);
-			if (value == null) {
-				value = Text.of("%" + a + "%");
-			}
-			args.put(a, value);
-		}
-		return template.apply(args).build();
-	}
-
-	/**
-	 * Replace placeholders
-	 */
-	@Override
-	public Text replacePlaceholders(Player player, String text, String o, String c) {
-		return replacePlaceholders(player,
-				TextUtils.parse(text, TextSerializers.FORMATTING_CODE::deserialize, generatePattern(o, c)));
-	}
-
-	/**
-	 * Get all placeholders
-	 */
-	@Override
-	public Set<Expansion> getExpansions() {
-		return registry.getAll();
-	}
-
-	/**
-	 * Get a placeholder by the identifier
-	 */
-	@Override
-	public Optional<Expansion> getExpansion(String id) {
-		return Optional.ofNullable(registry.get(id));
-	}
+    /**
+     * Get a placeholder by the identifier
+     */
+    @Override
+    public Optional<Expansion> getExpansion(String id) {
+	return Optional.ofNullable(registry.get(id));
+    }
 }

@@ -36,48 +36,48 @@ import org.spongepowered.api.text.TextTemplate;
  */
 public class TextUtils {
 
-	/**
-	 * Find all variables in a string and parse it into a text template.
-	 */
-	public static TextTemplate parse(final String i, Function<String, Text> parser, Pattern placeholderPattern) {
-		if (i == null) {
-			return null;
-		}
-		String in = i;
-		if (!placeholderPattern.matcher(in).find()) {
-			// No placeholders exist
-			return TextTemplate.of(parser.apply(in));
-		}
-		// What is not a placeholder - can be empty
-		String[] textParts = in.split(placeholderPattern.pattern());
-		Matcher matcher = placeholderPattern.matcher(in);
-		// Check if empty and create starting template
-		TextTemplate out = textParts.length == 0 ? TextTemplate.of() : TextTemplate.of(parser.apply(textParts[0]));
-		int x = 1;
-		while ((matcher = matcher.reset(in)).find()) {
-			String mg = matcher.group().substring(1); // Get actual placeholder
-			mg = mg.substring(0, mg.length() - 1);
-			// Make arg
-			out = out.concat(TextTemplate.of(TextTemplate.arg(mg)));
-			if (x < textParts.length) {
-				// If there exists a part to insert
-				out = out.concat(TextTemplate.of(parser.apply(textParts[x])));
-			}
-			in = matcher.replaceFirst("");
-			x++;
-		}
-		return out;
+    /**
+     * Find all variables in a string and parse it into a text template.
+     */
+    public static TextTemplate parse(final String i, Function<String, Text> parser, Pattern placeholderPattern) {
+	if (i == null) {
+	    return null;
 	}
+	String in = i;
+	if (!placeholderPattern.matcher(in).find()) {
+	    // No placeholders exist
+	    return TextTemplate.of(parser.apply(in));
+	}
+	// What is not a placeholder - can be empty
+	String[] textParts = in.split(placeholderPattern.pattern());
+	Matcher matcher = placeholderPattern.matcher(in);
+	// Check if empty and create starting template
+	TextTemplate out = textParts.length == 0 ? TextTemplate.of() : TextTemplate.of(parser.apply(textParts[0]));
+	int x = 1;
+	while ((matcher = matcher.reset(in)).find()) {
+	    String mg = matcher.group().substring(1); // Get actual placeholder
+	    mg = mg.substring(0, mg.length() - 1);
+	    // Make arg
+	    out = out.concat(TextTemplate.of(TextTemplate.arg(mg)));
+	    if (x < textParts.length) {
+		// If there exists a part to insert
+		out = out.concat(TextTemplate.of(parser.apply(textParts[x])));
+	    }
+	    in = matcher.replaceFirst("");
+	    x++;
+	}
+	return out;
+    }
 
-	/**
-	 * Make a text object by repeating a text n times.
-	 */
-	public static Text repeat(Text original, int times) {
-		Text out = original;
-		for (int i = 0; i < times; i++) {
-			out = out.concat(original);
-		}
-		return out;
+    /**
+     * Make a text object by repeating a text n times.
+     */
+    public static Text repeat(Text original, int times) {
+	Text out = original;
+	for (int i = 0; i < times; i++) {
+	    out = out.concat(original);
 	}
+	return out;
+    }
 
 }

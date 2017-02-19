@@ -14,30 +14,30 @@ import me.rojo8399.placeholderapi.PlaceholderService;
 
 public class ParseCommand implements CommandExecutor {
 
-	@Override
-	public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
+    @Override
+    public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
 
-		Player p = args.<Player>getOne("player").get();
-		String[] placeholders = args.<String>getOne(Text.of("placeholders")).get().split(" ");
+	Player p = args.<Player>getOne("player").get();
+	String[] placeholders = args.<String>getOne(Text.of("placeholders")).get().split(" ");
 
-		PlaceholderService service = PlaceholderAPIPlugin.getInstance().getGame().getServiceManager()
-				.provideUnchecked(PlaceholderService.class);
-		if (service == null) {
-			throw new CommandException(Text.of(TextColors.RED, "ERROR: Placeholders not registered!"));
-		}
-		for (String placeholder : placeholders) {
-			Text t = service.replacePlaceholders(p, placeholder, "%{", "%}");
-			if (t == null) {
-				t = Text.EMPTY;
-			}
-			if (!t.isEmpty()) {
-				src.sendMessage(t);
-			} else {
-				src.sendMessage(Text.of(TextColors.RED, "No value present!"));
-			}
-		}
-		return CommandResult.success();
-
+	PlaceholderService service = PlaceholderAPIPlugin.getInstance().getGame().getServiceManager()
+		.provideUnchecked(PlaceholderService.class);
+	if (service == null) {
+	    throw new CommandException(Text.of(TextColors.RED, "ERROR: Placeholders not registered!"));
 	}
+	for (String placeholder : placeholders) {
+	    Text t = service.replacePlaceholders(p, placeholder, "%{", "%}");
+	    if (t == null) {
+		t = Text.EMPTY;
+	    }
+	    if (!t.isEmpty()) {
+		src.sendMessage(t);
+	    } else {
+		src.sendMessage(Text.of(TextColors.RED, "No value present!"));
+	    }
+	}
+	return CommandResult.success();
+
+    }
 
 }
