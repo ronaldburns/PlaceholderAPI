@@ -1,13 +1,5 @@
 sudo: required
-dist: trusty
-
 language: java
-jdk:
-  - openjdk8
-  - oraclejdk8
-
-install: true
-script: ./bash gradlew check
 
 notifications:
   email: false
