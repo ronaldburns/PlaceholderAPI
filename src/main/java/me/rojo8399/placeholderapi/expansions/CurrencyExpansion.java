@@ -2,6 +2,7 @@ package me.rojo8399.placeholderapi.expansions;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -17,12 +18,13 @@ import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 public class CurrencyExpansion implements Expansion {
 
 	private EconomyService service;
-	private Map<String, Currency> currencies;
+	private Map<String, Currency> currencies = new HashMap<String, Currency>();
 	private Currency def;
 
 	public CurrencyExpansion(EconomyService service) {
 		this.service = service;
 		this.def = service.getDefaultCurrency();
+		PlaceholderAPIPlugin.getInstance().getLogger().debug("Service: " + service);
 		service.getCurrencies().forEach(this::putCur);
 	}
 
