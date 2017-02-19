@@ -50,7 +50,7 @@ public class ServerExpansion implements Expansion {
     }
 
     private boolean contains(Player p) {
-	return users.stream().map(u -> u.getUniqueId()).noneMatch(p.getUniqueId()::equals);
+	return users.stream().map(u -> u.getUniqueId()).anyMatch(p.getUniqueId()::equals);
     }
 
     public void sync() {
