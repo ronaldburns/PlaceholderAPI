@@ -7,7 +7,7 @@ jdk:
   - oraclejdk8
 
 install: true
-script: ./bash gradlew build
+script: ./gradlew check
 
 notifications:
   email: false
