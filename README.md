@@ -7,12 +7,6 @@ If you were sent here from another plugin, simply download this plugin and insta
 
 ----------
 
-##Donations
-I love being able to code plugins on Sponge for you! But it takes a lot of time and effort. If you run a profitable server off one of my plugins, please feel free to share the love!
-[Donate Here](http://paypal.me/rojo8399)
-
-----------
-
 ##FEATURES
 
 * No lag
