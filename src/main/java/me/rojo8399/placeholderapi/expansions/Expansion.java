@@ -40,14 +40,14 @@ public interface Expansion {
 	 * @return current version of this expansion
 	 */
 	public String getVersion();
-	
+
 	/**
 	 * Get all supported tokens. Null token means just the parent token.
 	 * 
 	 * @return the supported tokens.
 	 */
 	public List<String> getSupportedTokens();
-	
+
 	/**
 	 * Get the website for this expansion.
 	 * 
@@ -56,7 +56,7 @@ public interface Expansion {
 	public default URL getURL() {
 		return null;
 	}
-	
+
 	/**
 	 * Get the description for this expansion.
 	 * 
@@ -72,7 +72,7 @@ public interface Expansion {
 	 * @return the result of the parse as a text. If strings need to be
 	 *         converted to text, use the parser.
 	 */
-	public Text onPlaceholderRequest(Player player, Optional<String> token, Function<String, Text> textParser);
+	public Text onPlaceholderRequest(Player player, Optional<String> token);
 
 	/**
 	 * Parse the token for the player
@@ -101,30 +101,10 @@ public interface Expansion {
 	public default String onPlaceholderRequestLegacy(Player player, Optional<String> token,
 			Function<Text, String> textParser) {
 		Text t = onPlaceholderRequest(player, token);
-		if(t==null) {
+		if (t == null) {
 			return null;
 		}
 		return textParser.apply(t);
-	}
-
-	/**
-	 * Parse the token for the player
-	 * 
-	 * @return the result of the parse as a text. If strings need to be
-	 *         converted to text, use the serializer.
-	 */
-	public default Text onPlaceholderRequest(Player player, Optional<String> token, TextSerializer serializer) {
-		return onPlaceholderRequest(player, token, serializer::deserialize);
-	}
-
-	/**
-	 * Parse the token for the player
-	 * 
-	 * @return the result of the parse as a text. If strings need to be
-	 *         converted to text, use Text.of().
-	 */
-	public default Text onPlaceholderRequest(Player player, Optional<String> token) {
-		return onPlaceholderRequest(player, token, Text::of);
 	}
 
 }

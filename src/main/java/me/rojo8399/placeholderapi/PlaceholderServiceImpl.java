@@ -17,7 +17,7 @@ import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
 import org.spongepowered.api.text.format.TextColors;
-import org.spongepowered.api.text.serializer.TextSerializer;
+import org.spongepowered.api.text.serializer.TextSerializers;
 
 import me.rojo8399.placeholderapi.expansions.Expansion;
 import me.rojo8399.placeholderapi.utils.TextUtils;
@@ -66,17 +66,9 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	 */
 	private Registry registry = new Registry();
 
-	/**
-	 * Replace string to string placeholders
-	 */
 	@Override
 	public String replacePlaceholdersLegacy(Player player, String text, String o, String c) {
-		return rptl(player, text, Text::toPlain, o, c);
-	}
-
-	@Override
-	public String replacePlaceholdersLegacy(Player player, String text, TextSerializer serializer, String o, String c) {
-		return rptl(player, text, serializer::serialize, o, o);
+		return rptl(player, text, TextSerializers.FORMATTING_CODE::serialize, o, o);
 	}
 
 	private String rptl(Player player, String text, Function<Text, String> f, String o, String c) {
@@ -159,7 +151,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			}
 
 			@Override
-			public Text onPlaceholderRequest(Player player, Optional<String> token, Function<String, Text> parser) {
+			public Text onPlaceholderRequest(Player player, Optional<String> token) {
 				return function.apply(player, token);
 			}
 
@@ -176,30 +168,14 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	 * Replace placeholders
 	 */
 	@Override
-	public Text replacePlaceholders(Player player, String text, String o, String c) {
-		return replacePlaceholders(player, TextUtils.parse(text, Text::of, generatePattern(o, c)));
-	}
-
-	/**
-	 * Replace placeholders
-	 */
-	@Override
 	public Text replacePlaceholders(Player player, TextTemplate template) {
-		return rpt(player, template, Text::of);
-	}
-
-	/**
-	 * Replace placeholders
-	 */
-	@Override
-	public Text replacePlaceholders(Player player, TextTemplate template, TextSerializer serializer) {
-		return rpt(player, template, serializer::deserialize);
+		return rpt(player, template);
 	}
 
 	/*
 	 * Replace placeholders then parse value using the function
 	 */
-	private Text rpt(Player player, TextTemplate template, Function<String, Text> func) {
+	private Text rpt(Player player, TextTemplate template) {
 		Map<String, Object> args = new HashMap<>();
 		// For every existing argument
 		for (String a : template.getArguments().keySet()) {
@@ -230,14 +206,14 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			Expansion exp = registry.get(id);
 			Text value = null;
 			try {
-				value = exp.onPlaceholderRequest(player, Optional.ofNullable(token), func);
+				value = exp.onPlaceholderRequest(player, Optional.ofNullable(token));
 			} catch (Exception e) {
 				value = Text.of(TextColors.RED, "ERROR: " + e.getMessage());
 			}
 
 			PlaceholderAPIPlugin.getInstance().getLogger().debug("Format: " + a + ", ID: " + id + ", Value : " + value);
 			if (value == null) {
-				value = func.apply("%" + a + "%");
+				value = Text.of("%" + a + "%");
 			}
 			args.put(a, value);
 		}
@@ -248,9 +224,9 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	 * Replace placeholders
 	 */
 	@Override
-	public Text replacePlaceholders(Player player, String text, TextSerializer serializer, String o, String c) {
-		return replacePlaceholders(player, TextUtils.parse(text, serializer::deserialize, generatePattern(o, c)),
-				serializer);
+	public Text replacePlaceholders(Player player, String text, String o, String c) {
+		return replacePlaceholders(player,
+				TextUtils.parse(text, TextSerializers.FORMATTING_CODE::deserialize, generatePattern(o, c)));
 	}
 
 	/**

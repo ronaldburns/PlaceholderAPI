@@ -3,10 +3,10 @@ package me.rojo8399.placeholderapi.expansions;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.serializer.TextSerializers;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 
@@ -33,29 +33,29 @@ public class PlayerExpansion implements Expansion {
 	}
 
 	@Override
-	public Text onPlaceholderRequest(Player p, Optional<String> identifier, Function<String, Text> parser) {
+	public Text onPlaceholderRequest(Player p, Optional<String> identifier) {
 		if (!identifier.isPresent()) {
-			return parser.apply(p.getName());
+			return Text.of(p.getName());
 		}
 		String token = identifier.get();
 		if (token.startsWith("option_")) {
 			String op = token.substring("option_".length());
-			return parser.apply(p.getOption(op).orElse(""));
+			return TextSerializers.FORMATTING_CODE.deserialize(p.getOption(op).orElse(""));
 		}
 		if (token.startsWith("perm") && token.contains("_")) {
 			String op = token.substring(token.indexOf("_"));
-			return parser.apply(p.getPermissionValue(p.getActiveContexts(), op).toString());
+			return Text.of(p.getPermissionValue(p.getActiveContexts(), op).toString());
 		}
 		switch (token) {
 		case "prefix":
 		case "suffix":
-			return parser.apply(p.getOption(identifier.get()).orElse(""));
+			return TextSerializers.FORMATTING_CODE.deserialize(p.getOption(identifier.get()).orElse(""));
 		case "name":
-			return parser.apply(p.getName());
+			return Text.of(p.getName());
 		case "displayname":
 			return p.getDisplayNameData().displayName().get();
 		case "world":
-			return parser.apply(p.getWorld().getName());
+			return Text.of(p.getWorld().getName());
 		default:
 			return null;
 		}

@@ -8,7 +8,6 @@ import org.spongepowered.api.command.spec.CommandExecutor;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
-import org.spongepowered.api.text.serializer.TextSerializers;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.PlaceholderService;
@@ -27,7 +26,7 @@ public class ParseCommand implements CommandExecutor {
 			throw new CommandException(Text.of(TextColors.RED, "ERROR: Placeholders not registered!"));
 		}
 		for (String placeholder : placeholders) {
-			Text t = service.replacePlaceholders(p, placeholder, TextSerializers.FORMATTING_CODE, "%{", "%}");
+			Text t = service.replacePlaceholders(p, placeholder, "%{", "%}");
 			if (t == null) {
 				t = Text.EMPTY;
 			}

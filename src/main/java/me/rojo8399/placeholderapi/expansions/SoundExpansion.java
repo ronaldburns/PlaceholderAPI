@@ -3,7 +3,6 @@ package me.rojo8399.placeholderapi.expansions;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 import org.spongepowered.api.Game;
 import org.spongepowered.api.effect.sound.SoundType;
@@ -37,7 +36,7 @@ public class SoundExpansion implements Expansion {
 	}
 
 	@Override
-	public Text onPlaceholderRequest(Player p, Optional<String> identifier, Function<String, Text> func) {
+	public Text onPlaceholderRequest(Player p, Optional<String> identifier) {
 
 		if (!identifier.isPresent()) {
 			// No sound present

@@ -3,11 +3,11 @@ package me.rojo8399.placeholderapi.expansions;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.serializer.TextSerializers;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 
@@ -85,29 +85,29 @@ public class RankExpansion implements Expansion {
 	 * spongepowered.api.entity.living.player.Player, java.lang.String)
 	 */
 	@Override
-	public Text onPlaceholderRequest(Player player, Optional<String> token, Function<String, Text> parser) {
+	public Text onPlaceholderRequest(Player player, Optional<String> token) {
 		if (!token.isPresent()) {
-			return parser.apply(getParentGroup(player).getIdentifier());
+			return Text.of(getParentGroup(player).getIdentifier());
 		}
 		Subject rank = getParentGroup(player);
 		String t = token.get();
 		switch (t) {
 		case "prefix":
 		case "suffix":
-			return parser.apply(rank.getOption(t).orElse(""));
+			return TextSerializers.FORMATTING_CODE.deserialize(rank.getOption(t).orElse(""));
 		case "name":
-			return parser.apply(rank.getIdentifier());
+			return Text.of(rank.getIdentifier());
 		}
 		if (t.contains("_") && t.indexOf("_") < t.length()) {
 			if (t.startsWith("option")) {
 				String opt = t.substring(t.indexOf("_") + 1);
-				return parser.apply(rank.getOption(opt).orElse(""));
+				return TextSerializers.FORMATTING_CODE.deserialize(rank.getOption(opt).orElse(""));
 			}
 			// this also covers "permission_..."
 			// return whether the rank has a permission
 			if (t.startsWith("perm")) {
 				String perm = t.substring(t.indexOf("_") + 1);
-				return parser.apply(rank.getPermissionValue(rank.getActiveContexts(), perm).toString());
+				return Text.of(rank.getPermissionValue(rank.getActiveContexts(), perm).toString());
 			}
 		}
 		return null;

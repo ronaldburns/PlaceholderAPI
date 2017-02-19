@@ -5,10 +5,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.serializer.TextSerializers;
 
 import com.google.common.reflect.TypeToken;
 
@@ -51,9 +51,9 @@ public class DateTimeExpansion implements ConfigurableExpansion {
 	}
 
 	@Override
-	public Text onPlaceholderRequest(Player player, Optional<String> token, Function<String, Text> textParser) {
+	public Text onPlaceholderRequest(Player player, Optional<String> token) {
 		DateTimeFormatter f = DateTimeFormatter.ofPattern(format);
-		return textParser.apply(LocalDateTime.now().format(f));
+		return TextSerializers.FORMATTING_CODE.deserialize(LocalDateTime.now().format(f));
 	}
 
 	@Override

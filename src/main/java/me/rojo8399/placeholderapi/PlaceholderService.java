@@ -7,7 +7,6 @@ import java.util.function.BiFunction;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
-import org.spongepowered.api.text.serializer.TextSerializer;
 
 import me.rojo8399.placeholderapi.expansions.Expansion;
 
@@ -49,48 +48,6 @@ public interface PlaceholderService {
 	public Text replacePlaceholders(Player player, TextTemplate template);
 
 	/**
-	 * Replace all placeholders in a string then serialize it.
-	 * 
-	 * @param player
-	 *            The player to parse with respect to.
-	 * @param text
-	 *            The text to parse.
-	 * @param serializer
-	 *            The serializer to serialize the text with.
-	 * @return The parsed text.
-	 */
-	public default Text replacePlaceholders(Player player, String text, TextSerializer serializer) {
-		return replacePlaceholders(player, text, serializer, "%", "%");
-	}
-
-	/**
-	 * Replace all placeholders in a string then serialize it.
-	 * 
-	 * @param player
-	 *            The player to parse with respect to.
-	 * @param text
-	 *            The text to parse.
-	 * @param serializer
-	 *            The serializer to serialize the text with.
-	 * @return The parsed text.
-	 */
-	public Text replacePlaceholders(Player player, String text, TextSerializer serializer, String openText,
-			String closeText);
-
-	/**
-	 * Replace all placeholders in a string then serialize it.
-	 * 
-	 * @param player
-	 *            The player to parse with respect to.
-	 * @param text
-	 *            The text to parse.
-	 * @param serializer
-	 *            The serializer to serialize the text with.
-	 * @return The parsed text.
-	 */
-	public Text replacePlaceholders(Player player, TextTemplate template, TextSerializer serializer);
-
-	/**
 	 * Replace all placeholders in a string.
 	 * 
 	 * @param player
@@ -115,34 +72,6 @@ public interface PlaceholderService {
 	 * @return The parsed text.
 	 */
 	public String replacePlaceholdersLegacy(Player player, String text, String openText, String closeText);
-
-	/**
-	 * Replace all placeholders in a string.
-	 * 
-	 * @param player
-	 *            The player to parse with respect to.
-	 * @param text
-	 *            The text to parse.
-	 * @param serializer
-	 *            The serializer to use.
-	 * @return the parsed text.
-	 */
-	public default String replacePlaceholdersLegacy(Player player, String text, TextSerializer serializer) {
-		return replacePlaceholdersLegacy(player, text, serializer, "%", "%");
-	}
-
-	/**
-	 * Replace all placeholders in a string.
-	 * 
-	 * @param player
-	 *            The player to parse with respect to.
-	 * @param text
-	 *            The text to parse.
-	 * 
-	 * @return the parsed text.
-	 */
-	public String replacePlaceholdersLegacy(Player player, String text, TextSerializer serializer, String openText,
-			String closeText);
 
 	/**
 	 * Return the Expansion represented by a key.

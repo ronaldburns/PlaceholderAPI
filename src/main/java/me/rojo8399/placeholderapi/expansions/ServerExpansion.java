@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.spongepowered.api.Sponge;
@@ -16,7 +15,6 @@ import org.spongepowered.api.event.filter.Getter;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.service.user.UserStorageService;
 import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.serializer.TextSerializers;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 
@@ -62,9 +60,12 @@ public class ServerExpansion implements Expansion {
 		if (storage == null) {
 			return;
 		}
-		users = storage.getAll().stream().map(g -> storage.get(g)).filter(o -> o.isPresent()).map(o -> o.get())
-				.collect(Collectors.toSet());
-		changed = false;
+		try {
+			users = storage.getAll().stream().map(g -> storage.get(g)).filter(o -> o.isPresent()).map(o -> o.get())
+					.collect(Collectors.toSet());
+			changed = false;
+		} catch (Exception e) {
+		}
 	}
 
 	public int unique() {
@@ -87,29 +88,29 @@ public class ServerExpansion implements Expansion {
 	}
 
 	@Override
-	public Text onPlaceholderRequest(Player player, Optional<String> identifier, Function<String, Text> parser) {
+	public Text onPlaceholderRequest(Player player, Optional<String> identifier) {
 		if (!identifier.isPresent()) {
 			return null;
 		}
 		switch (identifier.get()) {
 		case "online":
-			return parser.apply(String.valueOf(Sponge.getServer().getOnlinePlayers().size()));
+			return Text.of(String.valueOf(Sponge.getServer().getOnlinePlayers().size()));
 		case "max_players":
-			return parser.apply(String.valueOf(Sponge.getServer().getMaxPlayers()));
+			return Text.of(String.valueOf(Sponge.getServer().getMaxPlayers()));
 		case "unique_players":
-			return parser.apply(String.valueOf(unique()));
+			return Text.of(String.valueOf(unique()));
 		case "motd":
-			return parser.apply(TextSerializers.FORMATTING_CODE.serialize(Sponge.getServer().getMotd()));
+			return Sponge.getServer().getMotd();
 		case "ram_used":
-			return parser.apply(String.valueOf((runtime.totalMemory() - runtime.freeMemory()) / MB));
+			return Text.of(String.valueOf((runtime.totalMemory() - runtime.freeMemory()) / MB));
 		case "ram_free":
-			return parser.apply(String.valueOf(runtime.freeMemory() / MB));
+			return Text.of(String.valueOf(runtime.freeMemory() / MB));
 		case "ram_total":
-			return parser.apply(String.valueOf(runtime.totalMemory() / MB));
+			return Text.of(String.valueOf(runtime.totalMemory() / MB));
 		case "ram_max":
-			return parser.apply(String.valueOf(runtime.maxMemory() / MB));
+			return Text.of(String.valueOf(runtime.maxMemory() / MB));
 		case "cores":
-			return parser.apply(String.valueOf(runtime.availableProcessors()));
+			return Text.of(String.valueOf(runtime.availableProcessors()));
 		default:
 			return null;
 		}

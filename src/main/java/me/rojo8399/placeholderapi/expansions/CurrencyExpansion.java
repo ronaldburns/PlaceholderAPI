@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.service.economy.Currency;
@@ -58,10 +57,10 @@ public class CurrencyExpansion implements Expansion {
 	}
 
 	@Override
-	public Text onPlaceholderRequest(Player player, Optional<String> token, Function<String, Text> textParser) {
+	public Text onPlaceholderRequest(Player player, Optional<String> token) {
 		if (!token.isPresent()) {
 			Text amt = def.format(BigDecimal.valueOf(1234.56));
-			Text v = textParser.apply(def.getName() + " (" + def.getId() + ") - ");
+			Text v = Text.of(def.getName() + " (" + def.getId() + ") - ");
 			return v.concat(amt);
 		}
 		String t = token.get();
@@ -78,7 +77,7 @@ public class CurrencyExpansion implements Expansion {
 		UniqueAccount acc = service.getOrCreateAccount(player.getUniqueId()).get();
 		switch (t) {
 		case "balance":
-			return textParser.apply(acc.getBalance(toUse).toPlainString());
+			return Text.of(acc.getBalance(toUse).toPlainString());
 		case "balformat":
 			return toUse.format(acc.getBalance(toUse));
 		case "display":

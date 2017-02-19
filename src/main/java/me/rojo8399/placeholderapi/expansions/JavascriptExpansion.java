@@ -25,13 +25,13 @@ package me.rojo8399.placeholderapi.expansions;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.serializer.TextSerializers;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.configs.JavascriptManager;
@@ -108,7 +108,7 @@ public class JavascriptExpansion implements Expansion {
 	 * java.util.function.Function)
 	 */
 	@Override
-	public Text onPlaceholderRequest(Player player, Optional<String> token, Function<String, Text> textParser) {
+	public Text onPlaceholderRequest(Player player, Optional<String> token) {
 		if (!token.isPresent()) {
 			// No script
 			return null;
@@ -121,7 +121,6 @@ public class JavascriptExpansion implements Expansion {
 		}
 		// Insert player + parser objects, which change every time
 		engine.put("player", player);
-		engine.put("parser", textParser);
 		// Evaluate the script
 		Object o = manager.eval(engine, token.get());
 		if (o == null) {
@@ -132,7 +131,7 @@ public class JavascriptExpansion implements Expansion {
 		if (o instanceof Text) {
 			return (Text) o;
 		} else {
-			return textParser.apply(o.toString());
+			return TextSerializers.FORMATTING_CODE.deserialize(o.toString());
 		}
 	}
 
