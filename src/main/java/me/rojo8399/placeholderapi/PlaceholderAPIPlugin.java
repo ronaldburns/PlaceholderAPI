@@ -22,7 +22,9 @@ import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.GameReloadEvent;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
+import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
+import org.spongepowered.api.event.game.state.GameStartingServerEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.service.economy.EconomyService;
@@ -50,8 +52,7 @@ import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 
-@Plugin(id = PlaceholderAPIPlugin.PLUGIN_ID, name = PlaceholderAPIPlugin.PLUGIN_NAME, version = PlaceholderAPIPlugin.PLUGIN_VERSION, authors = {
-		"rojo8399", "Wundero" })
+@Plugin(id = PlaceholderAPIPlugin.PLUGIN_ID, name = PlaceholderAPIPlugin.PLUGIN_NAME, version = PlaceholderAPIPlugin.PLUGIN_VERSION, authors = { "rojo8399", "Wundero" })
 public class PlaceholderAPIPlugin {
 
 	public static final String PLUGIN_ID = "placeholderapi";
@@ -93,8 +94,7 @@ public class PlaceholderAPIPlugin {
 	}
 
 	@Listener
-	public void onGamePreInitializationEvent(GamePreInitializationEvent event)
-			throws IOException, ObjectMappingException {
+	public void onGamePreInitializationEvent(GamePreInitializationEvent event) throws IOException, ObjectMappingException {
 		instance = this;
 		// Provide default implementation
 		game.getServiceManager().setProvider(this, PlaceholderService.class, s = new PlaceholderServiceImpl());
@@ -134,17 +134,7 @@ public class PlaceholderAPIPlugin {
 				mapDefault();
 			}
 		}
-		// Register placeholders
-		s.registerPlaceholder(new JavascriptExpansion(jsm));
-		s.registerPlaceholder(new PlayerExpansion());
-		s.registerPlaceholder(new ServerExpansion());
-		s.registerPlaceholder(new SoundExpansion());
-		s.registerPlaceholder(new RankExpansion());
-		if (game.getServiceManager().provide(EconomyService.class).isPresent()) {
-			s.registerPlaceholder(
-					new CurrencyExpansion(game.getServiceManager().provideUnchecked(EconomyService.class)));
-		}
-		s.registerPlaceholder(new DateTimeExpansion());
+
 	}
 
 	@Listener
@@ -152,35 +142,45 @@ public class PlaceholderAPIPlugin {
 		// Reigster Listeners and Commands
 
 		// placeholderapi parse {player} [placeholders]
-		CommandSpec parseCmd = CommandSpec.builder()
-				.arguments(GenericArguments.onlyOne(GenericArguments.player(Text.of("player"))),
-						GenericArguments.remainingJoinedStrings(Text.of("placeholders")))
-				.executor(new ParseCommand()).permission("placeholderapi.admin").build();
+		CommandSpec parseCmd = CommandSpec.builder().arguments(GenericArguments.onlyOne(GenericArguments.player(Text.of("player"))), GenericArguments.remainingJoinedStrings(Text.of("placeholders"))).executor(new ParseCommand()).permission("placeholderapi.admin").build();
 		// Map of expansion names for info command.
 		Map<String, String> map = new HashMap<>();
 		for (Expansion e : s.getExpansions()) {
 			map.put(e.getIdentifier(), e.getIdentifier());
 		}
 		// papi list
-		CommandSpec listCmd = CommandSpec.builder().permission("placeholderapi.admin").executor(new ListCommand())
-				.build();
+		CommandSpec listCmd = CommandSpec.builder().permission("placeholderapi.admin").executor(new ListCommand()).build();
 		// papi info {expansion}
-		CommandSpec infoCmd = CommandSpec.builder()
-				.arguments(GenericArguments.choices(Text.of("placeholder"), map, false))
-				.permission("placeholderapi.admin").executor(new InfoCommand()).build();
+		CommandSpec infoCmd = CommandSpec.builder().arguments(GenericArguments.choices(Text.of("placeholder"), map, false)).permission("placeholderapi.admin").executor(new InfoCommand()).build();
 
 		// placeholderapi
 		CommandSpec baseCmd = CommandSpec.builder().executor(new CommandExecutor() {
 			// send plugin name + version
 			@Override
 			public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
-				src.sendMessage(Text.of(TextColors.GREEN, PLUGIN_NAME, TextColors.GRAY, " version ", TextColors.AQUA,
-						PLUGIN_VERSION, TextColors.GRAY, "."));
+				src.sendMessage(Text.of(TextColors.GREEN, PLUGIN_NAME, TextColors.GRAY, " version ", TextColors.AQUA, PLUGIN_VERSION, TextColors.GRAY, "."));
 				return CommandResult.success();
 			}
 		}).child(parseCmd, "parse", "p").child(listCmd, "list", "l").child(infoCmd, "info", "i").build();
 		game.getCommandManager().register(plugin, baseCmd, "placeholderapi", "papi");
 
+	}
+	
+	@Listener
+	public void onGameStartingServerEvent(GameStartingServerEvent event) {
+		registerPlaceholders();
+	}
+
+	public void registerPlaceholders() {
+		s.registerPlaceholder(new JavascriptExpansion(jsm));
+		s.registerPlaceholder(new PlayerExpansion());
+		s.registerPlaceholder(new ServerExpansion());
+		s.registerPlaceholder(new SoundExpansion());
+		s.registerPlaceholder(new RankExpansion());
+		if (game.getServiceManager().provide(EconomyService.class).isPresent()) {
+			s.registerPlaceholder(new CurrencyExpansion(game.getServiceManager().provideUnchecked(EconomyService.class)));
+		}
+		s.registerPlaceholder(new DateTimeExpansion());
 	}
 
 	@Listener
@@ -196,8 +196,7 @@ public class PlaceholderAPIPlugin {
 		}
 
 		// Send Messages to console and player
-		event.getCause().first(Player.class).ifPresent(p -> p.sendMessage(
-				Text.builder().color(TextColors.GREEN).append(Text.of("Reloaded PlaceholderAPI")).build()));
+		event.getCause().first(Player.class).ifPresent(p -> p.sendMessage(Text.builder().color(TextColors.GREEN).append(Text.of("Reloaded PlaceholderAPI")).build()));
 		logger.info("Reloaded PlaceholderAPI");
 	}
 
@@ -212,9 +211,7 @@ public class PlaceholderAPIPlugin {
 	}
 
 	private ConfigurationNode loadDefault() throws IOException {
-		return HoconConfigurationLoader.builder()
-				.setURL(game.getAssetManager().getAsset(this, "config.conf").get().getUrl()).build()
-				.load(loader.getDefaultOptions());
+		return HoconConfigurationLoader.builder().setURL(game.getAssetManager().getAsset(this, "config.conf").get().getUrl()).build().load(loader.getDefaultOptions());
 	}
 
 	public Config getConfig() {
