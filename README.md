@@ -1,4 +1,5 @@
-# PlaceholderAPI [![Build Status](https://travis-ci.org/rojo8399/PlaceholderAPI.svg?branch=master)](https://travis-ci.org/rojo8399/PlaceholderAPI) [![forthebadge](http://forthebadge.com/images/badges/made-with-crayons.svg)](http://forthebadge.com)
+# PlaceholderAPI [![Build Status](https://travis-ci.org/rojo8399/PlaceholderAPI.svg?branch=master)](https://travis-ci.org/rojo8399/PlaceholderAPI)
+[![forthebadge](http://forthebadge.com/images/badges/made-with-crayons.svg)](http://forthebadge.com) [![forthebadge](http://forthebadge.com/images/badges/fuck-it-ship-it.svg)](http://forthebadge.com)
 
 If you were sent here from another plugin, simply download this plugin and install it in your mods folder. After the first start of this plugin, you will need to enable the default expansions in the config file to be able to use those placeholders. Example if you want Player placeholders, open the config and set <code>Player</code> to <code>True</code>. Now you can use %player_name% as a placeholder. This same method applies for every available expansion.
 
