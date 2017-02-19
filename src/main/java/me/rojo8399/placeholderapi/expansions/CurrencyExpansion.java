@@ -24,7 +24,6 @@ public class CurrencyExpansion implements Expansion {
 	public CurrencyExpansion(EconomyService service) {
 		this.service = service;
 		this.def = service.getDefaultCurrency();
-		PlaceholderAPIPlugin.getInstance().getLogger().debug("Service: " + service);
 		service.getCurrencies().forEach(this::putCur);
 	}
 
