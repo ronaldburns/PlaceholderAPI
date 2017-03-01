@@ -41,88 +41,88 @@ import javax.script.ScriptException;
  */
 public class JavascriptManager {
 
-    private Map<String, File> scripts = new HashMap<>();
+	private Map<String, File> scripts = new HashMap<>();
 
-    public JavascriptManager(File scriptFolder) {
-	if (scriptFolder.exists() && scriptFolder.isFile()) {
-	    // Scripts folder incorrect
-	    scriptFolder.delete();
+	public JavascriptManager(File scriptFolder) {
+		if (scriptFolder.exists() && scriptFolder.isFile()) {
+			// Scripts folder incorrect
+			scriptFolder.delete();
+		}
+		if (!scriptFolder.exists()) {
+			scriptFolder.mkdirs();
+		}
+		// Add references to all scripts
+		for (File sub : scriptFolder.listFiles((f, s) -> s.endsWith(".js"))) {
+			scripts.put(sub.getName().replace(".js", "").toLowerCase(), sub);
+		}
 	}
-	if (!scriptFolder.exists()) {
-	    scriptFolder.mkdirs();
-	}
-	// Add references to all scripts
-	for (File sub : scriptFolder.listFiles((f, s) -> s.endsWith(".js"))) {
-	    scripts.put(sub.getName().replace(".js", "").toLowerCase(), sub);
-	}
-    }
 
-    public List<String> getScriptNames() {
-	List<String> out = new ArrayList<>();
-	out.addAll(scripts.keySet());
-	return out;
-    }
+	public List<String> getScriptNames() {
+		List<String> out = new ArrayList<>();
+		out.addAll(scripts.keySet());
+		return out;
+	}
 
-    public FileReader getScript(String name) {
-	if (!scripts.containsKey(name)) {
-	    // Prevents creating filereader on null
-	    return null;
-	}
-	try {
-	    return new FileReader(scripts.get(name));
-	} catch (FileNotFoundException e) {
-	    return null;
-	}
-    }
-
-    public Object eval(ScriptEngine engine, String token) {
-	if (token.replace("_", "").isEmpty()) {
-	    // no script name
-	    return null;
-	}
-	if (token.contains("_")) {
-	    // script has args
-	    String[] arr = token.split("_");
-	    if (arr.length == 1) {
-		// script args not present, just script_
-		if (getScript(arr[0]) == null) {
-		    // script doesn't exist
-		    return null;
+	public FileReader getScript(String name) {
+		if (!scripts.containsKey(name)) {
+			// Prevents creating filereader on null
+			return null;
 		}
 		try {
-		    engine.put("args", null);
-		    // evaluate script
-		    return engine.eval(getScript(arr[0]));
-		} catch (ScriptException e) {
-		    return "ERROR: " + e.getMessage();
+			return new FileReader(scripts.get(name));
+		} catch (FileNotFoundException e) {
+			return null;
 		}
-	    } else {
-		FileReader f = getScript(arr[0]);
-		if (f == null) {
-		    return null;
-		}
-		// skip script name in args
-		List<String> l = Arrays.asList(arr).stream().skip(1).collect(Collectors.toList());
-		// put args as array
-		engine.put("args", l.toArray(new String[l.size() - 1]));
-		try {
-		    // evaluate script
-		    return engine.eval(f);
-		} catch (ScriptException e) {
-		    return "ERROR: " + e.getMessage();
-		}
-	    }
-	} else {
-	    if (getScript(token) == null) {
-		return null;
-	    }
-	    try {
-		engine.put("args", null);
-		return engine.eval(getScript(token));
-	    } catch (ScriptException e) {
-		return "ERROR: " + e.getMessage();
-	    }
 	}
-    }
+
+	public Object eval(ScriptEngine engine, String token) {
+		if (token.replace("_", "").isEmpty()) {
+			// no script name
+			return null;
+		}
+		if (token.contains("_")) {
+			// script has args
+			String[] arr = token.split("_");
+			if (arr.length == 1) {
+				// script args not present, just script_
+				if (getScript(arr[0]) == null) {
+					// script doesn't exist
+					return null;
+				}
+				try {
+					engine.put("args", null);
+					// evaluate script
+					return engine.eval(getScript(arr[0]));
+				} catch (ScriptException e) {
+					return "ERROR: " + e.getMessage();
+				}
+			} else {
+				FileReader f = getScript(arr[0]);
+				if (f == null) {
+					return null;
+				}
+				// skip script name in args
+				List<String> l = Arrays.asList(arr).stream().skip(1).collect(Collectors.toList());
+				// put args as array
+				engine.put("args", l.toArray(new String[l.size() - 1]));
+				try {
+					// evaluate script
+					return engine.eval(f);
+				} catch (ScriptException e) {
+					return "ERROR: " + e.getMessage();
+				}
+			}
+		} else {
+			if (getScript(token) == null) {
+				return null;
+			}
+			try {
+				engine.put("args", null);
+				return engine.eval(getScript(token));
+			} catch (ScriptException e) {
+				return "ERROR: " + e.getMessage();
+			}
+		}
+	}
 
 }

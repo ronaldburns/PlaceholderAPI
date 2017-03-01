@@ -25,6 +25,7 @@ package me.rojo8399.placeholderapi.expansions;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -34,6 +35,7 @@ import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.serializer.TextSerializers;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
+import me.rojo8399.placeholderapi.PlaceholderService;
 import me.rojo8399.placeholderapi.configs.JavascriptManager;
 
 /**
@@ -42,107 +44,115 @@ import me.rojo8399.placeholderapi.configs.JavascriptManager;
  */
 public class JavascriptExpansion implements Expansion {
 
-    private ScriptEngine engine;
-    private JavascriptManager manager;
+	private ScriptEngine engine;
+	private JavascriptManager manager;
 
-    public JavascriptExpansion(JavascriptManager manager) {
-	this.manager = manager;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see me.rojo8399.placeholderapi.expansions.Expansion#getDescription()
-     */
-    @Override
-    public String getDescription() {
-	return "Execute javascript scripts.";
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see me.rojo8399.placeholderapi.expansions.Expansion#canRegister()
-     */
-    @Override
-    public boolean canRegister() {
-	return PlaceholderAPIPlugin.getInstance().getConfig().expansions.javascript;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see me.rojo8399.placeholderapi.expansions.Expansion#getIdentifier()
-     */
-    @Override
-    public String getIdentifier() {
-	return "javascript";
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see me.rojo8399.placeholderapi.expansions.Expansion#getAuthor()
-     */
-    @Override
-    public String getAuthor() {
-	return "Wundero";
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see me.rojo8399.placeholderapi.expansions.Expansion#getVersion()
-     */
-    @Override
-    public String getVersion() {
-	return "1.0";
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * me.rojo8399.placeholderapi.expansions.Expansion#onPlaceholderRequest(org.
-     * spongepowered.api.entity.living.player.Player, java.util.Optional,
-     * java.util.function.Function)
-     */
-    @Override
-    public Text onPlaceholderRequest(Player player, Optional<String> token) {
-	if (!token.isPresent()) {
-	    // No script
-	    return null;
+	public JavascriptExpansion(JavascriptManager manager) {
+		this.manager = manager;
 	}
-	if (engine == null) {
-	    // Lazily instantiate engine
-	    engine = new ScriptEngineManager(null).getEngineByName("Nashorn");
-	    // Insert default server variable - constant
-	    engine.put("server", PlaceholderAPIPlugin.getInstance().getGame().getServer());
-	}
-	// Insert player + parser objects, which change every time
-	engine.put("player", player);
-	// Evaluate the script
-	Object o = manager.eval(engine, token.get());
-	if (o == null) {
-	    // If null do not replace
-	    return null;
-	}
-	// Return object out
-	if (o instanceof Text) {
-	    return (Text) o;
-	} else {
-	    return TextSerializers.FORMATTING_CODE.deserialize(o.toString());
-	}
-    }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see me.rojo8399.placeholderapi.expansions.Expansion#getSupportedTokens()
-     */
-    @Override
-    public List<String> getSupportedTokens() {
-	return manager.getScriptNames();
-    }
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see me.rojo8399.placeholderapi.expansions.Expansion#getDescription()
+	 */
+	@Override
+	public String getDescription() {
+		return "Execute javascript scripts.";
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see me.rojo8399.placeholderapi.expansions.Expansion#canRegister()
+	 */
+	@Override
+	public boolean canRegister() {
+		return PlaceholderAPIPlugin.getInstance().getConfig().expansions.javascript;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see me.rojo8399.placeholderapi.expansions.Expansion#getIdentifier()
+	 */
+	@Override
+	public String getIdentifier() {
+		return "javascript";
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see me.rojo8399.placeholderapi.expansions.Expansion#getAuthor()
+	 */
+	@Override
+	public String getAuthor() {
+		return "Wundero";
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see me.rojo8399.placeholderapi.expansions.Expansion#getVersion()
+	 */
+	@Override
+	public String getVersion() {
+		return "1.0";
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * me.rojo8399.placeholderapi.expansions.Expansion#onPlaceholderRequest(org.
+	 * spongepowered.api.entity.living.player.Player, java.util.Optional,
+	 * java.util.function.Function)
+	 */
+	@Override
+	public Text onPlaceholderRequest(Player player, Optional<String> token) {
+		if (!token.isPresent()) {
+			// No script
+			return null;
+		}
+		if (engine == null) {
+			// Lazily instantiate engine
+			engine = new ScriptEngineManager(null).getEngineByName("Nashorn");
+			// Insert default server variable - constant
+			engine.put("server", PlaceholderAPIPlugin.getInstance().getGame().getServer());
+		}
+		// Insert player + parser objects, which change every time
+		engine.put("player", player);
+		// Allow retrieving values for registered expansions except for
+		// javascript
+		// scripts - will parse like a normal string (e.g. "%player_name%")
+		Function<String, Text> otherVars = (t) -> !t.toLowerCase().contains("javascript")
+				? PlaceholderAPIPlugin.getInstance().getGame().getServiceManager()
+						.provideUnchecked(PlaceholderService.class).replacePlaceholders(player, t)
+				: Text.of(t);
+		engine.put("service", otherVars);
+		// Evaluate the script
+		Object o = manager.eval(engine, token.get());
+		if (o == null) {
+			// If null do not replace
+			return null;
+		}
+		// Return object out
+		if (o instanceof Text) {
+			return (Text) o;
+		} else {
+			return TextSerializers.FORMATTING_CODE.deserialize(o.toString());
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see me.rojo8399.placeholderapi.expansions.Expansion#getSupportedTokens()
+	 */
+	@Override
+	public List<String> getSupportedTokens() {
+		return manager.getScriptNames();
+	}
 
 }
