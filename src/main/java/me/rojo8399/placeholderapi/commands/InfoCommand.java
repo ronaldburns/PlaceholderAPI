@@ -2,6 +2,7 @@ package me.rojo8399.placeholderapi.commands;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.spongepowered.api.command.CommandException;
@@ -36,6 +37,9 @@ public class InfoCommand implements CommandExecutor {
 		return CommandResult.success();
 	}
 
+	private static final Pattern OPT = Pattern.compile("[\\<\\[\\(\\{]([^ \\<\\>\\[\\]\\{\\}\\(\\)]+)[\\>\\}\\]\\)]",
+			Pattern.CASE_INSENSITIVE);
+
 	private static Text formatExpansion(Expansion e, CommandSource src) {
 		final String name = e.getIdentifier();
 		String version = e.getVersion();
@@ -50,6 +54,9 @@ public class InfoCommand implements CommandExecutor {
 						return token(name, src);
 					}
 					String s2 = name.concat("_" + s);
+					if (OPT.matcher(s2).find()) {
+						return token(s2, src, true);
+					}
 					return token(s2, src);
 				}).collect(Collectors.toList());
 		Text url = e.getURL() == null ? Text.EMPTY
@@ -61,6 +68,19 @@ public class InfoCommand implements CommandExecutor {
 						Text.joinWith(Text.of(", "), supportedTokens));
 		return Text.of(TextColors.AQUA, name, TextColors.GREEN, " " + version, TextColors.GRAY, " by ", TextColors.GOLD,
 				author, TextColors.GRAY, ".", desc, url, support);
+	}
+
+	private static Text token(String token, CommandSource src, boolean opt) {
+		if (!opt) {
+			return token(token, src);
+		}
+		if (!(src instanceof Player)) {
+			return Text.of(TextColors.GREEN, "%" + token + "%");
+		}
+		String p = src.getName();
+		return Text.of(TextColors.GREEN,
+				TextActions.showText(Text.of(TextColors.AQUA, "Click to parse this placeholder for you!")),
+				TextActions.suggestCommand("/papi p " + p + " %" + token + "%"), "%" + token + "%");
 	}
 
 	private static Text token(String token, CommandSource src) {
