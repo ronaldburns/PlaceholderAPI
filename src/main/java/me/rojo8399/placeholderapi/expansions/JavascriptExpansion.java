@@ -25,11 +25,12 @@ package me.rojo8399.placeholderapi.expansions;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.serializer.TextSerializers;
@@ -126,11 +127,9 @@ public class JavascriptExpansion implements Expansion {
 		// Allow retrieving values for registered expansions except for
 		// javascript
 		// scripts - will parse like a normal string (e.g. "%player_name%")
-		Function<String, Text> otherVars = (t) -> !t.toLowerCase().contains("javascript")
-				? PlaceholderAPIPlugin.getInstance().getGame().getServiceManager()
-						.provideUnchecked(PlaceholderService.class).replacePlaceholders(player, t)
-				: Text.of(t);
-		engine.put("service", otherVars);
+		PlaceholderService s = Sponge.getServiceManager().provideUnchecked(PlaceholderService.class);
+		Service service = new Service(s, player);
+		engine.put("service", service);
 		// Evaluate the script
 		Object o = manager.eval(engine, token.get());
 		if (o == null) {
@@ -142,6 +141,30 @@ public class JavascriptExpansion implements Expansion {
 			return (Text) o;
 		} else {
 			return TextSerializers.FORMATTING_CODE.deserialize(o.toString());
+		}
+	}
+
+	public static class Service {
+		private PlaceholderService s;
+		private Player p;
+
+		public Service(PlaceholderService s, Player p) {
+			this.s = s;
+			this.p = p;
+		}
+
+		public Text get(String placeholders) {
+			if (placeholders.toLowerCase().contains("javascript")) {
+				return Text.of(placeholders);
+			}
+			return s.replacePlaceholders(p, placeholders);
+		}
+
+		public Text get(String placeholders, String pattern) {
+			if (placeholders.toLowerCase().contains("javascript")) {
+				return Text.of(placeholders);
+			}
+			return s.replacePlaceholders(p, placeholders, Pattern.compile(pattern, Pattern.CASE_INSENSITIVE));
 		}
 	}
 

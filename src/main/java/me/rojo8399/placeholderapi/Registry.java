@@ -27,7 +27,7 @@ public class Registry {
 	}
 
 	public boolean register(Expansion e) {
-		if (e == null || (!(e instanceof ConfigurableExpansion) && !e.canRegister())) {
+		if (e == null) {
 			return false;
 		}
 		if (e.getIdentifier() == null || e.getIdentifier().isEmpty()) {
@@ -61,9 +61,9 @@ public class Registry {
 				}
 				return false;
 			}
-			if (!e.canRegister()) {
-				return false;
-			}
+		}
+		if (!e.canRegister()) {
+			return false;
 		}
 		registry.put((ru ? e.getIdentifier().replace("_", "") : e.getIdentifier()).toLowerCase(), e);
 		return true;

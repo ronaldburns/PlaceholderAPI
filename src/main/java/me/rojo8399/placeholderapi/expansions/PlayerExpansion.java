@@ -56,6 +56,8 @@ public class PlayerExpansion implements Expansion {
 			return p.getDisplayNameData().displayName().get();
 		case "world":
 			return Text.of(p.getWorld().getName());
+		case "ping":
+			return Text.of(p.getConnection().getLatency());
 		default:
 			return null;
 		}
@@ -69,7 +71,7 @@ public class PlayerExpansion implements Expansion {
 	@Override
 	public List<String> getSupportedTokens() {
 		return Arrays.asList(null, "prefix", "suffix", "name", "displayname", "world", "option_[option]",
-				"permission_[permission]");
+				"permission_[permission]", "ping");
 	}
 
 }
