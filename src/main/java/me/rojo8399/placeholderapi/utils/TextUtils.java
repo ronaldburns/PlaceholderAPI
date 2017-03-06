@@ -60,19 +60,23 @@ public class TextUtils {
 			String mg = matcher.group().substring(1); // Get actual placeholder
 			mg = mg.substring(0, mg.length() - 1);
 			// Get format for arg
-			if (x > 1) {
+			if (x <= textParts.length) {
 				last = last.merge(getLastFormat(parser.apply(textParts[x - 1])));
 			}
 			// Make arg
 			out = out.concat(TextTemplate.of(TextTemplate.arg(mg).format(last)));
 			if (x < textParts.length) {
 				// If there exists a part to insert
-				out = out.concat(TextTemplate.of(parser.apply(textParts[x])));
+				out = out.concat(TextTemplate.of(fix(parser.apply(textParts[x]), last)));
 			}
 			in = matcher.replaceFirst("");
 			x++;
 		}
 		return out;
+	}
+
+	private static Text fix(Text to, TextFormat l) {
+		return to.toBuilder().format(l.merge(to.getFormat())).build();
 	}
 
 	/**

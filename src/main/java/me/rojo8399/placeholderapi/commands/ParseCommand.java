@@ -20,24 +20,22 @@ public class ParseCommand implements CommandExecutor {
 	public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
 
 		Player p = args.<Player>getOne("player").get();
-		String[] placeholders = args.<String>getOne(Text.of("placeholders")).get().split(" ");
+		String placeholder = args.<String>getOne(Text.of("placeholders")).get();
 
 		PlaceholderService service = PlaceholderAPIPlugin.getInstance().getGame().getServiceManager()
 				.provideUnchecked(PlaceholderService.class);
 		if (service == null) {
 			throw new CommandException(Text.of(TextColors.RED, "ERROR: Placeholders not registered!"));
 		}
-		for (String placeholder : placeholders) {
-			Text t = service.replacePlaceholders(p, placeholder,
-					Pattern.compile("[%{]([^{%} ]+)[%}]", Pattern.CASE_INSENSITIVE));
-			if (t == null) {
-				t = Text.EMPTY;
-			}
-			if (!t.isEmpty()) {
-				src.sendMessage(t);
-			} else {
-				src.sendMessage(Text.of(TextColors.RED, "No value present!"));
-			}
+		Text t = service.replacePlaceholders(p, placeholder,
+				Pattern.compile("[%{]([^{%} ]+)[%}]", Pattern.CASE_INSENSITIVE));
+		if (t == null) {
+			t = Text.EMPTY;
+		}
+		if (!t.isEmpty()) {
+			src.sendMessage(t);
+		} else {
+			src.sendMessage(Text.of(TextColors.RED, "No value present!"));
 		}
 		return CommandResult.success();
 

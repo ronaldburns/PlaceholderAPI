@@ -89,6 +89,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	private String rptl(Player player, String text, Function<Text, String> f, Pattern p) {
 		Matcher placeholderMatcher = p.matcher(text);
 		while (placeholderMatcher.find()) {
+			String total = placeholderMatcher.group();
 			String format = placeholderMatcher.group(1);
 			int index = format.indexOf("_");
 			if (index == 0 || index == format.length()) {
@@ -114,9 +115,9 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			PlaceholderAPIPlugin.getInstance().getLogger()
 					.debug("Format: " + format + ", ID: " + id + ", Value : " + value);
 			if (value == null) {
-				value = "%" + format + "%";
+				value = total;
 			}
-			text = text.replace("%" + format + "%", Matcher.quoteReplacement(value));
+			text = text.replace(total, Matcher.quoteReplacement(value));
 		}
 		return text;
 	}
