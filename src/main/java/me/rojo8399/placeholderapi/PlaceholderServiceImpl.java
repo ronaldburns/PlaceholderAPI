@@ -110,7 +110,13 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			try {
 				value = exp.onPlaceholderRequestLegacy(player, Optional.ofNullable(token), f);
 			} catch (Exception e) {
-				value = "ERROR: " + e.getMessage();
+				if (e instanceof NullPointerException && e.getMessage().equals("null")) {
+					// Should theoretically only happen if player is null.
+					value = null;
+				} else {
+					value = "ERROR: " + e.getMessage();
+				}
+				e.printStackTrace();
 			}
 			PlaceholderAPIPlugin.getInstance().getLogger()
 					.debug("Format: " + format + ", ID: " + id + ", Value : " + value);
@@ -223,7 +229,12 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			try {
 				value = exp.onPlaceholderRequest(player, Optional.ofNullable(token));
 			} catch (Exception e) {
-				value = Text.of(TextColors.RED, "ERROR: " + e.getMessage());
+				if (e instanceof NullPointerException && e.getMessage().equals("null")) {
+					value = null;
+				} else {
+					value = Text.of(TextColors.RED, "ERROR: " + e.getMessage());
+				}
+				e.printStackTrace();
 			}
 
 			PlaceholderAPIPlugin.getInstance().getLogger().debug("Format: " + a + ", ID: " + id + ", Value : " + value);
