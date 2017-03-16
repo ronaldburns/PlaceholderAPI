@@ -53,16 +53,50 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 		boolean skip = false;
 		for (Character c : pattern.toCharArray()) {
 			if (skip) {
+				switch (c) {
+				case 'D':
+				case 'd':
+				case 'S':
+				case 's':
+				case 'w':
+				case 'W':
+				case 'b':
+				case 'B':
+				case 'A':
+				case 'G':
+				case 'Z':
+				case 'z':
+				case 'n':
+					out += "\\";
+				}
 				out += c;
 				skip = false;
 				continue;
 			}
-			if (c == '\\') {
-				skip = true;
+			switch (c) {
+			case '\\':
+			case '[':
+			case ']':
+			case '(':
+			case ')':
+			case '$':
+			case '^':
+			case '+':
+			case '?':
+			case '*':
+			case '{':
+			case '}':
+			case '|':
+			case '.':
+			case '=':
+			case ':':
+			case '>':
+			case '<':
+			case '!':
+			case '-':
 				out += "\\";
-				continue;
 			}
-			out += "\\" + c;
+			out += c;
 		}
 		return out;
 	}
