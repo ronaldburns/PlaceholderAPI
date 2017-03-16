@@ -223,17 +223,30 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	 * Replace placeholders
 	 */
 	@Override
-	public Text replacePlaceholders(Player player, TextTemplate template) {
-		return rpt(player, template);
+	public Text replacePlaceholders(Player player, TextTemplate template, Map<String, Object> args) {
+		return template.apply(rpt(player, template, args)).build();
+	}
+
+	/**
+	 * Fill placeholders
+	 */
+	@Override
+	public Map<String, Object> fillPlaceholders(Player player, TextTemplate template) {
+		return rpt(player, template, null);
 	}
 
 	/*
 	 * Replace placeholders then parse value using the function
 	 */
-	private Text rpt(Player player, TextTemplate template) {
-		Map<String, Object> args = new HashMap<>();
+	private Map<String, Object> rpt(Player player, TextTemplate template, Map<String, Object> args) {
+		if (args == null) {
+			args = new HashMap<>();
+		}
 		// For every existing argument
 		for (String a : template.getArguments().keySet()) {
+			if (args.containsKey(a)) {
+				continue;
+			}
 			String format = a.toLowerCase();
 			int index = format.indexOf("_");
 			if (index == 0 || index == format.length()) {
@@ -277,7 +290,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			}
 			args.put(a, value);
 		}
-		return template.apply(args).build();
+		return args;
 	}
 
 	/**

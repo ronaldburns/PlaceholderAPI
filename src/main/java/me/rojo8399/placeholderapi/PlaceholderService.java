@@ -1,5 +1,7 @@
 package me.rojo8399.placeholderapi;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -63,7 +65,31 @@ public interface PlaceholderService {
 	 *            The template to parse.
 	 * @return The parsed text.
 	 */
-	public Text replacePlaceholders(Player player, TextTemplate template);
+	public default Text replacePlaceholders(Player player, TextTemplate template) {
+		return replacePlaceholders(player, template, new HashMap<>());
+	}
+
+	/**
+	 * Replace all placeholders in a texttemplate.
+	 * 
+	 * @param player
+	 *            The player to parse with respect to.
+	 * @param template
+	 *            The template to parse.
+	 * @return The parsed text.
+	 */
+	public Text replacePlaceholders(Player player, TextTemplate template, Map<String, Object> arguments);
+
+	/**
+	 * Fill a map with placeholder replacements for a player.
+	 * 
+	 * @param player
+	 *            The player to parse with respect to.
+	 * @param template
+	 *            The template from which to take placeholders
+	 * @return the arguments that will fill the template.
+	 */
+	public Map<String, Object> fillPlaceholders(Player player, TextTemplate template);
 
 	/**
 	 * Replace all placeholders in a string.
