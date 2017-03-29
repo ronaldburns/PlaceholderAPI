@@ -16,21 +16,28 @@ import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.service.user.UserStorageService;
 import org.spongepowered.api.text.Text;
 
-import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
+import com.google.common.reflect.TypeToken;
 
-public class ServerExpansion implements Expansion {
+import ninja.leaping.configurate.objectmapping.Setting;
+
+import static me.rojo8399.placeholderapi.utils.TextUtils.textOf;
+
+public class ServerExpansion implements ConfigurableExpansion, ListeningExpansion {
+
+	private static TypeToken<ServerExpansion> type = TypeToken.of(ServerExpansion.class);
 
 	private static Runtime runtime = Runtime.getRuntime();
 	private static int MB = 1024 * 1024;
 	private UserStorageService storage = null;
 	private Set<User> users = new HashSet<>();
 	private boolean changed = false;
+	@Setting
+	private boolean enabled = true;
 
 	@Override
 	public boolean canRegister() {
-		boolean out = PlaceholderAPIPlugin.getInstance().getConfig().expansions.server;
+		boolean out = enabled;
 		if (out) {
-			Sponge.getEventManager().registerListeners(PlaceholderAPIPlugin.getInstance(), this);
 			Optional<UserStorageService> o = Sponge.getServiceManager().provide(UserStorageService.class);
 			if (o.isPresent()) {
 				this.storage = o.get();
@@ -94,23 +101,25 @@ public class ServerExpansion implements Expansion {
 		}
 		switch (identifier.get()) {
 		case "online":
-			return Text.of(String.valueOf(Sponge.getServer().getOnlinePlayers().size()));
+			return textOf(Sponge.getServer().getOnlinePlayers().size());
 		case "max_players":
-			return Text.of(String.valueOf(Sponge.getServer().getMaxPlayers()));
+			return textOf(Sponge.getServer().getMaxPlayers());
 		case "unique_players":
-			return Text.of(String.valueOf(unique()));
+			return textOf(unique());
 		case "motd":
 			return Sponge.getServer().getMotd();
 		case "ram_used":
-			return Text.of(String.valueOf((runtime.totalMemory() - runtime.freeMemory()) / MB));
+			return textOf((runtime.totalMemory() - runtime.freeMemory()) / MB);
 		case "ram_free":
-			return Text.of(String.valueOf(runtime.freeMemory() / MB));
+			return textOf(runtime.freeMemory() / MB);
 		case "ram_total":
-			return Text.of(String.valueOf(runtime.totalMemory() / MB));
+			return textOf(runtime.totalMemory() / MB);
 		case "ram_max":
-			return Text.of(String.valueOf(runtime.maxMemory() / MB));
+			return textOf(runtime.maxMemory() / MB);
 		case "cores":
-			return Text.of(String.valueOf(runtime.availableProcessors()));
+			return textOf(runtime.availableProcessors());
+		case "tps":
+			return textOf(Sponge.getServer().getTicksPerSecond());
 		default:
 			return null;
 		}
@@ -124,7 +133,28 @@ public class ServerExpansion implements Expansion {
 	@Override
 	public List<String> getSupportedTokens() {
 		return Arrays.asList("online", "max_players", "unique_players", "motd", "ram_used", "ram_free", "ram_total",
-				"ram_max", "cores");
+				"ram_max", "cores", "tps");
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see me.rojo8399.placeholderapi.expansions.ListeningExpansion#getPlugin()
+	 */
+	@Override
+	public Optional<Object> getPlugin() {
+		return Optional.empty();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * me.rojo8399.placeholderapi.expansions.ConfigurableExpansion#getToken()
+	 */
+	@Override
+	public TypeToken<? extends ConfigurableExpansion> getToken() {
+		return type;
 	}
 
 }

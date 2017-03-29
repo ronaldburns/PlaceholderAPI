@@ -16,8 +16,6 @@ public class Config {
 		@Setting
 		public boolean player = true;
 		@Setting
-		public boolean server = true;
-		@Setting
 		public boolean rank = false;
 		@Setting
 		public boolean sound = false;

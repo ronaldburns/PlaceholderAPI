@@ -101,8 +101,13 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 		return out;
 	}
 
-	// Package level to prevent instantiation but allow the plugin to create one
-	PlaceholderServiceImpl() {
+	private static PlaceholderServiceImpl instance; // lazy instantiation
+
+	private PlaceholderServiceImpl() {
+	}
+
+	public static PlaceholderServiceImpl get() {
+		return instance == null ? instance = new PlaceholderServiceImpl() : instance;
 	}
 
 	/**

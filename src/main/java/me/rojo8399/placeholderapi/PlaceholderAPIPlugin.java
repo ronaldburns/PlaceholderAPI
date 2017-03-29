@@ -54,7 +54,7 @@ public class PlaceholderAPIPlugin {
 
 	public static final String PLUGIN_ID = "placeholderapi";
 	public static final String PLUGIN_NAME = "PlaceholderAPI";
-	public static final String PLUGIN_VERSION = "3.8";
+	public static final String PLUGIN_VERSION = "3.9";
 	private static PlaceholderAPIPlugin instance;
 
 	@Inject
@@ -95,7 +95,7 @@ public class PlaceholderAPIPlugin {
 			throws IOException, ObjectMappingException {
 		instance = this;
 		// Provide default implementation
-		game.getServiceManager().setProvider(this, PlaceholderService.class, s = new PlaceholderServiceImpl());
+		game.getServiceManager().setProvider(this, PlaceholderService.class, s = PlaceholderServiceImpl.get());
 		plugin = game.getPluginManager().getPlugin(PLUGIN_ID).get();
 		Asset conf = game.getAssetManager().getAsset(this, "config.conf").get();
 		jsm = new JavascriptManager(new File(path.toFile().getParentFile(), "javascript"));

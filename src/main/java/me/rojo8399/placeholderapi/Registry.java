@@ -5,8 +5,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import org.spongepowered.api.Sponge;
+
 import me.rojo8399.placeholderapi.expansions.ConfigurableExpansion;
 import me.rojo8399.placeholderapi.expansions.Expansion;
+import me.rojo8399.placeholderapi.expansions.ListeningExpansion;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMapper;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
@@ -64,6 +67,10 @@ public class Registry {
 		}
 		if (!e.canRegister()) {
 			return false;
+		}
+		if (e instanceof ListeningExpansion) {
+			Sponge.getEventManager().registerListeners(
+					((ListeningExpansion) e).getPlugin().orElse(PlaceholderAPIPlugin.getInstance()), e);
 		}
 		registry.put((ru ? e.getIdentifier().replace("_", "") : e.getIdentifier()).toLowerCase(), e);
 		return true;

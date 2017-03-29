@@ -48,7 +48,7 @@ public class InfoCommand implements CommandExecutor {
 		if (tokens == null) {
 			tokens = new ArrayList<>();
 		}
-		List<Text> supportedTokens = tokens.stream().limit(10).map(s -> s == null || s.isEmpty() ? null : s).distinct()
+		List<Text> supportedTokens = tokens.stream().limit(20).map(s -> s == null || s.isEmpty() ? null : s).distinct()
 				.sorted((s1, s2) -> s1 == null ? -1 : (s2 == null ? 1 : s1.compareTo(s2))).map(s -> {
 					if (s == null) {
 						return token(name, src);

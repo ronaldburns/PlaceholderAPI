@@ -140,7 +140,7 @@ public class JavascriptExpansion implements Expansion {
 		if (o instanceof Text) {
 			return (Text) o;
 		} else {
-			return TextSerializers.FORMATTING_CODE.deserialize(o.toString());
+			return TextSerializers.FORMATTING_CODE.deserialize(String.valueOf(o));
 		}
 	}
 

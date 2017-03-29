@@ -129,4 +129,11 @@ public class TextUtils {
 		return out;
 	}
 
+	/**
+	 * Return a text literal value of an object
+	 */
+	public static <T> Text textOf(T obj) {
+		return Text.of(String.valueOf(obj));
+	}
+
 }

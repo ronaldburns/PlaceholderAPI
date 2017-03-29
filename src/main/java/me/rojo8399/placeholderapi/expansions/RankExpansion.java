@@ -63,18 +63,15 @@ public class RankExpansion implements Expansion {
 	 */
 	private static Subject getParentGroup(Subject subject) {
 		List<Subject> parents = subject.getParents();
-		return parents.stream().filter(parent -> {
-			for (Subject s : parents) {
-				if (s.equals(parent) || s.getIdentifier().equals(parent.getIdentifier())) {
-					continue;
-				}
-				if (parent.isChildOf(s)) {
-					continue;
-				}
-				return false;
+		return parents.stream().sorted((s1, s2) -> {
+			if (s1.isChildOf(s2)) {
+				return 1;
 			}
-			return true;
-		}).findFirst().orElse(subject);
+			if (s2.isChildOf(s1)) {
+				return -1;
+			}
+			return 0;
+		}).findFirst().orElse(parents.isEmpty() ? subject : parents.get(0));
 	}
 
 	/*
