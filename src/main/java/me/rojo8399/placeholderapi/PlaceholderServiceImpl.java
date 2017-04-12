@@ -129,7 +129,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 		Matcher placeholderMatcher = p.matcher(text);
 		while (placeholderMatcher.find()) {
 			String total = placeholderMatcher.group();
-			String format = placeholderMatcher.group(1);
+			String format = placeholderMatcher.group(2);
 			int index = format.indexOf("_");
 			if (index == 0 || index == format.length()) {
 				continue;
