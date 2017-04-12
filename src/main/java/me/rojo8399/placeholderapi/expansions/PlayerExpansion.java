@@ -1,7 +1,5 @@
 package me.rojo8399.placeholderapi.expansions;
 
-import static me.rojo8399.placeholderapi.utils.TextUtils.textOf;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -50,7 +48,7 @@ public class PlayerExpansion implements Expansion {
 		}
 		if (token.toLowerCase().startsWith("stat") && token.contains("_")) {
 			String s = token.substring(token.indexOf("_"));
-			return textOf(p.getStatisticData().statistics().entrySet().stream()
+			return Text.of(p.getStatisticData().statistics().entrySet().stream()
 					.filter(e -> e.getKey().getId().equalsIgnoreCase(s) || e.getKey().getName().equalsIgnoreCase(s))
 					.sorted((e1, e2) -> e1.getKey().getId().equalsIgnoreCase(s) ? -1 : 1).map(e -> e.getValue())
 					.findFirst().orElse(-1l));
@@ -70,23 +68,23 @@ public class PlayerExpansion implements Expansion {
 		case "language":
 			return Text.of(p.getLocale().getDisplayName());
 		case "flying":
-			return textOf(!p.isOnGround());
+			return Text.of(!p.isOnGround());
 		case "health":
-			return textOf(Math.round(p.health().get()));
+			return Text.of(Math.round(p.health().get()));
 		case "max_health":
-			return textOf(Math.round(p.maxHealth().get()));
+			return Text.of(Math.round(p.maxHealth().get()));
 		case "food":
-			return textOf(p.foodLevel().get());
+			return Text.of(p.foodLevel().get());
 		case "saturation":
-			return textOf(Math.round(p.saturation().get()));
+			return Text.of(Math.round(p.saturation().get()));
 		case "gamemode":
 			return Text.of(p.gameMode().get().getName());
 		case "x":
-			return textOf(p.getLocation().getPosition().toInt().getX());
+			return Text.of(p.getLocation().getPosition().toInt().getX());
 		case "y":
-			return textOf(p.getLocation().getPosition().toInt().getY());
+			return Text.of(p.getLocation().getPosition().toInt().getY());
 		case "z":
-			return textOf(p.getLocation().getPosition().toInt().getZ());
+			return Text.of(p.getLocation().getPosition().toInt().getZ());
 		default:
 			return null;
 		}

@@ -20,8 +20,6 @@ import com.google.common.reflect.TypeToken;
 
 import ninja.leaping.configurate.objectmapping.Setting;
 
-import static me.rojo8399.placeholderapi.utils.TextUtils.textOf;
-
 public class ServerExpansion implements ConfigurableExpansion, ListeningExpansion {
 
 	private static TypeToken<ServerExpansion> type = TypeToken.of(ServerExpansion.class);
@@ -101,25 +99,25 @@ public class ServerExpansion implements ConfigurableExpansion, ListeningExpansio
 		}
 		switch (identifier.get()) {
 		case "online":
-			return textOf(Sponge.getServer().getOnlinePlayers().size());
+			return Text.of(Sponge.getServer().getOnlinePlayers().size());
 		case "max_players":
-			return textOf(Sponge.getServer().getMaxPlayers());
+			return Text.of(Sponge.getServer().getMaxPlayers());
 		case "unique_players":
-			return textOf(unique());
+			return Text.of(unique());
 		case "motd":
 			return Sponge.getServer().getMotd();
 		case "ram_used":
-			return textOf((runtime.totalMemory() - runtime.freeMemory()) / MB);
+			return Text.of((runtime.totalMemory() - runtime.freeMemory()) / MB);
 		case "ram_free":
-			return textOf(runtime.freeMemory() / MB);
+			return Text.of(runtime.freeMemory() / MB);
 		case "ram_total":
-			return textOf(runtime.totalMemory() / MB);
+			return Text.of(runtime.totalMemory() / MB);
 		case "ram_max":
-			return textOf(runtime.maxMemory() / MB);
+			return Text.of(runtime.maxMemory() / MB);
 		case "cores":
-			return textOf(runtime.availableProcessors());
+			return Text.of(runtime.availableProcessors());
 		case "tps":
-			return textOf(Sponge.getServer().getTicksPerSecond());
+			return Text.of(Sponge.getServer().getTicksPerSecond());
 		default:
 			return null;
 		}
