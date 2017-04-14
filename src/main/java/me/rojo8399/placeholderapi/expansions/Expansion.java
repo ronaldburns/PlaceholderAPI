@@ -3,11 +3,10 @@ package me.rojo8399.placeholderapi.expansions;
 import java.net.URL;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.serializer.TextSerializer;
+import org.spongepowered.api.text.serializer.TextSerializers;
 
 public interface Expansion {
 
@@ -77,34 +76,14 @@ public interface Expansion {
 	/**
 	 * Parse the token for the player
 	 * 
-	 * @return the result of the parse as a string serialized with the
-	 *         serializer
-	 */
-	public default String onPlaceholderRequestLegacy(Player player, Optional<String> token, TextSerializer serializer) {
-		return onPlaceholderRequestLegacy(player, token, serializer::serialize);
-	}
-
-	/**
-	 * Parse the token for the player
-	 * 
-	 * @return the result of the parse as a string
-	 */
-	public default String onPlaceholderRequestLegacy(Player player, Optional<String> token) {
-		return onPlaceholderRequestLegacy(player, token, Text::toPlain);
-	}
-
-	/**
-	 * Parse the token for the player
-	 * 
 	 * @return the result of the parse as a string created with the text parser
 	 */
-	public default String onPlaceholderRequestLegacy(Player player, Optional<String> token,
-			Function<Text, String> textParser) {
+	public default String onPlaceholderRequestLegacy(Player player, Optional<String> token) {
 		Text t = onPlaceholderRequest(player, token);
 		if (t == null) {
 			return null;
 		}
-		return textParser.apply(t);
+		return TextSerializers.FORMATTING_CODE.serialize(t);
 	}
 
 }

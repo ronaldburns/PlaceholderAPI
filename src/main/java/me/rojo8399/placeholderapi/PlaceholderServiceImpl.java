@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -117,15 +116,15 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 
 	@Override
 	public String replacePlaceholdersLegacy(Player player, String text, String o, String c) {
-		return rptl(player, text, TextSerializers.FORMATTING_CODE::serialize, generatePattern(o, c));
+		return rptl(player, text, generatePattern(o, c));
 	}
 
 	@Override
 	public String replacePlaceholdersLegacy(Player player, String text, Pattern pattern) {
-		return rptl(player, text, TextSerializers.FORMATTING_CODE::serialize, pattern);
+		return rptl(player, text, pattern);
 	}
 
-	private String rptl(Player player, String text, Function<Text, String> f, Pattern p) {
+	private String rptl(Player player, String text, Pattern p) {
 		Matcher placeholderMatcher = p.matcher(text);
 		while (placeholderMatcher.find()) {
 			String total = placeholderMatcher.group();
@@ -152,7 +151,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			Expansion exp = registry.get(id);
 			String value = null;
 			try {
-				value = exp.onPlaceholderRequestLegacy(player, Optional.ofNullable(token), f);
+				value = exp.onPlaceholderRequestLegacy(player, Optional.ofNullable(token));
 			} catch (Exception e) {
 				if (e instanceof NullPointerException && e.getMessage().equals("null")) {
 					// Should theoretically only happen if player is null.

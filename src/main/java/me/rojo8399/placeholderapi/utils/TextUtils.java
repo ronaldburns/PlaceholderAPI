@@ -51,7 +51,7 @@ public class TextUtils {
 			parser = TextSerializers.FORMATTING_CODE::deserialize;
 		}
 		if (placeholderPattern == null) {
-			placeholderPattern = Pattern.compile("[\\%]([^ \\%]+)[\\%]", Pattern.CASE_INSENSITIVE);
+			placeholderPattern = Pattern.compile("[%]([^ %]+)[%]", Pattern.CASE_INSENSITIVE);
 		}
 		String in = i;
 		if (!placeholderPattern.matcher(in).find()) {
