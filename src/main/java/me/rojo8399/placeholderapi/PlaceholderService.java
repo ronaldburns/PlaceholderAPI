@@ -51,7 +51,13 @@ public interface PlaceholderService {
 	 * @param text
 	 *            The text to parse.
 	 * @param pattern
-	 *            The pattern to match against
+	 *            The pattern to match against. The parser assumes regular
+	 *            expression group 1 is the group that gets the whole
+	 *            placeholder. You can use non-capturing groups (?:...) to have
+	 *            matching groups ahead of the group. If there are no groups,
+	 *            the parser assumes one special character on either end of the
+	 *            whole matched string is not part of the placeholder and the
+	 *            rest is.
 	 * @return The parsed text.
 	 */
 	public Text replacePlaceholders(Player player, String text, Pattern pattern);
@@ -127,7 +133,13 @@ public interface PlaceholderService {
 	 * @param text
 	 *            The text to parse.
 	 * @param pattern
-	 *            The pattern to match against.
+	 *            The pattern to match against. The parser assumes regular
+	 *            expression group 1 is the group that gets the whole
+	 *            placeholder. You can use non-capturing groups (?:...) to have
+	 *            matching groups ahead of the group. If there are no groups,
+	 *            the parser assumes one special character on either end of the
+	 *            whole matched string is not part of the placeholder and the
+	 *            rest is.
 	 * @return The parsed text.
 	 */
 	public String replacePlaceholdersLegacy(Player player, String text, Pattern pattern);

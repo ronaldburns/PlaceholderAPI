@@ -153,6 +153,17 @@ public class JavascriptExpansion implements Expansion {
 			this.p = p;
 		}
 
+		public String value(String placeholder) {
+			return value(placeholder, "[%]([^% ]+)[%]");
+		}
+
+		public String value(String placeholder, String pattern) {
+			if (placeholder.toLowerCase().contains("javascript")) {
+				return placeholder;
+			}
+			return s.replacePlaceholdersLegacy(p, placeholder, Pattern.compile(pattern, Pattern.CASE_INSENSITIVE));
+		}
+
 		public Text get(String placeholders) {
 			if (placeholders.toLowerCase().contains("javascript")) {
 				return Text.of(placeholders);

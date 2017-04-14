@@ -32,9 +32,9 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 		String o = backslash(openText);
 		String c = backslash(closeText);
 		String m = backslash(uniqueChars(openText, closeText));
-		String inco = "(" + o + ")";
+		String inco = "(?:" + o + ")";
 		String exc = "[^" + m + " ]";
-		String incc = "(" + c + ")";
+		String incc = "(?:" + c + ")";
 		return Pattern.compile(inco + "(" + exc + "+)" + incc);
 	}
 
@@ -129,7 +129,12 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 		Matcher placeholderMatcher = p.matcher(text);
 		while (placeholderMatcher.find()) {
 			String total = placeholderMatcher.group();
-			String format = placeholderMatcher.group(2);
+			String format;
+			try {
+				format = placeholderMatcher.group(1);
+			} catch (Exception e) {
+				format = total.substring(1, total.length() - 1);
+			}
 			int index = format.indexOf("_");
 			if (index == 0 || index == format.length()) {
 				continue;
