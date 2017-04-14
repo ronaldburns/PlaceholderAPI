@@ -50,8 +50,7 @@ public class PlayerExpansion implements Expansion {
 			String s = token.substring(token.indexOf("_"));
 			return Text.of(p.getStatisticData().statistics().entrySet().stream()
 					.filter(e -> e.getKey().getId().equalsIgnoreCase(s) || e.getKey().getName().equalsIgnoreCase(s))
-					.sorted((e1, e2) -> e1.getKey().getId().equalsIgnoreCase(s) ? -1 : 1).map(e -> e.getValue())
-					.findFirst().orElse(-1l));
+					.map(e -> e.getValue()).findFirst().orElse(-1l));
 		}
 		switch (token) {
 		case "prefix":
