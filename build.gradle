@@ -13,7 +13,7 @@ dependencies {
     compile 'org.slf4j:slf4j-api:1.7.21'
     compile 'org.reflections:reflections:0.9.10'
     compile 'ninja.leaping.configurate:configurate-hocon:3.2'
-    compile 'org.spongepowered:spongeapi:5.2.0'
+    compile 'org.spongepowered:spongeapi:5.1.0'
 }
 
 spongestart {
