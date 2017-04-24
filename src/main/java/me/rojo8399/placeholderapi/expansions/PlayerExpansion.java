@@ -8,6 +8,8 @@ import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.serializer.TextSerializers;
 
+import com.flowpowered.math.vector.Vector3d;
+
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 
 public class PlayerExpansion implements Expansion {
@@ -84,9 +86,45 @@ public class PlayerExpansion implements Expansion {
 			return Text.of(p.getLocation().getPosition().toInt().getY());
 		case "z":
 			return Text.of(p.getLocation().getPosition().toInt().getZ());
+		case "direction":
+			return Text.of(getCardinal(p));
 		default:
 			return null;
 		}
+	}
+
+	private static String getCardinal(Player player) {
+		Vector3d rot = player.getHeadRotation();
+		double rotation = rot.abs().getY();
+		if (between(rotation, 0, 22.5) || between(rotation, 360, 337.5)) {
+			return "South";
+		}
+		if (between(rotation, 22.5, 67.5)) {
+			return "Southwest";
+		}
+		if (between(rotation, 67.5, 112.5)) {
+			return "West";
+		}
+		if (between(rotation, 112.5, 157.5)) {
+			return "Northwest";
+		}
+		if (between(rotation, 157.5, 202.5)) {
+			return "North";
+		}
+		if (between(rotation, 202.5, 247.5)) {
+			return "Northeast";
+		}
+		if (between(rotation, 247.5, 292.5)) {
+			return "East";
+		}
+		if (between(rotation, 292.5, 337.5)) {
+			return "Southeast";
+		}
+		return "ERROR";
+	}
+
+	private static boolean between(double o, double min, double max) {
+		return o >= Math.min(min, max) && o <= Math.max(min, max);
 	}
 
 	/*

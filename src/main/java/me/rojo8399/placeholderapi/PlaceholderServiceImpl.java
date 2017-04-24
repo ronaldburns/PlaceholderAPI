@@ -10,6 +10,7 @@ import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.plugin.PluginContainer;
@@ -206,7 +207,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 
 			@Override
 			public String getAuthor() {
-				return c.getAuthors().toString();
+				return StringUtils.join(c.getAuthors(), ", ");
 			}
 
 			@Override
