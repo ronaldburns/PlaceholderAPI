@@ -110,6 +110,10 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 		return instance == null ? instance = new PlaceholderServiceImpl() : instance;
 	}
 
+	public boolean refreshPlaceholder(String id) {
+		return registry.refresh(id);
+	}
+
 	/**
 	 * Hold the expansions in a separate file
 	 */
@@ -286,11 +290,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			try {
 				value = exp.onPlaceholderRequest(player, Optional.ofNullable(token));
 			} catch (Exception e) {
-				if (e instanceof NullPointerException && e.getMessage().equals("null")) {
-					value = null;
-				} else {
-					value = Text.of(TextColors.RED, "ERROR: " + e.getMessage());
-				}
+				value = Text.of(TextColors.RED, "ERROR: " + e.getMessage());
 				e.printStackTrace();
 			}
 

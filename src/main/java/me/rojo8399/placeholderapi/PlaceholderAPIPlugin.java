@@ -33,6 +33,7 @@ import com.google.inject.Inject;
 import me.rojo8399.placeholderapi.commands.InfoCommand;
 import me.rojo8399.placeholderapi.commands.ListCommand;
 import me.rojo8399.placeholderapi.commands.ParseCommand;
+import me.rojo8399.placeholderapi.commands.RefreshCommand;
 import me.rojo8399.placeholderapi.configs.Config;
 import me.rojo8399.placeholderapi.configs.JavascriptManager;
 import me.rojo8399.placeholderapi.expansions.CurrencyExpansion;
@@ -42,6 +43,7 @@ import me.rojo8399.placeholderapi.expansions.PlayerExpansion;
 import me.rojo8399.placeholderapi.expansions.RankExpansion;
 import me.rojo8399.placeholderapi.expansions.ServerExpansion;
 import me.rojo8399.placeholderapi.expansions.SoundExpansion;
+import me.rojo8399.placeholderapi.expansions.StatisticExpansion;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
@@ -54,7 +56,7 @@ public class PlaceholderAPIPlugin {
 
 	public static final String PLUGIN_ID = "placeholderapi";
 	public static final String PLUGIN_NAME = "PlaceholderAPI";
-	public static final String PLUGIN_VERSION = "3.9";
+	public static final String PLUGIN_VERSION = "3.10";
 	private static PlaceholderAPIPlugin instance;
 
 	@Inject
@@ -150,7 +152,9 @@ public class PlaceholderAPIPlugin {
 		// papi info {expansion}
 		CommandSpec infoCmd = CommandSpec.builder().arguments(GenericArguments.string(Text.of("placeholder")))
 				.permission("placeholderapi.admin").executor(new InfoCommand()).build();
-
+		CommandSpec reloadCommand = CommandSpec.builder()
+				.arguments(GenericArguments.optional(GenericArguments.string(Text.of("id"))))
+				.permission("placeholderapi.admin").executor(new RefreshCommand()).build();
 		// placeholderapi
 		CommandSpec baseCmd = CommandSpec.builder().executor(new CommandExecutor() {
 			// send plugin name + version
@@ -160,7 +164,8 @@ public class PlaceholderAPIPlugin {
 						PLUGIN_VERSION, TextColors.GRAY, "."));
 				return CommandResult.success();
 			}
-		}).child(parseCmd, "parse", "p").child(listCmd, "list", "l").child(infoCmd, "info", "i").build();
+		}).child(parseCmd, "parse", "p").child(listCmd, "list", "l").child(infoCmd, "info", "i")
+				.child(reloadCommand, "reload", "r").build();
 		game.getCommandManager().register(plugin, baseCmd, "placeholderapi", "papi");
 
 	}
@@ -181,10 +186,20 @@ public class PlaceholderAPIPlugin {
 					new CurrencyExpansion(game.getServiceManager().provideUnchecked(EconomyService.class)));
 		}
 		s.registerPlaceholder(new DateTimeExpansion());
+		s.registerPlaceholder(new StatisticExpansion());
 	}
 
 	@Listener
 	public void onReload(GameReloadEvent event) throws IOException, ObjectMappingException {
+		reloadConfig();
+
+		// Send Messages to console and player
+		event.getCause().first(Player.class).ifPresent(p -> p.sendMessage(
+				Text.builder().color(TextColors.GREEN).append(Text.of("Reloaded PlaceholderAPI")).build()));
+		logger.info("Reloaded PlaceholderAPI");
+	}
+
+	public void reloadConfig() throws IOException, ObjectMappingException {
 		try {
 			config = (root = loader.load()).getValue(Config.type);
 		} catch (IOException ex) {
@@ -194,11 +209,6 @@ public class PlaceholderAPIPlugin {
 			logger.error("Invalid Config!");
 			throw ex;
 		}
-
-		// Send Messages to console and player
-		event.getCause().first(Player.class).ifPresent(p -> p.sendMessage(
-				Text.builder().color(TextColors.GREEN).append(Text.of("Reloaded PlaceholderAPI")).build()));
-		logger.info("Reloaded PlaceholderAPI");
 	}
 
 	private void mapDefault() throws IOException, ObjectMappingException {

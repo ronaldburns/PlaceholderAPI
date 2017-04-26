@@ -10,6 +10,7 @@ import org.spongepowered.api.Sponge;
 import me.rojo8399.placeholderapi.expansions.ConfigurableExpansion;
 import me.rojo8399.placeholderapi.expansions.Expansion;
 import me.rojo8399.placeholderapi.expansions.ListeningExpansion;
+import me.rojo8399.placeholderapi.expansions.ReloadableExpansion;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMapper;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
@@ -23,6 +24,18 @@ public class Registry {
 
 	public boolean has(String id) {
 		return registry.containsKey(id.toLowerCase());
+	}
+
+	public boolean refresh(String id) {
+		id = id.toLowerCase();
+		if (!has(id)) {
+			return false;
+		}
+		Expansion e = registry.remove(id);
+		if (e instanceof ReloadableExpansion) {
+			((ReloadableExpansion) e).reload();
+		}
+		return register(e);
 	}
 
 	public Set<Expansion> getAll() {

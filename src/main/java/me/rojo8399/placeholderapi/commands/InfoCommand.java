@@ -63,11 +63,18 @@ public class InfoCommand implements CommandExecutor {
 				: Text.of(Text.NEW_LINE, TextColors.BLUE, TextActions.openUrl(e.getURL()), e.getURL().toString());
 		Text desc = e.getDescription() == null ? Text.EMPTY
 				: Text.of(Text.NEW_LINE, TextColors.AQUA, e.getDescription());
+		Text reload = Text.of(Text.NEW_LINE, TextColors.AQUA, "Click to reload: ", reload(e.getIdentifier()));
 		Text support = supportedTokens.isEmpty() ? Text.EMPTY
 				: Text.of(Text.NEW_LINE, TextColors.GOLD, "Supported placeholders: ", Text.NEW_LINE,
 						Text.joinWith(Text.of(", "), supportedTokens));
 		return Text.of(TextColors.AQUA, name, TextColors.GREEN, " " + version, TextColors.GRAY, " by ", TextColors.GOLD,
-				author, TextColors.GRAY, ".", desc, url, support);
+				author, TextColors.GRAY, ".", reload, desc, url, support);
+	}
+
+	private static Text reload(String token) {
+		return Text.of(TextColors.RED,
+				TextActions.showText(Text.of(TextColors.AQUA, "Click to reload this placeholder!")),
+				TextActions.runCommand("/papi r " + token), "[RELOAD]");
 	}
 
 	private static Text token(String token, CommandSource src, boolean opt) {

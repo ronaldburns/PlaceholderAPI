@@ -24,10 +24,12 @@ public class DateTimeExpansion implements ConfigurableExpansion {
 	public boolean enabled;
 	@Setting
 	public String format = "uuuu LLL dd HH:mm:ss";
+	private DateTimeFormatter f;
 
 	@Override
 	public boolean canRegister() {
-		return enabled;
+		f = DateTimeFormatter.ofPattern(format);
+		return enabled && f != null;
 	}
 
 	@Override
@@ -52,7 +54,6 @@ public class DateTimeExpansion implements ConfigurableExpansion {
 
 	@Override
 	public Text onPlaceholderRequest(Player player, Optional<String> token) {
-		DateTimeFormatter f = DateTimeFormatter.ofPattern(format);
 		return TextSerializers.FORMATTING_CODE.deserialize(LocalDateTime.now().format(f));
 	}
 

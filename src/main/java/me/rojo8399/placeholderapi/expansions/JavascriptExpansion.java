@@ -30,6 +30,7 @@ import java.util.regex.Pattern;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
+import org.spongepowered.api.Server;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
@@ -43,10 +44,20 @@ import me.rojo8399.placeholderapi.configs.JavascriptManager;
  * @author Wundero
  *
  */
-public class JavascriptExpansion implements Expansion {
+public class JavascriptExpansion implements ReloadableExpansion {
 
 	private ScriptEngine engine;
 	private JavascriptManager manager;
+	private PlaceholderService s;
+	private Server server;
+
+	@Override
+	public boolean reload() {
+		manager.reloadScripts();
+		server = PlaceholderAPIPlugin.getInstance().getGame().getServer();
+		s = Sponge.getServiceManager().provideUnchecked(PlaceholderService.class);
+		return true;
+	}
 
 	public JavascriptExpansion(JavascriptManager manager) {
 		this.manager = manager;
@@ -69,7 +80,9 @@ public class JavascriptExpansion implements Expansion {
 	 */
 	@Override
 	public boolean canRegister() {
-		return PlaceholderAPIPlugin.getInstance().getConfig().expansions.javascript;
+		server = PlaceholderAPIPlugin.getInstance().getGame().getServer();
+		s = Sponge.getServiceManager().provideUnchecked(PlaceholderService.class);
+		return PlaceholderAPIPlugin.getInstance().getConfig().expansions.javascript && s != null;
 	}
 
 	/*
@@ -120,14 +133,14 @@ public class JavascriptExpansion implements Expansion {
 			// Lazily instantiate engine
 			engine = new ScriptEngineManager(null).getEngineByName("Nashorn");
 			// Insert default server variable - constant
-			engine.put("server", PlaceholderAPIPlugin.getInstance().getGame().getServer());
+			engine.put("server",
+					server == null ? (server = PlaceholderAPIPlugin.getInstance().getGame().getServer()) : server);
 		}
 		// Insert player + parser objects, which change every time
 		engine.put("player", player);
 		// Allow retrieving values for registered expansions except for
 		// javascript
 		// scripts - will parse like a normal string (e.g. "%player_name%")
-		PlaceholderService s = Sponge.getServiceManager().provideUnchecked(PlaceholderService.class);
 		Service service = new Service(s, player);
 		engine.put("service", service);
 		// Evaluate the script
@@ -165,10 +178,7 @@ public class JavascriptExpansion implements Expansion {
 		}
 
 		public Text get(String placeholders) {
-			if (placeholders.toLowerCase().contains("javascript")) {
-				return Text.of(placeholders);
-			}
-			return s.replacePlaceholders(p, placeholders);
+			return get(placeholders, "[%]([^% ]+)[%]");
 		}
 
 		public Text get(String placeholders, String pattern) {

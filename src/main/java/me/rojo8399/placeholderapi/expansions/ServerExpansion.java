@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.event.Listener;
@@ -99,7 +100,8 @@ public class ServerExpansion implements ConfigurableExpansion, ListeningExpansio
 		}
 		switch (identifier.get()) {
 		case "online":
-			return Text.of(Sponge.getServer().getOnlinePlayers().size());
+			return Text.of(Sponge.getServer().getOnlinePlayers().stream()
+					.filter(p -> !p.getOrElse(Keys.VANISH_PREVENTS_TARGETING, false)).count());
 		case "max_players":
 			return Text.of(Sponge.getServer().getMaxPlayers());
 		case "unique_players":

@@ -42,6 +42,7 @@ import javax.script.ScriptException;
 public class JavascriptManager {
 
 	private Map<String, File> scripts = new HashMap<>();
+	private File folder;
 
 	public JavascriptManager(File scriptFolder) {
 		if (scriptFolder.exists() && scriptFolder.isFile()) {
@@ -51,8 +52,16 @@ public class JavascriptManager {
 		if (!scriptFolder.exists()) {
 			scriptFolder.mkdirs();
 		}
+		this.folder = scriptFolder;
 		// Add references to all scripts
-		for (File sub : scriptFolder.listFiles((f, s) -> s.endsWith(".js"))) {
+		for (File sub : folder.listFiles((f, s) -> s.endsWith(".js"))) {
+			scripts.put(sub.getName().replace(".js", "").toLowerCase(), sub);
+		}
+	}
+
+	public void reloadScripts() {
+		scripts.clear();
+		for (File sub : folder.listFiles((f, s) -> s.endsWith(".js"))) {
 			scripts.put(sub.getName().replace(".js", "").toLowerCase(), sub);
 		}
 	}
