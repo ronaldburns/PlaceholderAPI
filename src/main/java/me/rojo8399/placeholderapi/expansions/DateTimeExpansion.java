@@ -12,6 +12,7 @@ import org.spongepowered.api.text.serializer.TextSerializers;
 
 import com.google.common.reflect.TypeToken;
 
+import me.rojo8399.placeholderapi.configs.Messages;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 
@@ -35,6 +36,11 @@ public class DateTimeExpansion implements ConfigurableExpansion {
 	@Override
 	public String getIdentifier() {
 		return "time";
+	}
+
+	@Override
+	public String getDescription() {
+		return Messages.get().placeholder.timedesc;
 	}
 
 	@Override

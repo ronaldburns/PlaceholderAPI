@@ -9,10 +9,10 @@ import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.spec.CommandExecutor;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.format.TextColors;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.PlaceholderService;
+import me.rojo8399.placeholderapi.configs.Messages;
 
 public class ParseCommand implements CommandExecutor {
 
@@ -25,7 +25,7 @@ public class ParseCommand implements CommandExecutor {
 		PlaceholderService service = PlaceholderAPIPlugin.getInstance().getGame().getServiceManager()
 				.provideUnchecked(PlaceholderService.class);
 		if (service == null) {
-			throw new CommandException(Text.of(TextColors.RED, "ERROR: Placeholders not registered!"));
+			throw new CommandException(Messages.t(Messages.get().plugin.serviceUnavailable));
 		}
 		Text t = service.replacePlaceholders(p, placeholder,
 				Pattern.compile("[%{]([^{%} ]+)[%}]", Pattern.CASE_INSENSITIVE));
@@ -35,7 +35,7 @@ public class ParseCommand implements CommandExecutor {
 		if (!t.isEmpty()) {
 			src.sendMessage(t);
 		} else {
-			src.sendMessage(Text.of(TextColors.RED, "No value present!"));
+			src.sendMessage(Messages.t(Messages.get().misc.noValue));
 		}
 		return CommandResult.success();
 

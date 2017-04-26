@@ -10,6 +10,7 @@ import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.serializer.TextSerializers;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
+import me.rojo8399.placeholderapi.configs.Messages;
 
 public class RankExpansion implements Expansion {
 
@@ -33,6 +34,11 @@ public class RankExpansion implements Expansion {
 		return "rank";
 	}
 
+	@Override
+	public String getDescription() {
+		return Messages.get().placeholder.rankdesc;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -41,11 +47,6 @@ public class RankExpansion implements Expansion {
 	@Override
 	public String getAuthor() {
 		return "Wundero";
-	}
-
-	@Override
-	public String getDescription() {
-		return "Rank information for a player.";
 	}
 
 	/*

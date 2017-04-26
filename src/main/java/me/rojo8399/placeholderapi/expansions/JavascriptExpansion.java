@@ -39,6 +39,7 @@ import org.spongepowered.api.text.serializer.TextSerializers;
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.PlaceholderService;
 import me.rojo8399.placeholderapi.configs.JavascriptManager;
+import me.rojo8399.placeholderapi.configs.Messages;
 
 /**
  * @author Wundero
@@ -70,7 +71,7 @@ public class JavascriptExpansion implements ReloadableExpansion {
 	 */
 	@Override
 	public String getDescription() {
-		return "Execute javascript scripts.";
+		return Messages.get().placeholder.jsdesc;
 	}
 
 	/*

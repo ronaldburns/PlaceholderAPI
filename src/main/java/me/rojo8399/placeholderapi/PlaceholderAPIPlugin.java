@@ -15,6 +15,7 @@ import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.command.spec.CommandExecutor;
 import org.spongepowered.api.command.spec.CommandSpec;
+import org.spongepowered.api.config.ConfigDir;
 import org.spongepowered.api.config.DefaultConfig;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
@@ -36,6 +37,7 @@ import me.rojo8399.placeholderapi.commands.ParseCommand;
 import me.rojo8399.placeholderapi.commands.RefreshCommand;
 import me.rojo8399.placeholderapi.configs.Config;
 import me.rojo8399.placeholderapi.configs.JavascriptManager;
+import me.rojo8399.placeholderapi.configs.Messages;
 import me.rojo8399.placeholderapi.expansions.CurrencyExpansion;
 import me.rojo8399.placeholderapi.expansions.DateTimeExpansion;
 import me.rojo8399.placeholderapi.expansions.JavascriptExpansion;
@@ -76,8 +78,14 @@ public class PlaceholderAPIPlugin {
 	@Inject
 	@DefaultConfig(sharedRoot = false)
 	private ConfigurationLoader<CommentedConfigurationNode> loader;
+	@Inject
+	@ConfigDir(sharedRoot = false)
+	private Path configDir;
 	private ConfigurationNode root;
 	private Config config;
+	private ConfigurationNode msgRoot;
+	private Messages msgs;
+	private ConfigurationLoader<CommentedConfigurationNode> msgloader;
 
 	private PlaceholderService s;
 
@@ -134,7 +142,35 @@ public class PlaceholderAPIPlugin {
 				mapDefault();
 			}
 		}
-
+		File msgFile = new File(configDir.toFile(), "messages.conf");
+		msgloader = HoconConfigurationLoader.builder().setFile(msgFile).build();
+		try {
+			msgs = (msgRoot = msgloader.load()).getValue(Messages.type);
+			if (msgs == null) {
+				msgs = new Messages();
+				msgRoot.setValue(Messages.type, msgs);
+				msgloader.save(msgRoot);
+			}
+		} catch (IOException ex) {
+			logger.error("Could not load the messages file!");
+			try {
+				throw ex;
+			} finally {
+				msgs = new Messages();
+				msgRoot.setValue(Messages.type, msgs);
+				msgloader.save(msgRoot);
+			}
+		} catch (ObjectMappingException ex) {
+			logger.error("Invalid messages file!");
+			try {
+				throw ex;
+			} finally {
+				msgs = new Messages();
+				msgRoot.setValue(Messages.type, msgs);
+				msgloader.save(msgRoot);
+			}
+		}
+		Messages.init(msgs);
 	}
 
 	@Listener
@@ -160,8 +196,8 @@ public class PlaceholderAPIPlugin {
 			// send plugin name + version
 			@Override
 			public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
-				src.sendMessage(Text.of(TextColors.GREEN, PLUGIN_NAME, TextColors.GRAY, " version ", TextColors.AQUA,
-						PLUGIN_VERSION, TextColors.GRAY, "."));
+				src.sendMessage(Text.of(TextColors.GREEN, PLUGIN_NAME, TextColors.GRAY, " ",
+						Messages.get().misc.version, " ", TextColors.AQUA, PLUGIN_VERSION, TextColors.GRAY, "."));
 				return CommandResult.success();
 			}
 		}).child(parseCmd, "parse", "p").child(listCmd, "list", "l").child(infoCmd, "info", "i")
@@ -194,8 +230,8 @@ public class PlaceholderAPIPlugin {
 		reloadConfig();
 
 		// Send Messages to console and player
-		event.getCause().first(Player.class).ifPresent(p -> p.sendMessage(
-				Text.builder().color(TextColors.GREEN).append(Text.of("Reloaded PlaceholderAPI")).build()));
+		event.getCause().first(Player.class)
+				.ifPresent(p -> p.sendMessage(Messages.t(Messages.get().plugin.reloadSuccess)));
 		logger.info("Reloaded PlaceholderAPI");
 	}
 
@@ -209,6 +245,21 @@ public class PlaceholderAPIPlugin {
 			logger.error("Invalid Config!");
 			throw ex;
 		}
+		try {
+			msgs = (msgRoot = msgloader.load()).getValue(Messages.type);
+			if (msgs == null) {
+				msgs = new Messages();
+				msgRoot.setValue(Messages.type, msgs);
+				msgloader.save(msgRoot);
+			}
+		} catch (IOException ex) {
+			logger.error("Could not reload config!");
+			throw ex;
+		} catch (ObjectMappingException ex) {
+			logger.error("Invalid Config!");
+			throw ex;
+		}
+		Messages.init(msgs);
 	}
 
 	private void mapDefault() throws IOException, ObjectMappingException {

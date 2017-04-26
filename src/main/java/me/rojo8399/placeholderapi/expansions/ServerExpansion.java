@@ -19,6 +19,7 @@ import org.spongepowered.api.text.Text;
 
 import com.google.common.reflect.TypeToken;
 
+import me.rojo8399.placeholderapi.configs.Messages;
 import ninja.leaping.configurate.objectmapping.Setting;
 
 public class ServerExpansion implements ConfigurableExpansion, ListeningExpansion {
@@ -76,6 +77,11 @@ public class ServerExpansion implements ConfigurableExpansion, ListeningExpansio
 
 	public int unique() {
 		return users.size();
+	}
+
+	@Override
+	public String getDescription() {
+		return Messages.get().placeholder.serverdesc;
 	}
 
 	@Override

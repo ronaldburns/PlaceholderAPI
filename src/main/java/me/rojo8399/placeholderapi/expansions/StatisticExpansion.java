@@ -8,6 +8,8 @@ import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
 
+import me.rojo8399.placeholderapi.configs.Messages;
+
 public class StatisticExpansion implements Expansion {
 
 	@Override
@@ -23,6 +25,11 @@ public class StatisticExpansion implements Expansion {
 	@Override
 	public String getAuthor() {
 		return "Wundero";
+	}
+
+	@Override
+	public String getDescription() {
+		return Messages.get().placeholder.statdesc;
 	}
 
 	@Override

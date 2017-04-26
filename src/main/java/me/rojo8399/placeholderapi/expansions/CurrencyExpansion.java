@@ -14,6 +14,7 @@ import org.spongepowered.api.service.economy.account.UniqueAccount;
 import org.spongepowered.api.text.Text;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
+import me.rojo8399.placeholderapi.configs.Messages;
 
 public class CurrencyExpansion implements Expansion {
 
@@ -44,6 +45,11 @@ public class CurrencyExpansion implements Expansion {
 	@Override
 	public String getAuthor() {
 		return "Wundero";
+	}
+
+	@Override
+	public String getDescription() {
+		return Messages.get().placeholder.curdesc;
 	}
 
 	@Override

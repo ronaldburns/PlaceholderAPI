@@ -14,6 +14,7 @@ import org.spongepowered.api.text.format.TextColors;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.PlaceholderService;
+import me.rojo8399.placeholderapi.configs.Messages;
 
 public class ListCommand implements CommandExecutor {
 
@@ -23,9 +24,12 @@ public class ListCommand implements CommandExecutor {
 				.provideUnchecked(PlaceholderService.class);
 		List<Text> l = service.getExpansions().stream()
 				.map(e -> Text.of(TextColors.GOLD, TextActions.runCommand("/papi i " + e.getIdentifier()),
-						TextActions.showText(Text.of(TextColors.GREEN, "Click to get more info!")), e.getIdentifier()))
+						TextActions.showText(Messages.t(Messages.get()
+								.placeholder
+								.infoButtonHover)),
+						e.getIdentifier()))
 				.collect(Collectors.toList());
-		src.sendMessage(Text.of(TextColors.GREEN, "Available placeholders:"));
+		src.sendMessage(Messages.t(Messages.get().placeholder.availablePlaceholders));
 		src.sendMessage(Text.joinWith(Text.of(", "), l));
 		return CommandResult.success();
 	}

@@ -12,6 +12,7 @@ import org.spongepowered.api.text.Text;
 import com.flowpowered.math.vector.Vector3d;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
+import me.rojo8399.placeholderapi.configs.Messages;
 
 public class SoundExpansion implements Expansion {
 
@@ -28,6 +29,11 @@ public class SoundExpansion implements Expansion {
 	@Override
 	public String getAuthor() {
 		return "rojo8399";
+	}
+
+	@Override
+	public String getDescription() {
+		return Messages.get().placeholder.sounddesc;
 	}
 
 	@Override

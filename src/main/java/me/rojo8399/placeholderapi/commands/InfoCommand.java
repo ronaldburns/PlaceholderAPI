@@ -17,6 +17,7 @@ import org.spongepowered.api.text.format.TextColors;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.PlaceholderService;
+import me.rojo8399.placeholderapi.configs.Messages;
 import me.rojo8399.placeholderapi.expansions.Expansion;
 import me.rojo8399.placeholderapi.utils.TextUtils;
 
@@ -25,11 +26,11 @@ public class InfoCommand implements CommandExecutor {
 	@Override
 	public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
 		String placeholder = (String) args.getOne("placeholder")
-				.orElseThrow(() -> new CommandException(Text.of(TextColors.RED, "You must specify a placeholder!")));
+				.orElseThrow(() -> new CommandException(Messages.t(Messages.get().placeholder.mustSpecify)));
 		PlaceholderService service = PlaceholderAPIPlugin.getInstance().getGame().getServiceManager()
 				.provideUnchecked(PlaceholderService.class);
 		Expansion e = service.getExpansion(placeholder)
-				.orElseThrow(() -> new CommandException(Text.of(TextColors.RED, "That is not a valid placeholder!")));
+				.orElseThrow(() -> new CommandException(Messages.t(Messages.get().placeholder.invalidPlaceholder)));
 		Text barrier = TextUtils.repeat(Text.of(TextColors.GOLD, "="), 35);
 		src.sendMessage(barrier);
 		src.sendMessage(formatExpansion(e, src));
@@ -63,18 +64,20 @@ public class InfoCommand implements CommandExecutor {
 				: Text.of(Text.NEW_LINE, TextColors.BLUE, TextActions.openUrl(e.getURL()), e.getURL().toString());
 		Text desc = e.getDescription() == null ? Text.EMPTY
 				: Text.of(Text.NEW_LINE, TextColors.AQUA, e.getDescription());
-		Text reload = Text.of(Text.NEW_LINE, TextColors.AQUA, "Click to reload: ", reload(e.getIdentifier()));
+		Text reload = Text.of(Text.NEW_LINE, Messages.t(Messages.get().placeholder.clickReload), " ",
+				reload(e.getIdentifier()));
 		Text support = supportedTokens.isEmpty() ? Text.EMPTY
-				: Text.of(Text.NEW_LINE, TextColors.GOLD, "Supported placeholders: ", Text.NEW_LINE,
+				: Text.of(Text.NEW_LINE, Messages.t(Messages.get().placeholder.supportedPlaceholders), Text.NEW_LINE,
 						Text.joinWith(Text.of(", "), supportedTokens));
-		return Text.of(TextColors.AQUA, name, TextColors.GREEN, " " + version, TextColors.GRAY, " by ", TextColors.GOLD,
-				author, TextColors.GRAY, ".", reload, desc, url, support);
+		return Text.of(TextColors.AQUA, name, TextColors.GREEN, " " + version, TextColors.GRAY, " ",
+				Messages.t(Messages.get().misc.by), " ", TextColors.GOLD, author, TextColors.GRAY, ".", reload, desc,
+				url, support);
 	}
 
 	private static Text reload(String token) {
-		return Text.of(TextColors.RED,
-				TextActions.showText(Text.of(TextColors.AQUA, "Click to reload this placeholder!")),
-				TextActions.runCommand("/papi r " + token), "[RELOAD]");
+		return Messages.t(Messages.get().placeholder.reloadButton).toBuilder()
+				.onHover(TextActions.showText(Messages.t(Messages.get().placeholder.reloadButtonHover)))
+				.onClick(TextActions.runCommand("/papi r " + token)).build();
 	}
 
 	private static Text token(String token, CommandSource src, boolean opt) {
@@ -85,8 +88,7 @@ public class InfoCommand implements CommandExecutor {
 			return Text.of(TextColors.GREEN, "%" + token + "%");
 		}
 		String p = src.getName();
-		return Text.of(TextColors.GREEN,
-				TextActions.showText(Text.of(TextColors.AQUA, "Click to parse this placeholder for you!")),
+		return Text.of(TextColors.GREEN, TextActions.showText(Messages.t(Messages.get().placeholder.parseButtonHover)),
 				TextActions.suggestCommand("/papi p " + p + " %" + token + "%"), "%" + token + "%");
 	}
 
@@ -95,8 +97,7 @@ public class InfoCommand implements CommandExecutor {
 			return Text.of(TextColors.GREEN, "%" + token + "%");
 		}
 		String p = src.getName();
-		return Text.of(TextColors.GREEN,
-				TextActions.showText(Text.of(TextColors.AQUA, "Click to parse this placeholder for you!")),
+		return Text.of(TextColors.GREEN, TextActions.showText(Messages.t(Messages.get().placeholder.parseButtonHover)),
 				TextActions.runCommand("/papi p " + p + " %" + token + "%"), "%" + token + "%");
 	}
 

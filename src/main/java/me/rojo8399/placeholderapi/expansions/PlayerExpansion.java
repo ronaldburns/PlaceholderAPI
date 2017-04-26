@@ -7,6 +7,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -23,6 +24,7 @@ import com.flowpowered.math.vector.Vector3d;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.PlaceholderServiceImpl;
+import me.rojo8399.placeholderapi.configs.Messages;
 
 public class PlayerExpansion implements Expansion {
 
@@ -39,6 +41,11 @@ public class PlayerExpansion implements Expansion {
 	@Override
 	public String getAuthor() {
 		return "rojo8399";
+	}
+
+	@Override
+	public String getDescription() {
+		return Messages.get().placeholder.playerdesc;
 	}
 
 	@Override
@@ -154,26 +161,28 @@ public class PlayerExpansion implements Expansion {
 			long h = getTime(p, TimeUnit.HOURS, false);
 			long m = getTime(p, TimeUnit.MINUTES, false);
 			double s = getTime(p, TimeUnit.SECONDS);
-			NumberFormat f = NumberFormat.getInstance();
+			NumberFormat f = NumberFormat.getInstance(Locale.getDefault());
 			f.setMaximumFractionDigits(2);
 			String out = "";
 			if (d > 0) {
-				out += d + " d ";
+				out += f.format(d) + " d ";
 				h -= 24 * d;
 				m -= 24 * 60 * d;
 				s -= 24 * 3600 * d;
 			}
 			if (h > 0) {
-				out += h + " h ";
+				out += f.format(h) + " h ";
 				m -= 60 * h;
 				s -= 3600 * h;
 			}
 			if (m > 0) {
-				out += m + " m ";
+				out += f.format(m) + " m ";
 				s -= 60 * m;
 			}
-			out += f.format(s) + " s";
-			return Text.of(out);
+			if (s > 0) {
+				out += f.format(s) + " s";
+			}
+			return Text.of(out.trim());
 		default:
 			return null;
 		}
@@ -219,28 +228,28 @@ public class PlayerExpansion implements Expansion {
 		Vector3d rot = player.getHeadRotation();
 		double rotation = rot.abs().getY();
 		if (between(rotation, 0, 22.5) || between(rotation, 337.5, 360)) {
-			return "South";
+			return Messages.get().misc.directions.south;
 		}
 		if (between(rotation, 22.5, 67.5)) {
-			return "Southwest";
+			return Messages.get().misc.directions.southwest;
 		}
 		if (between(rotation, 67.5, 112.5)) {
-			return "West";
+			return Messages.get().misc.directions.west;
 		}
 		if (between(rotation, 112.5, 157.5)) {
-			return "Northwest";
+			return Messages.get().misc.directions.northwest;
 		}
 		if (between(rotation, 157.5, 202.5)) {
-			return "North";
+			return Messages.get().misc.directions.north;
 		}
 		if (between(rotation, 202.5, 247.5)) {
-			return "Northeast";
+			return Messages.get().misc.directions.northeast;
 		}
 		if (between(rotation, 247.5, 292.5)) {
-			return "East";
+			return Messages.get().misc.directions.east;
 		}
 		if (between(rotation, 292.5, 337.5)) {
-			return "Southeast";
+			return Messages.get().misc.directions.southeast;
 		}
 		return "ERROR";
 	}
