@@ -7,7 +7,7 @@ If you were sent here from another plugin, simply download this plugin and insta
 
 ----------
 
-##FEATURES
+## FEATURES
 
 * No lag
 * Fast updates
@@ -19,15 +19,15 @@ If you were sent here from another plugin, simply download this plugin and insta
 
 ----------
 
-##USAGE
-###Server Owners
+## USAGE
+### Server Owners
 Just drop this plugin into your mods folder and enable any default expansions you want to use in the config file.
-###Developers
+### Developers
 View tutorials on how to use the API **[here](https://github.com/rojo8399/PlaceholderAPI/wiki/Developers/)**.
 
 If you're looking to contribute, the source code is available **[here](https://github.com/rojo8399/PlaceholderAPI)**.
 
 ----------
 
-##BUGS
+## BUGS
 If you find any bugs or would like to suggest features, please create an issue **[here](https://github.com/rojo8399/PlaceholderAPI/issues)**
