@@ -23,10 +23,8 @@ public class ParseCommand implements CommandExecutor {
 		String placeholder = args.<String>getOne(Text.of("placeholders")).get();
 
 		PlaceholderService service = PlaceholderAPIPlugin.getInstance().getGame().getServiceManager()
-				.provideUnchecked(PlaceholderService.class);
-		if (service == null) {
-			throw new CommandException(Messages.t(Messages.get().plugin.serviceUnavailable));
-		}
+				.provide(PlaceholderService.class)
+				.orElseThrow(() -> new CommandException(Messages.get().plugin.serviceUnavailable.t()));
 		Text t = service.replacePlaceholders(p, placeholder,
 				Pattern.compile("[%{]([^{%} ]+)[%}]", Pattern.CASE_INSENSITIVE));
 		if (t == null) {
@@ -35,7 +33,7 @@ public class ParseCommand implements CommandExecutor {
 		if (!t.isEmpty()) {
 			src.sendMessage(t);
 		} else {
-			src.sendMessage(Messages.t(Messages.get().misc.noValue));
+			src.sendMessage(Messages.get().misc.noValue.t());
 		}
 		return CommandResult.success();
 

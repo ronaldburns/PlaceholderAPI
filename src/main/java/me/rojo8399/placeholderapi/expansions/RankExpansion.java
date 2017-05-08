@@ -36,7 +36,7 @@ public class RankExpansion implements Expansion {
 
 	@Override
 	public String getDescription() {
-		return Messages.get().placeholder.rankdesc;
+		return Messages.get().placeholder.rankdesc.value;
 	}
 
 	/*

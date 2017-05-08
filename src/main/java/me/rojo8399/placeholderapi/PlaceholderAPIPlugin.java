@@ -230,8 +230,7 @@ public class PlaceholderAPIPlugin {
 		reloadConfig();
 
 		// Send Messages to console and player
-		event.getCause().first(Player.class)
-				.ifPresent(p -> p.sendMessage(Messages.t(Messages.get().plugin.reloadSuccess)));
+		event.getCause().first(Player.class).ifPresent(p -> p.sendMessage(Messages.get().plugin.reloadSuccess.t()));
 		logger.info("Reloaded PlaceholderAPI");
 	}
 

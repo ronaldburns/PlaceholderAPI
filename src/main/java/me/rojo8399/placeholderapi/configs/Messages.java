@@ -10,6 +10,33 @@ import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 
 @ConfigSerializable
 public class Messages {
+	
+	@ConfigSerializable
+	public static class Message {
+		
+		@Setting
+		public String value;
+		
+		public Message() {
+		}
+		
+		public Message(String s) {
+			this.value = s;
+		}
+		
+		public Text t(Object... args) {
+			return Messages.t(value, args);
+		}
+		
+		@Override
+		public String toString() {
+			return value;
+		}
+	}
+	
+	private static Message of(String v) {
+		return new Message(v);
+	}
 
 	public static final TypeToken<Messages> type = TypeToken.of(Messages.class);
 
@@ -32,37 +59,35 @@ public class Messages {
 
 	@ConfigSerializable
 	public static class Misc {
-		@Setting
-		public String invalid = "&cThat is not a valid %s!";
 		@Setting("no-permission")
-		public String noPerm = "&cYou are not allowed to do that!";
+		public Message noPerm = of("&cYou are not allowed to do that!");
 		@Setting("no-value")
-		public String noValue = "&cNo value present.";
+		public Message noValue = of("&cNo value present.");
 		@Setting
-		public String by = "by";
+		public Message by = of("by");
 		@Setting
-		public String version = "version";
+		public Message version = of("version");
 		@Setting
 		public Direction directions = new Direction();
 
 		@ConfigSerializable
 		public static class Direction {
 			@Setting
-			public String south = "South";
+			public Message south = of("South");
 			@Setting
-			public String southwest = "Southwest";
+			public Message southwest = of("Southwest");
 			@Setting
-			public String west = "West";
+			public Message west = of("West");
 			@Setting
-			public String northwest = "Northwest";
+			public Message northwest = of("Northwest");
 			@Setting
-			public String north = "North";
+			public Message north = of("North");
 			@Setting
-			public String northeast = "Northeast";
+			public Message northeast = of("Northeast");
 			@Setting
-			public String east = "East";
+			public Message east = of("East");
 			@Setting
-			public String southeast = "Southeast";
+			public Message southeast = of("Southeast");
 		}
 	}
 
@@ -72,43 +97,43 @@ public class Messages {
 	@ConfigSerializable
 	public static class Placeholders {
 		@Setting("javascript-description")
-		public String jsdesc = "Execute JavaScripts.";
+		public Message jsdesc = of("Execute JavaScripts.");
 		@Setting("currency-description")
-		public String curdesc = "View information about the server's economy.";
+		public Message curdesc = of("View information about the server's economy.");
 		@Setting("time-description")
-		public String timedesc = "View the current date and time.";
+		public Message timedesc = of("View the current date and time.");
 		@Setting("player-description")
-		public String playerdesc = "View information about a player.";
+		public Message playerdesc = of("View information about a player.");
 		@Setting("rank-description")
-		public String rankdesc = "View information about a player's rank.";
+		public Message rankdesc = of("View information about a player's rank.");
 		@Setting("server-description")
-		public String serverdesc = "View information about the server.";
+		public Message serverdesc = of("View information about the server.");
 		@Setting("sound-description")
-		public String sounddesc = "Play sounds to players.";
+		public Message sounddesc = of("Play sounds to players.");
 		@Setting("statistics-description")
-		public String statdesc = "View a player's statistics.";
+		public Message statdesc = of("View a player's statistics.");
 		@Setting("click-to-reload")
-		public String clickReload = "&bClick to reload:";
+		public Message clickReload = of("&bClick to reload:");
 		@Setting("reload-button-hover")
-		public String reloadButtonHover = "&bClick to reload this placeholder!";
+		public Message reloadButtonHover = of("&bClick to reload this placeholder!");
 		@Setting("reload-button")
-		public String reloadButton = "&c[RELOAD]";
+		public Message reloadButton = of("&c[RELOAD]");
 		@Setting("supported-placeholders")
-		public String supportedPlaceholders = "&6Supported placeholders:";
+		public Message supportedPlaceholders = of("&6Supported placeholders:");
 		@Setting("parse-button-hover")
-		public String parseButtonHover = "&bClick to parse this placeholder for you!";
+		public Message parseButtonHover = of("&bClick to parse this placeholder for you!");
 		@Setting("info-button-hover")
-		public String infoButtonHover = "&bClick to get more info!";
+		public Message infoButtonHover = of("&bClick to get more info!");
 		@Setting("available-placeholders")
-		public String availablePlaceholders = "&aAvailable placeholders:";
+		public Message availablePlaceholders = of("&aAvailable placeholders:");
 		@Setting("must-specify")
-		public String mustSpecify = "&cYou must specify a placeholder!";
+		public Message mustSpecify = of("&cYou must specify a placeholder!");
 		@Setting("invalid-placeholder")
-		public String invalidPlaceholder = "&cThat is not a valid placeholder!";
+		public Message invalidPlaceholder = of("&cThat is not a valid placeholder!");
 		@Setting("reload-success")
-		public String reloadSuccess = "&aPlaceholder reloaded successfully!";
+		public Message reloadSuccess = of("&aPlaceholder reloaded successfully!");
 		@Setting("reload-failed")
-		public String reloadFailed = "&cPlaceholder failed to reload!";
+		public Message reloadFailed = of("&cPlaceholder failed to reload!");
 	}
 
 	@Setting
@@ -117,11 +142,11 @@ public class Messages {
 	@ConfigSerializable
 	public static class Plugins {
 		@Setting("service-unavailable")
-		public String serviceUnavailable = "&cPlaceholders are unavailable!";
+		public Message serviceUnavailable = of("&cPlaceholders are unavailable!");
 		@Setting("reload-success")
-		public String reloadSuccess = "&aPlaceholderAPI reloaded successfully!";
+		public Message reloadSuccess = of("&aPlaceholderAPI reloaded successfully!");
 		@Setting("reload-failed")
-		public String reloadFailed = "&cPlaceholderAPI failed to reload!";
+		public Message reloadFailed = of("&cPlaceholderAPI failed to reload!");
 	}
 
 }

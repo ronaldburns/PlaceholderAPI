@@ -26,11 +26,11 @@ public class InfoCommand implements CommandExecutor {
 	@Override
 	public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
 		String placeholder = (String) args.getOne("placeholder")
-				.orElseThrow(() -> new CommandException(Messages.t(Messages.get().placeholder.mustSpecify)));
+				.orElseThrow(() -> new CommandException(Messages.get().placeholder.mustSpecify.t()));
 		PlaceholderService service = PlaceholderAPIPlugin.getInstance().getGame().getServiceManager()
 				.provideUnchecked(PlaceholderService.class);
 		Expansion e = service.getExpansion(placeholder)
-				.orElseThrow(() -> new CommandException(Messages.t(Messages.get().placeholder.invalidPlaceholder)));
+				.orElseThrow(() -> new CommandException(Messages.get().placeholder.invalidPlaceholder.t()));
 		Text barrier = TextUtils.repeat(Text.of(TextColors.GOLD, "="), 35);
 		src.sendMessage(barrier);
 		src.sendMessage(formatExpansion(e, src));
@@ -64,19 +64,19 @@ public class InfoCommand implements CommandExecutor {
 				: Text.of(Text.NEW_LINE, TextColors.BLUE, TextActions.openUrl(e.getURL()), e.getURL().toString());
 		Text desc = e.getDescription() == null ? Text.EMPTY
 				: Text.of(Text.NEW_LINE, TextColors.AQUA, e.getDescription());
-		Text reload = Text.of(Text.NEW_LINE, Messages.t(Messages.get().placeholder.clickReload), " ",
+		Text reload = Text.of(Text.NEW_LINE, Messages.get().placeholder.clickReload.t(), " ",
 				reload(e.getIdentifier()));
 		Text support = supportedTokens.isEmpty() ? Text.EMPTY
-				: Text.of(Text.NEW_LINE, Messages.t(Messages.get().placeholder.supportedPlaceholders), Text.NEW_LINE,
+				: Text.of(Text.NEW_LINE, Messages.get().placeholder.supportedPlaceholders.t(), Text.NEW_LINE,
 						Text.joinWith(Text.of(", "), supportedTokens));
 		return Text.of(TextColors.AQUA, name, TextColors.GREEN, " " + version, TextColors.GRAY, " ",
-				Messages.t(Messages.get().misc.by), " ", TextColors.GOLD, author, TextColors.GRAY, ".", reload, desc,
-				url, support);
+				Messages.get().misc.by.t(), " ", TextColors.GOLD, author, TextColors.GRAY, ".", reload, desc, url,
+				support);
 	}
 
 	private static Text reload(String token) {
-		return Messages.t(Messages.get().placeholder.reloadButton).toBuilder()
-				.onHover(TextActions.showText(Messages.t(Messages.get().placeholder.reloadButtonHover)))
+		return Messages.get().placeholder.reloadButton.t().toBuilder()
+				.onHover(TextActions.showText(Messages.get().placeholder.reloadButtonHover.t()))
 				.onClick(TextActions.runCommand("/papi r " + token)).build();
 	}
 
@@ -88,7 +88,7 @@ public class InfoCommand implements CommandExecutor {
 			return Text.of(TextColors.GREEN, "%" + token + "%");
 		}
 		String p = src.getName();
-		return Text.of(TextColors.GREEN, TextActions.showText(Messages.t(Messages.get().placeholder.parseButtonHover)),
+		return Text.of(TextColors.GREEN, TextActions.showText(Messages.get().placeholder.parseButtonHover.t()),
 				TextActions.suggestCommand("/papi p " + p + " %" + token + "%"), "%" + token + "%");
 	}
 
@@ -97,7 +97,7 @@ public class InfoCommand implements CommandExecutor {
 			return Text.of(TextColors.GREEN, "%" + token + "%");
 		}
 		String p = src.getName();
-		return Text.of(TextColors.GREEN, TextActions.showText(Messages.t(Messages.get().placeholder.parseButtonHover)),
+		return Text.of(TextColors.GREEN, TextActions.showText(Messages.get().placeholder.parseButtonHover.t()),
 				TextActions.runCommand("/papi p " + p + " %" + token + "%"), "%" + token + "%");
 	}
 

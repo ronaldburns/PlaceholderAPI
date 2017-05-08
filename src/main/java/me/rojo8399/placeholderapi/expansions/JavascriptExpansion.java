@@ -54,7 +54,11 @@ public class JavascriptExpansion implements ReloadableExpansion {
 
 	@Override
 	public boolean reload() {
-		manager.reloadScripts();
+		try {
+			manager.reloadScripts();
+		} catch (Exception e) {
+			return false;
+		}
 		server = PlaceholderAPIPlugin.getInstance().getGame().getServer();
 		s = Sponge.getServiceManager().provideUnchecked(PlaceholderService.class);
 		return true;
@@ -71,7 +75,7 @@ public class JavascriptExpansion implements ReloadableExpansion {
 	 */
 	@Override
 	public String getDescription() {
-		return Messages.get().placeholder.jsdesc;
+		return Messages.get().placeholder.jsdesc.value;
 	}
 
 	/*
@@ -113,7 +117,7 @@ public class JavascriptExpansion implements ReloadableExpansion {
 	 */
 	@Override
 	public String getVersion() {
-		return "1.0";
+		return "1.1";
 	}
 
 	/*

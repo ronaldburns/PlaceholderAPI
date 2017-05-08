@@ -45,12 +45,12 @@ public class PlayerExpansion implements Expansion {
 
 	@Override
 	public String getDescription() {
-		return Messages.get().placeholder.playerdesc;
+		return Messages.get().placeholder.playerdesc.value;
 	}
 
 	@Override
 	public String getVersion() {
-		return "1.0";
+		return "1.2";
 	}
 
 	@Override
@@ -190,7 +190,10 @@ public class PlayerExpansion implements Expansion {
 
 	private static double getTime(Player player, TimeUnit unit) {
 		boolean ticks = unit == null;
-		long time = player.getOrNull(Keys.STATISTICS).get(Statistics.TIME_PLAYED);
+		long time = Optional.ofNullable(
+				player.get(Keys.STATISTICS).orElseThrow(() -> new IllegalStateException("Player must have statistics!"))
+						.get(Statistics.TIME_PLAYED))
+				.orElse(0L);
 		if (ticks) {
 			return time;
 		} else {
@@ -205,7 +208,10 @@ public class PlayerExpansion implements Expansion {
 
 	private static long getTime(Player player, TimeUnit unit, boolean round) {
 		boolean ticks = unit == null;
-		long time = player.getOrNull(Keys.STATISTICS).get(Statistics.TIME_PLAYED);
+		long time = Optional.ofNullable(
+				player.get(Keys.STATISTICS).orElseThrow(() -> new IllegalStateException("Player must have statistics!"))
+						.get(Statistics.TIME_PLAYED))
+				.orElse(0L);
 		if (ticks) {
 			return time;
 		} else {
@@ -228,28 +234,28 @@ public class PlayerExpansion implements Expansion {
 		Vector3d rot = player.getHeadRotation();
 		double rotation = rot.abs().getY();
 		if (between(rotation, 0, 22.5) || between(rotation, 337.5, 360)) {
-			return Messages.get().misc.directions.south;
+			return Messages.get().misc.directions.south.value;
 		}
 		if (between(rotation, 22.5, 67.5)) {
-			return Messages.get().misc.directions.southwest;
+			return Messages.get().misc.directions.southwest.value;
 		}
 		if (between(rotation, 67.5, 112.5)) {
-			return Messages.get().misc.directions.west;
+			return Messages.get().misc.directions.west.value;
 		}
 		if (between(rotation, 112.5, 157.5)) {
-			return Messages.get().misc.directions.northwest;
+			return Messages.get().misc.directions.northwest.value;
 		}
 		if (between(rotation, 157.5, 202.5)) {
-			return Messages.get().misc.directions.north;
+			return Messages.get().misc.directions.north.value;
 		}
 		if (between(rotation, 202.5, 247.5)) {
-			return Messages.get().misc.directions.northeast;
+			return Messages.get().misc.directions.northeast.value;
 		}
 		if (between(rotation, 247.5, 292.5)) {
-			return Messages.get().misc.directions.east;
+			return Messages.get().misc.directions.east.value;
 		}
 		if (between(rotation, 292.5, 337.5)) {
-			return Messages.get().misc.directions.southeast;
+			return Messages.get().misc.directions.southeast.value;
 		}
 		return "ERROR";
 	}

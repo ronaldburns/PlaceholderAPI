@@ -20,20 +20,20 @@ public class RefreshCommand implements CommandExecutor {
 			try {
 				PlaceholderAPIPlugin.getInstance().reloadConfig();
 			} catch (Exception e) {
-				throw new CommandException(Messages.t(Messages.get().plugin.reloadFailed));
+				throw new CommandException(Messages.get().plugin.reloadFailed.t());
 			}
-			src.sendMessage(Messages.t(Messages.get().plugin.reloadSuccess));
+			src.sendMessage(Messages.get().plugin.reloadSuccess.t());
 			return CommandResult.success();
 		}
 		Expansion e = PlaceholderServiceImpl.get().getExpansion(placeholderid).orElse(null);
 		if (e == null) {
-			throw new CommandException(Messages.t(Messages.get().placeholder.invalidPlaceholder));
+			throw new CommandException(Messages.get().placeholder.invalidPlaceholder.t());
 		}
 		boolean s = PlaceholderServiceImpl.get().refreshPlaceholder(placeholderid);
 		if (!s) {
-			src.sendMessage(Messages.t(Messages.get().placeholder.reloadFailed));
+			src.sendMessage(Messages.get().placeholder.reloadFailed.t());
 		} else {
-			src.sendMessage(Messages.t(Messages.get().placeholder.reloadSuccess));
+			src.sendMessage(Messages.get().placeholder.reloadSuccess.t());
 		}
 		return s ? CommandResult.success() : CommandResult.successCount(0);
 	}

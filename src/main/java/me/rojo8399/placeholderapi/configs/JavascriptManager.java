@@ -23,9 +23,12 @@
  */
 package me.rojo8399.placeholderapi.configs;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -41,10 +44,10 @@ import javax.script.ScriptException;
  */
 public class JavascriptManager {
 
-	private Map<String, File> scripts = new HashMap<>();
+	private Map<String, String> scripts = new HashMap<>();
 	private File folder;
 
-	public JavascriptManager(File scriptFolder) {
+	public JavascriptManager(File scriptFolder) throws FileNotFoundException {
 		if (scriptFolder.exists() && scriptFolder.isFile()) {
 			// Scripts folder incorrect
 			scriptFolder.delete();
@@ -55,14 +58,16 @@ public class JavascriptManager {
 		this.folder = scriptFolder;
 		// Add references to all scripts
 		for (File sub : folder.listFiles((f, s) -> s.endsWith(".js"))) {
-			scripts.put(sub.getName().replace(".js", "").toLowerCase(), sub);
+			String str = new BufferedReader(new FileReader(sub)).lines().reduce("", (s1, s2) -> s1 + "\n" + s2);
+			scripts.put(sub.getName().replace(".js", "").toLowerCase(), str);
 		}
 	}
 
-	public void reloadScripts() {
+	public void reloadScripts() throws FileNotFoundException {
 		scripts.clear();
 		for (File sub : folder.listFiles((f, s) -> s.endsWith(".js"))) {
-			scripts.put(sub.getName().replace(".js", "").toLowerCase(), sub);
+			String str = new BufferedReader(new FileReader(sub)).lines().reduce("", (s1, s2) -> s1 + "\n" + s2);
+			scripts.put(sub.getName().replace(".js", "").toLowerCase(), str);
 		}
 	}
 
@@ -72,16 +77,12 @@ public class JavascriptManager {
 		return out;
 	}
 
-	public FileReader getScript(String name) {
+	public Reader getScript(String name) {
 		if (!scripts.containsKey(name)) {
-			// Prevents creating filereader on null
+			// Prevents creating reader on null
 			return null;
 		}
-		try {
-			return new FileReader(scripts.get(name));
-		} catch (FileNotFoundException e) {
-			return null;
-		}
+		return new StringReader(scripts.get(name));
 	}
 
 	public Object eval(ScriptEngine engine, String token) {
@@ -94,19 +95,20 @@ public class JavascriptManager {
 			String[] arr = token.split("_");
 			if (arr.length == 1) {
 				// script args not present, just script_
-				if (getScript(arr[0]) == null) {
+				Reader r;
+				if ((r = getScript(arr[0])) == null) {
 					// script doesn't exist
 					return null;
 				}
 				try {
 					engine.put("args", null);
 					// evaluate script
-					return engine.eval(getScript(arr[0]));
+					return engine.eval(r);
 				} catch (ScriptException e) {
 					return "ERROR: " + e.getMessage();
 				}
 			} else {
-				FileReader f = getScript(arr[0]);
+				Reader f = getScript(arr[0]);
 				if (f == null) {
 					return null;
 				}
@@ -122,12 +124,13 @@ public class JavascriptManager {
 				}
 			}
 		} else {
-			if (getScript(token) == null) {
+			Reader r;
+			if ((r = getScript(token)) == null) {
 				return null;
 			}
 			try {
 				engine.put("args", null);
-				return engine.eval(getScript(token));
+				return engine.eval(r);
 			} catch (ScriptException e) {
 				return "ERROR: " + e.getMessage();
 			}

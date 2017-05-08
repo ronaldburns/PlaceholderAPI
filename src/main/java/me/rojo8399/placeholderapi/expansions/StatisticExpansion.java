@@ -29,7 +29,7 @@ public class StatisticExpansion implements Expansion {
 
 	@Override
 	public String getDescription() {
-		return Messages.get().placeholder.statdesc;
+		return Messages.get().placeholder.statdesc.value;
 	}
 
 	@Override

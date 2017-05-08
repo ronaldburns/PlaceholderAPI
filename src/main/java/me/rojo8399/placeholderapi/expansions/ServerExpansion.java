@@ -81,7 +81,7 @@ public class ServerExpansion implements ConfigurableExpansion, ListeningExpansio
 
 	@Override
 	public String getDescription() {
-		return Messages.get().placeholder.serverdesc;
+		return Messages.get().placeholder.serverdesc.value;
 	}
 
 	@Override
@@ -96,7 +96,7 @@ public class ServerExpansion implements ConfigurableExpansion, ListeningExpansio
 
 	@Override
 	public String getVersion() {
-		return "1.0";
+		return "1.1";
 	}
 
 	@Override

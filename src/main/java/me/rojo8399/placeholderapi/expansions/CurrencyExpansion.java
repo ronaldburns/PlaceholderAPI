@@ -49,7 +49,7 @@ public class CurrencyExpansion implements Expansion {
 
 	@Override
 	public String getDescription() {
-		return Messages.get().placeholder.curdesc;
+		return Messages.get().placeholder.curdesc.value;
 	}
 
 	@Override

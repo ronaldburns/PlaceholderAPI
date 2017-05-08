@@ -21,15 +21,13 @@ public class ListCommand implements CommandExecutor {
 	@Override
 	public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
 		PlaceholderService service = PlaceholderAPIPlugin.getInstance().getGame().getServiceManager()
-				.provideUnchecked(PlaceholderService.class);
+				.provide(PlaceholderService.class)
+				.orElseThrow(() -> new CommandException(Messages.get().plugin.serviceUnavailable.t()));
 		List<Text> l = service.getExpansions().stream()
 				.map(e -> Text.of(TextColors.GOLD, TextActions.runCommand("/papi i " + e.getIdentifier()),
-						TextActions.showText(Messages.t(Messages.get()
-								.placeholder
-								.infoButtonHover)),
-						e.getIdentifier()))
+						TextActions.showText(Messages.get().placeholder.infoButtonHover.t()), e.getIdentifier()))
 				.collect(Collectors.toList());
-		src.sendMessage(Messages.t(Messages.get().placeholder.availablePlaceholders));
+		src.sendMessage(Messages.get().placeholder.availablePlaceholders.t());
 		src.sendMessage(Text.joinWith(Text.of(", "), l));
 		return CommandResult.success();
 	}

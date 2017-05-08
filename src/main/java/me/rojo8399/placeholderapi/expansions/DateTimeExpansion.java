@@ -40,7 +40,7 @@ public class DateTimeExpansion implements ConfigurableExpansion {
 
 	@Override
 	public String getDescription() {
-		return Messages.get().placeholder.timedesc;
+		return Messages.get().placeholder.timedesc.value;
 	}
 
 	@Override

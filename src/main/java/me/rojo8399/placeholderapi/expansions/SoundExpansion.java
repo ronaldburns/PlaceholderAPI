@@ -33,7 +33,7 @@ public class SoundExpansion implements Expansion {
 
 	@Override
 	public String getDescription() {
-		return Messages.get().placeholder.sounddesc;
+		return Messages.get().placeholder.sounddesc.value;
 	}
 
 	@Override
