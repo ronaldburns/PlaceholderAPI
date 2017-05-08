@@ -25,8 +25,8 @@ package me.rojo8399.placeholderapi.configs;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -47,7 +47,7 @@ public class JavascriptManager {
 	private Map<String, String> scripts = new HashMap<>();
 	private File folder;
 
-	public JavascriptManager(File scriptFolder) throws FileNotFoundException {
+	public JavascriptManager(File scriptFolder) throws IOException {
 		if (scriptFolder.exists() && scriptFolder.isFile()) {
 			// Scripts folder incorrect
 			scriptFolder.delete();
@@ -58,15 +58,19 @@ public class JavascriptManager {
 		this.folder = scriptFolder;
 		// Add references to all scripts
 		for (File sub : folder.listFiles((f, s) -> s.endsWith(".js"))) {
-			String str = new BufferedReader(new FileReader(sub)).lines().reduce("", (s1, s2) -> s1 + "\n" + s2);
+			BufferedReader r = new BufferedReader(new FileReader(sub));
+			String str = r.lines().reduce("", (s1, s2) -> s1 + "\n" + s2);
+			r.close();
 			scripts.put(sub.getName().replace(".js", "").toLowerCase(), str);
 		}
 	}
 
-	public void reloadScripts() throws FileNotFoundException {
+	public void reloadScripts() throws IOException {
 		scripts.clear();
 		for (File sub : folder.listFiles((f, s) -> s.endsWith(".js"))) {
-			String str = new BufferedReader(new FileReader(sub)).lines().reduce("", (s1, s2) -> s1 + "\n" + s2);
+			BufferedReader r = new BufferedReader(new FileReader(sub));
+			String str = r.lines().reduce("", (s1, s2) -> s1 + "\n" + s2);
+			r.close();
 			scripts.put(sub.getName().replace(".js", "").toLowerCase(), str);
 		}
 	}

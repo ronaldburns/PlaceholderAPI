@@ -29,7 +29,6 @@ import java.util.regex.Pattern;
 
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
-import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.text.format.TextFormat;
 import org.spongepowered.api.text.serializer.TextSerializers;
 
@@ -70,7 +69,7 @@ public class TextUtils {
 			mg = mg.substring(0, mg.length() - 1);
 			// Get format for arg
 			if (x <= textParts.length) {
-				last = strictMerge(last, getLastFormat(parser.apply(textParts[x - 1])));
+				last = last.merge(getLastFormat(parser.apply(textParts[x - 1])));
 			}
 			// Make arg
 			out = out.concat(TextTemplate.of(TextTemplate.arg(mg).format(last)));
@@ -85,26 +84,7 @@ public class TextUtils {
 	}
 
 	private static Text fix(Text to, TextFormat l) {
-		return to.toBuilder().format(strictMerge(l, to.getFormat())).build();
-	}
-
-	/**
-	 * Merge formats like vanilla Minecraft
-	 * 
-	 * Similar to onto.merge(from), except if from has TextColor RESET, the
-	 * previous styles are abandoned
-	 * 
-	 * @param onto
-	 *            the first part of the format
-	 * @param from
-	 * @return
-	 */
-	public static TextFormat strictMerge(TextFormat onto, TextFormat from) {
-		// Vanilla merge resets style with reset color, sponge does not.
-		if (from.getColor() == TextColors.RESET) { // reset style + color
-			return from.color(TextColors.NONE);
-		}
-		return onto.merge(from); // else merge normally
+		return to.toBuilder().format(l.merge(to.getFormat())).build();
 	}
 
 	/**

@@ -10,30 +10,30 @@ import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 
 @ConfigSerializable
 public class Messages {
-	
+
 	@ConfigSerializable
 	public static class Message {
-		
+
 		@Setting
 		public String value;
-		
+
 		public Message() {
 		}
-		
+
 		public Message(String s) {
 			this.value = s;
 		}
-		
+
 		public Text t(Object... args) {
 			return Messages.t(value, args);
 		}
-		
+
 		@Override
 		public String toString() {
 			return value;
 		}
 	}
-	
+
 	private static Message of(String v) {
 		return new Message(v);
 	}
@@ -51,7 +51,8 @@ public class Messages {
 	}
 
 	public static Text t(String m, Object... args) {
-		return TextSerializers.FORMATTING_CODE.deserialize(String.format(m, args));
+		return TextSerializers.FORMATTING_CODE
+				.deserialize((args == null || args.length == 0 ? m : String.format(m, args)));
 	}
 
 	@Setting

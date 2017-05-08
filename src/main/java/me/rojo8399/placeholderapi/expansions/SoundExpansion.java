@@ -51,8 +51,7 @@ public class SoundExpansion implements Expansion {
 		Game game = PlaceholderAPIPlugin.getInstance().getGame();
 
 		String[] i = identifier.get().split("-");
-
-		Optional<SoundType> sound = game.getRegistry().getType(SoundType.class, i[0]);
+		Optional<SoundType> sound = game.getRegistry().getType(SoundType.class, i[0].replace("_", "."));
 		Vector3d position = p.getLocation().getPosition();
 		Double volume = Double.valueOf((i[1] == null) ? String.valueOf(1) : i[1]);
 		Double pitch = Double.valueOf((i[2] == null) ? String.valueOf(1) : i[2]);
