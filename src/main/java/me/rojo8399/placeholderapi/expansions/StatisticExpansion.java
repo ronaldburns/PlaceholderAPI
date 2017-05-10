@@ -8,13 +8,21 @@ import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
 
-import me.rojo8399.placeholderapi.configs.Messages;
+import com.google.common.reflect.TypeToken;
 
-public class StatisticExpansion implements Expansion {
+import me.rojo8399.placeholderapi.configs.Messages;
+import ninja.leaping.configurate.objectmapping.Setting;
+
+public class StatisticExpansion implements ConfigurableExpansion {
+
+	private static final TypeToken<StatisticExpansion> type = TypeToken.of(StatisticExpansion.class);
+
+	@Setting
+	public boolean enabled = true;
 
 	@Override
 	public boolean canRegister() {
-		return true;
+		return enabled;
 	}
 
 	@Override
@@ -48,9 +56,13 @@ public class StatisticExpansion implements Expansion {
 			return null;
 		}
 		return Text.of(player.getOrNull(Keys.STATISTICS).entrySet().stream()
-				.peek(e -> System.out.println(e.getKey().getId().replace("._", ".")))
 				.filter(e -> e.getKey().getId().replace("._", ".").toLowerCase().startsWith(token.get().toLowerCase()))
 				.map(Map.Entry::getValue).reduce(0l, (a, b) -> a + b));
+	}
+
+	@Override
+	public TypeToken<? extends ConfigurableExpansion> getToken() {
+		return type;
 	}
 
 }

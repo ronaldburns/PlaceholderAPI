@@ -142,6 +142,8 @@ public class Messages {
 
 	@ConfigSerializable
 	public static class Plugins {
+		@Setting("placeholders-reloaded")
+		public Message reloadCount = of("&a%s placeholders reloaded! (&c%s failed to reload.&a)");
 		@Setting("service-unavailable")
 		public Message serviceUnavailable = of("&cPlaceholders are unavailable!");
 		@Setting("reload-success")

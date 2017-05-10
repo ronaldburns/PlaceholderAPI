@@ -1,5 +1,6 @@
 package me.rojo8399.placeholderapi;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,6 +27,20 @@ public class Registry {
 		return registry.containsKey(id.toLowerCase());
 	}
 
+	public int refreshAll() {
+		List<Expansion> toRefresh = registry.values().stream().collect(Collectors.toList());
+		registry.clear();
+		int count = 0;
+		for (Expansion e : toRefresh) {
+			if (e instanceof ReloadableExpansion) {
+				if (((ReloadableExpansion) e).reload()) {
+					count += register(e) ? 1 : 0;
+				}
+			}
+		}
+		return count;
+	}
+
 	public boolean refresh(String id) {
 		id = id.toLowerCase();
 		if (!has(id)) {
@@ -33,7 +48,10 @@ public class Registry {
 		}
 		Expansion e = registry.remove(id);
 		if (e instanceof ReloadableExpansion) {
-			((ReloadableExpansion) e).reload();
+			boolean b = ((ReloadableExpansion) e).reload();
+			if (!b) {
+				return b;
+			}
 		}
 		return register(e);
 	}

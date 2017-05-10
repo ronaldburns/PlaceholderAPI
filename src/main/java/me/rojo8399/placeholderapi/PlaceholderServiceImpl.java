@@ -113,6 +113,10 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	public boolean refreshPlaceholder(String id) {
 		return registry.refresh(id);
 	}
+	
+	public int refreshAll() {
+		return registry.refreshAll();
+	}
 
 	/**
 	 * Hold the expansions in a separate file

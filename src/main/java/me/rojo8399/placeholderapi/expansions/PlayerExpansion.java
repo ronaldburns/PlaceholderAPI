@@ -127,9 +127,9 @@ public class PlayerExpansion implements Expansion {
 		case "fly_speed":
 			return Text.of(p.getOrElse(Keys.FLYING_SPEED, 1.0));
 		case "max_air":
-			return Text.of(p.getOrElse(Keys.MAX_AIR, 10));
+			return Text.of(p.getOrElse(Keys.MAX_AIR, 300));
 		case "remaining_air":
-			return Text.of(p.getOrElse(Keys.REMAINING_AIR, 10));
+			return Text.of(p.getOrElse(Keys.REMAINING_AIR, 300));
 		case "item_in_main_hand":
 			ItemStack item = p.getItemInHand(HandTypes.MAIN_HAND).orElse(null);
 			if (item == null) {
