@@ -51,13 +51,21 @@ public class StatisticExpansion implements ConfigurableExpansion {
 	}
 
 	@Override
+	public Object onValueRequest(Player player, Optional<String> token) {
+		if (!token.isPresent()) {
+			return null;
+		}
+		return player.getOrNull(Keys.STATISTICS).entrySet().stream()
+				.filter(e -> e.getKey().getId().replace("._", ".").toLowerCase().startsWith(token.get().toLowerCase()))
+				.map(Map.Entry::getValue).reduce(0l, (a, b) -> a + b);
+	}
+
+	@Override
 	public Text onPlaceholderRequest(Player player, Optional<String> token) {
 		if (!token.isPresent()) {
 			return null;
 		}
-		return Text.of(player.getOrNull(Keys.STATISTICS).entrySet().stream()
-				.filter(e -> e.getKey().getId().replace("._", ".").toLowerCase().startsWith(token.get().toLowerCase()))
-				.map(Map.Entry::getValue).reduce(0l, (a, b) -> a + b));
+		return Text.of(onValueRequest(player, token));
 	}
 
 	@Override

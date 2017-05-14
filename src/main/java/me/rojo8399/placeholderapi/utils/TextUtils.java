@@ -41,14 +41,11 @@ public class TextUtils {
 	/**
 	 * Find all variables in a string and parse it into a text template.
 	 */
-	public static TextTemplate parse(final String i, Function<String, Text> parser, Pattern placeholderPattern) {
+	public static TextTemplate parse(final String i, Pattern placeholderPattern) {
 		if (i == null) {
 			return null;
 		}
-		// default impl if not present
-		if (parser == null) {
-			parser = TextSerializers.FORMATTING_CODE::deserialize;
-		}
+		Function<String, Text> parser = TextSerializers.FORMATTING_CODE::deserialize;
 		if (placeholderPattern == null) {
 			placeholderPattern = Pattern.compile("[%]([^ %]+)[%]", Pattern.CASE_INSENSITIVE);
 		}

@@ -57,6 +57,11 @@ public class DateTimeExpansion implements ConfigurableExpansion {
 	public List<String> getSupportedTokens() {
 		return Arrays.asList((String) null);
 	}
+	
+	@Override
+	public Object onValueRequest(Player player, Optional<String> token) {
+		return LocalDateTime.now();
+	}
 
 	@Override
 	public Text onPlaceholderRequest(Player player, Optional<String> token) {

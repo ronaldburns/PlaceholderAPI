@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import javax.annotation.Nullable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
@@ -34,7 +35,6 @@ import org.spongepowered.api.Server;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.serializer.TextSerializers;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.PlaceholderService;
@@ -130,6 +130,11 @@ public class JavascriptExpansion implements ReloadableExpansion {
 	 */
 	@Override
 	public Text onPlaceholderRequest(Player player, Optional<String> token) {
+		return onValueRequest(player, token, Text.class).orElse(Text.EMPTY);
+	}
+
+	@Override
+	public @Nullable Object onValueRequest(Player player, Optional<String> token) {
 		if (!token.isPresent()) {
 			// No script
 			return null;
@@ -149,17 +154,7 @@ public class JavascriptExpansion implements ReloadableExpansion {
 		Service service = new Service(s, player);
 		engine.put("service", service);
 		// Evaluate the script
-		Object o = manager.eval(engine, token.get());
-		if (o == null) {
-			// If null do not replace
-			return null;
-		}
-		// Return object out
-		if (o instanceof Text) {
-			return (Text) o;
-		} else {
-			return TextSerializers.FORMATTING_CODE.deserialize(String.valueOf(o));
-		}
+		return manager.eval(engine, token.get());
 	}
 
 	public static class Service {

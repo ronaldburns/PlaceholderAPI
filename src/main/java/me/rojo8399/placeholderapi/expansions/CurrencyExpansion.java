@@ -64,6 +64,32 @@ public class CurrencyExpansion implements Expansion {
 	}
 
 	@Override
+	public Object onValueRequest(Player player, Optional<String> token) {
+		if (!token.isPresent()) {
+			Text amt = def.format(BigDecimal.valueOf(1234.56));
+			Text v = Text.of(def.getName() + " (" + def.getId() + ") - ");
+			return v.concat(amt);
+		}
+		String t = token.get();
+		Currency toUse = def;
+		if (t.contains("_")) {
+			String[] a = t.split("_");
+			t = a[0];
+			String c = a[1];
+			if (currencies.containsKey(c)) {
+				toUse = currencies.get(def);
+			}
+		}
+		// Don't handle nonexistent accounts here, instead throw error
+		UniqueAccount acc = service.getOrCreateAccount(player.getUniqueId()).get();
+		switch (t) {
+		case "balance":
+			return acc.getBalance(toUse);
+		}
+		return onPlaceholderRequest(player, token);
+	}
+
+	@Override
 	public Text onPlaceholderRequest(Player player, Optional<String> token) {
 		if (!token.isPresent()) {
 			Text amt = def.format(BigDecimal.valueOf(1234.56));

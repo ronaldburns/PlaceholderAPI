@@ -17,7 +17,6 @@ import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
 import org.spongepowered.api.text.format.TextColors;
-import org.spongepowered.api.text.serializer.TextSerializers;
 
 import me.rojo8399.placeholderapi.expansions.Expansion;
 import me.rojo8399.placeholderapi.utils.TextUtils;
@@ -113,7 +112,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	public boolean refreshPlaceholder(String id) {
 		return registry.refresh(id);
 	}
-	
+
 	public int refreshAll() {
 		return registry.refreshAll();
 	}
@@ -312,8 +311,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	 */
 	@Override
 	public Text replacePlaceholders(Player player, String text, Pattern pattern) {
-		return replacePlaceholders(player,
-				TextUtils.parse(text, TextSerializers.FORMATTING_CODE::deserialize, pattern));
+		return replacePlaceholders(player, TextUtils.parse(text, pattern));
 	}
 
 	/**
@@ -321,8 +319,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	 */
 	@Override
 	public Text replacePlaceholders(Player player, String text, String o, String c) {
-		return replacePlaceholders(player,
-				TextUtils.parse(text, TextSerializers.FORMATTING_CODE::deserialize, generatePattern(o, c)));
+		return replacePlaceholders(player, TextUtils.parse(text, generatePattern(o, c)));
 	}
 
 	/**

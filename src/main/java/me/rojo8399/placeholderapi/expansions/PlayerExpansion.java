@@ -11,6 +11,8 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import javax.annotation.Nullable;
+
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.data.type.HandTypes;
 import org.spongepowered.api.entity.living.player.Player;
@@ -54,108 +56,89 @@ public class PlayerExpansion implements Expansion {
 	}
 
 	@Override
-	public Text onPlaceholderRequest(Player p, Optional<String> identifier) {
+	public Object onValueRequest(Player p, Optional<String> identifier) {
 		if (!identifier.isPresent()) {
-			return Text.of(p.getName());
+			return p.getName();
 		}
 		String token = identifier.get();
 		if (token.toLowerCase().startsWith("option_")) {
 			String op = token.substring("option_".length());
-			return TextSerializers.FORMATTING_CODE.deserialize(p.getOption(op).orElse(""));
+			return p.getOption(op).orElse("");
 		}
 		if (token.toLowerCase().startsWith("perm") && token.contains("_")) {
 			String op = token.substring(token.indexOf("_"));
-			return Text.of(p.getPermissionValue(p.getActiveContexts(), op).toString());
+			return p.getPermissionValue(p.getActiveContexts(), op).toString();
 		}
 		switch (token) {
 		case "prefix":
 		case "suffix":
-			return TextSerializers.FORMATTING_CODE.deserialize(p.getOption(identifier.get()).orElse(""));
+			return p.getOption(identifier.get()).orElse("");
 		case "name":
-			return Text.of(p.getName());
+			return p.getName();
 		case "displayname":
 			return p.getOrElse(Keys.DISPLAY_NAME, Text.of(p.getName()));
 		case "uuid":
-			return Text.of(p.getUniqueId());
+			return p.getUniqueId();
 		case "can_fly":
-			return Text.of(p.getOrElse(Keys.CAN_FLY, false));
+			return p.getOrElse(Keys.CAN_FLY, false);
 		case "world":
-			return Text.of(p.getWorld().getName());
+			return p.getWorld().getName();
 		case "ping":
-			return Text.of(p.getConnection().getLatency());
+			return p.getConnection().getLatency();
 		case "language":
-			return Text.of(p.getLocale().getDisplayName());
+			return p.getLocale().getDisplayName();
 		case "flying":
-			return Text.of(p.getOrElse(Keys.IS_FLYING, false));
+			return p.getOrElse(Keys.IS_FLYING, false);
 		case "health":
-			return Text.of(Math.round(p.health().get()));
+			return Math.round(p.health().get());
 		case "max_health":
-			return Text.of(Math.round(p.maxHealth().get()));
+			return Math.round(p.maxHealth().get());
 		case "food":
-			return Text.of(p.foodLevel().get());
+			return p.foodLevel().get();
 		case "saturation":
-			return Text.of(Math.round(p.saturation().get()));
+			return Math.round(p.saturation().get());
 		case "gamemode":
-			return Text.of(p.gameMode().get().getName());
+			return p.gameMode().get().getName();
 		case "x":
-			return Text.of(p.getLocation().getPosition().toInt().getX());
+			return p.getLocation().getPosition().toInt().getX();
 		case "y":
-			return Text.of(p.getLocation().getPosition().toInt().getY());
+			return p.getLocation().getPosition().toInt().getY();
 		case "z":
-			return Text.of(p.getLocation().getPosition().toInt().getZ());
+			return p.getLocation().getPosition().toInt().getZ();
 		case "direction":
-			return Text.of(getCardinal(p));
+			return getCardinal(p);
 		case "exp_total":
-			return Text.of(p.getOrElse(Keys.TOTAL_EXPERIENCE, 0));
+			return p.getOrElse(Keys.TOTAL_EXPERIENCE, 0);
 		case "exp":
-			return Text.of(p.getOrElse(Keys.EXPERIENCE_SINCE_LEVEL, 0));
+			return p.getOrElse(Keys.EXPERIENCE_SINCE_LEVEL, 0);
 		case "exp_to_next":
-			return Text.of(p.getOrElse(Keys.EXPERIENCE_FROM_START_OF_LEVEL, 0));
+			return p.getOrElse(Keys.EXPERIENCE_FROM_START_OF_LEVEL, 0);
 		case "level":
-			return Text.of(p.getOrElse(Keys.EXPERIENCE_LEVEL, 0));
+			return p.getOrElse(Keys.EXPERIENCE_LEVEL, 0);
 		case "first_join":
-			Instant jointime = p.getOrNull(Keys.FIRST_DATE_PLAYED);
-			if (jointime == null) {
-				return Text.EMPTY;
-			}
-			if (PlaceholderServiceImpl.get().getExpansion("time").isPresent()) {
-				return TextSerializers.FORMATTING_CODE.deserialize(DateTimeFormatter
-						.ofPattern(((DateTimeExpansion) PlaceholderServiceImpl.get().getExpansion("time").get()).format)
-						.format(LocalDateTime.ofInstant(jointime, ZoneOffset.systemDefault())));
-			}
-			return Text.of(jointime);
+			return p.getOrNull(Keys.FIRST_DATE_PLAYED);
 		case "fly_speed":
-			return Text.of(p.getOrElse(Keys.FLYING_SPEED, 1.0));
+			return p.getOrElse(Keys.FLYING_SPEED, 1.0);
 		case "max_air":
-			return Text.of(p.getOrElse(Keys.MAX_AIR, 300));
+			return p.getOrElse(Keys.MAX_AIR, 300);
 		case "remaining_air":
-			return Text.of(p.getOrElse(Keys.REMAINING_AIR, 300));
+			return p.getOrElse(Keys.REMAINING_AIR, 300);
 		case "item_in_main_hand":
-			ItemStack item = p.getItemInHand(HandTypes.MAIN_HAND).orElse(null);
-			if (item == null) {
-				return Text.EMPTY;
-			}
-			return Text.of(TextActions.showItem(item.createSnapshot()),
-					item.getOrElse(Keys.DISPLAY_NAME, Text.of(item)));
+			return p.getItemInHand(HandTypes.MAIN_HAND).orElse(null);
 		case "item_in_off_hand":
-			item = p.getItemInHand(HandTypes.OFF_HAND).orElse(null);
-			if (item == null) {
-				return Text.EMPTY;
-			}
-			return Text.of(TextActions.showItem(item.createSnapshot()),
-					item.getOrElse(Keys.DISPLAY_NAME, Text.of(item)));
+			return p.getItemInHand(HandTypes.OFF_HAND).orElse(null);
 		case "walk_speed":
-			return Text.of(p.getOrElse(Keys.WALKING_SPEED, 1.0));
+			return p.getOrElse(Keys.WALKING_SPEED, 1.0);
 		case "time_played_seconds":
-			return Text.of(getTime(p, TimeUnit.SECONDS, true));
+			return getTime(p, TimeUnit.SECONDS, true);
 		case "time_played_minutes":
-			return Text.of(getTime(p, TimeUnit.MINUTES, true));
+			return getTime(p, TimeUnit.MINUTES, true);
 		case "time_played_ticks":
-			return Text.of(getTime(p, null, true));
+			return getTime(p, null, true);
 		case "time_played_hours":
-			return Text.of(getTime(p, TimeUnit.HOURS, true));
+			return getTime(p, TimeUnit.HOURS, true);
 		case "time_played_days":
-			return Text.of(getTime(p, TimeUnit.DAYS, true));
+			return getTime(p, TimeUnit.DAYS, true);
 		case "time_played":
 			long d = getTime(p, TimeUnit.DAYS, false);
 			long h = getTime(p, TimeUnit.HOURS, false);
@@ -182,10 +165,42 @@ public class PlayerExpansion implements Expansion {
 			if (s > 0) {
 				out += f.format(s) + " s";
 			}
-			return Text.of(out.trim());
+			return out.trim();
 		default:
 			return null;
 		}
+	}
+
+	private static Text ofItem(@Nullable ItemStack item) {
+		if (item == null) {
+			return Text.EMPTY;
+		}
+		return Text.of(TextActions.showItem(item.createSnapshot()), item.getOrElse(Keys.DISPLAY_NAME, Text.of(item)));
+	}
+
+	@Override
+	public Text onPlaceholderRequest(Player p, Optional<String> identifier) {
+		Object val = onValueRequest(p, identifier);
+		if (val == null) {
+			return null;
+		}
+		if (val instanceof Text) {
+			return (Text) val;
+		}
+		if (val instanceof String) {
+			return TextSerializers.FORMATTING_CODE.deserialize((String) val);
+		}
+		if (val instanceof ItemStack) {
+			return ofItem((ItemStack) val);
+		}
+		if (val instanceof Instant) {
+			if (PlaceholderServiceImpl.get().getExpansion("time").isPresent()) {
+				return TextSerializers.FORMATTING_CODE.deserialize(DateTimeFormatter
+						.ofPattern(((DateTimeExpansion) PlaceholderServiceImpl.get().getExpansion("time").get()).format)
+						.format(LocalDateTime.ofInstant((Instant) val, ZoneOffset.systemDefault())));
+			}
+		}
+		return Text.of(val);
 	}
 
 	private static double getTime(Player player, TimeUnit unit) {
