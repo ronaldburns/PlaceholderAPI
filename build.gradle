@@ -3,8 +3,8 @@ plugins {
     id 'com.qixalite.spongestart' version '1.5.2'
 }
 
-group = 'me.rojo8399' // TODO
-version = '3.10'
+group = 'me.rojo8399.placeholderapi'
+version = '3.11'
 description = 'An API for all of your placeholders.'
 
 compileJava.options.encoding = 'UTF-8'

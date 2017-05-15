@@ -100,34 +100,44 @@ public class ServerExpansion implements ConfigurableExpansion, ListeningExpansio
 	}
 
 	@Override
-	public Text onPlaceholderRequest(Player player, Optional<String> identifier) {
+	public Object onValueRequest(Player player, Optional<String> identifier) {
 		if (!identifier.isPresent()) {
 			return null;
 		}
 		switch (identifier.get()) {
 		case "online":
-			return Text.of(Sponge.getServer().getOnlinePlayers().stream()
-					.filter(p -> !p.getOrElse(Keys.VANISH_PREVENTS_TARGETING, false)).count());
+			return Sponge.getServer().getOnlinePlayers().stream()
+					.filter(p -> !p.getOrElse(Keys.VANISH_PREVENTS_TARGETING, false)).count();
 		case "max_players":
-			return Text.of(Sponge.getServer().getMaxPlayers());
+			return Sponge.getServer().getMaxPlayers();
 		case "unique_players":
-			return Text.of(unique());
+			return unique();
 		case "motd":
 			return Sponge.getServer().getMotd();
 		case "ram_used":
-			return Text.of((runtime.totalMemory() - runtime.freeMemory()) / MB);
+			return ((runtime.totalMemory() - runtime.freeMemory()) / MB);
 		case "ram_free":
-			return Text.of(runtime.freeMemory() / MB);
+			return (runtime.freeMemory() / MB);
 		case "ram_total":
-			return Text.of(runtime.totalMemory() / MB);
+			return (runtime.totalMemory() / MB);
 		case "ram_max":
-			return Text.of(runtime.maxMemory() / MB);
+			return (runtime.maxMemory() / MB);
 		case "cores":
-			return Text.of(runtime.availableProcessors());
+			return runtime.availableProcessors();
 		case "tps":
-			return Text.of(Sponge.getServer().getTicksPerSecond());
+			return Sponge.getServer().getTicksPerSecond();
 		default:
 			return null;
+		}
+	}
+
+	@Override
+	public Text onPlaceholderRequest(Player player, Optional<String> identifier) {
+		Object val = onValueRequest(player, identifier);
+		if (val instanceof Text) {
+			return (Text) val;
+		} else {
+			return Text.of(val);
 		}
 	}
 
