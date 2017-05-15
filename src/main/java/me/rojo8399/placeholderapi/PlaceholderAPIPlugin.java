@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
@@ -40,6 +43,7 @@ import me.rojo8399.placeholderapi.configs.JavascriptManager;
 import me.rojo8399.placeholderapi.configs.Messages;
 import me.rojo8399.placeholderapi.expansions.CurrencyExpansion;
 import me.rojo8399.placeholderapi.expansions.DateTimeExpansion;
+import me.rojo8399.placeholderapi.expansions.Expansion;
 import me.rojo8399.placeholderapi.expansions.JavascriptExpansion;
 import me.rojo8399.placeholderapi.expansions.PlayerExpansion;
 import me.rojo8399.placeholderapi.expansions.RankExpansion;
@@ -63,6 +67,9 @@ public class PlaceholderAPIPlugin {
 
 	@Inject
 	private Logger logger;
+
+	@Inject
+	private Metrics metrics;
 
 	@Inject
 	private Game game;
@@ -209,6 +216,19 @@ public class PlaceholderAPIPlugin {
 	@Listener
 	public void onGameStartingServerEvent(GameStartingServerEvent event) {
 		registerPlaceholders();
+		metrics.addCustomChart(new Metrics.SimpleBarChart("placeholders") {
+			@Override
+			public HashMap<String, Integer> getValues(HashMap<String, Integer> valueMap) {
+				Set<Expansion> exp = s.getExpansions();
+				if (exp.isEmpty()) {
+					HashMap<String, Integer> out = new HashMap<>();
+					out.put("none", 1);
+					return out;
+				}
+				return (HashMap<String, Integer>) exp.stream()
+						.collect(Collectors.toMap(Expansion::getIdentifier, e -> 1));
+			}
+		});
 	}
 
 	public void registerPlaceholders() {
