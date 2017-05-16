@@ -119,6 +119,12 @@ public class Messages {
 		public Message reloadButtonHover = of("&bClick to reload this placeholder!");
 		@Setting("reload-button")
 		public Message reloadButton = of("&c[RELOAD]");
+		@Setting("all-placeholders-button")
+		public Message allPlaceholdersButton = of("&e[SEE ALL]");
+		@Setting("all-supported-placeholders")
+		public Message allSupportedPlaceholders = of("&6&lAll supported placeholders:");
+		@Setting("all-placeholders-hover")
+		public Message allPlaceholdersHover = of("&bClick to see all placehodlers!");
 		@Setting("supported-placeholders")
 		public Message supportedPlaceholders = of("&6Supported placeholders:");
 		@Setting("parse-button-hover")

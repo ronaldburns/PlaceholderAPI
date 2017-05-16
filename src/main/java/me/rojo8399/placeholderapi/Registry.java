@@ -32,13 +32,22 @@ public class Registry {
 		registry.clear();
 		int count = 0;
 		for (Expansion e : toRefresh) {
-			if (e instanceof ReloadableExpansion) {
-				if (((ReloadableExpansion) e).reload()) {
-					count += register(e) ? 1 : 0;
-				}
-			}
+			count += refresh(e) ? 1 : 0;
 		}
 		return count;
+	}
+
+	public boolean refresh(Expansion e) {
+		if (e instanceof ReloadableExpansion) {
+			boolean b = ((ReloadableExpansion) e).reload();
+			if (!b) {
+				return b;
+			}
+		}
+		if (e instanceof ListeningExpansion) {
+			Sponge.getEventManager().unregisterListeners(e);
+		}
+		return register(e);
 	}
 
 	public boolean refresh(String id) {
@@ -47,13 +56,7 @@ public class Registry {
 			return false;
 		}
 		Expansion e = registry.remove(id);
-		if (e instanceof ReloadableExpansion) {
-			boolean b = ((ReloadableExpansion) e).reload();
-			if (!b) {
-				return b;
-			}
-		}
-		return register(e);
+		return refresh(e);
 	}
 
 	public Set<Expansion> getAll() {

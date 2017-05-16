@@ -17,6 +17,7 @@ import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.data.type.HandTypes;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.statistic.Statistics;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.action.TextActions;
@@ -124,9 +125,9 @@ public class PlayerExpansion implements Expansion {
 		case "remaining_air":
 			return p.getOrElse(Keys.REMAINING_AIR, 300);
 		case "item_in_main_hand":
-			return p.getItemInHand(HandTypes.MAIN_HAND).orElse(null);
+			return p.getItemInHand(HandTypes.MAIN_HAND).orElse(ItemStackSnapshot.NONE.createStack());
 		case "item_in_off_hand":
-			return p.getItemInHand(HandTypes.OFF_HAND).orElse(null);
+			return p.getItemInHand(HandTypes.OFF_HAND).orElse(ItemStackSnapshot.NONE.createStack());
 		case "walk_speed":
 			return p.getOrElse(Keys.WALKING_SPEED, 1.0);
 		case "time_played_seconds":

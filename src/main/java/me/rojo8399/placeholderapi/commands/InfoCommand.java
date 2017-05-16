@@ -49,7 +49,7 @@ public class InfoCommand implements CommandExecutor {
 		if (tokens == null) {
 			tokens = new ArrayList<>();
 		}
-		List<Text> supportedTokens = tokens.stream().limit(20).map(s -> s == null || s.isEmpty() ? null : s).distinct()
+		List<Text> supportedTokens = tokens.stream().map(s -> s == null || s.isEmpty() ? null : s).distinct()
 				.sorted((s1, s2) -> s1 == null ? -1 : (s2 == null ? 1 : s1.compareTo(s2))).map(s -> {
 					if (s == null) {
 						return token(name, src);
@@ -60,6 +60,12 @@ public class InfoCommand implements CommandExecutor {
 					}
 					return token(s2, src);
 				}).collect(Collectors.toList());
+		boolean seeall = false;
+		List<Text> t2 = new ArrayList<Text>(supportedTokens);
+		if (supportedTokens.size() > 20) {
+			supportedTokens = supportedTokens.subList(0, 20);
+			seeall = true;
+		}
 		Text url = e.getURL() == null ? Text.EMPTY
 				: Text.of(Text.NEW_LINE, TextColors.BLUE, TextActions.openUrl(e.getURL()), e.getURL().toString());
 		Text desc = e.getDescription() == null ? Text.EMPTY
@@ -67,11 +73,20 @@ public class InfoCommand implements CommandExecutor {
 		Text reload = Text.of(Text.NEW_LINE, Messages.get().placeholder.clickReload.t(), " ",
 				reload(e.getIdentifier()));
 		Text support = supportedTokens.isEmpty() ? Text.EMPTY
-				: Text.of(Text.NEW_LINE, Messages.get().placeholder.supportedPlaceholders.t(), Text.NEW_LINE,
-						Text.joinWith(Text.of(", "), supportedTokens));
+				: Text.of(Text.NEW_LINE, Messages.get().placeholder.supportedPlaceholders.t(),
+						seeall ? (seeall(t2)) : "", Text.NEW_LINE, Text.joinWith(Text.of(", "), supportedTokens));
 		return Text.of(TextColors.AQUA, name, TextColors.GREEN, " " + version, TextColors.GRAY, " ",
 				Messages.get().misc.by.t(), " ", TextColors.GOLD, author, TextColors.GRAY, ".", reload, desc, url,
 				support);
+	}
+
+	private static Text seeall(List<Text> tokens) {
+		final Text t = Text.joinWith(Text.of(", "), tokens);
+		return Text.of("    ", TextActions.showText(Text.of(Messages.get().placeholder.allPlaceholdersHover.t())),
+				TextActions.executeCallback(s -> {
+					s.sendMessage(Messages.get().placeholder.allSupportedPlaceholders.t());
+					s.sendMessage(t);
+				}), Messages.get().placeholder.allPlaceholdersButton.t());
 	}
 
 	private static Text reload(String token) {
