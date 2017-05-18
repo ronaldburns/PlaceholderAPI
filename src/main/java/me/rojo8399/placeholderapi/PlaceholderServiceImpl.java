@@ -323,6 +323,22 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	}
 
 	/**
+	 * Replace placeholders
+	 */
+	@Override
+	public Text replacePlaceholders(Player player, Text text, String o, String c) {
+		return replacePlaceholders(player, TextUtils.toTemplate(text, generatePattern(o, c)));
+	}
+
+	/**
+	 * Replace placeholders
+	 */
+	@Override
+	public Text replacePlaceholders(Player player, Text text, Pattern pattern) {
+		return replacePlaceholders(player, TextUtils.toTemplate(text, pattern));
+	}
+
+	/**
 	 * Get all placeholders
 	 */
 	@Override

@@ -63,6 +63,40 @@ public interface PlaceholderService {
 	public Text replacePlaceholders(Player player, String text, Pattern pattern);
 
 	/**
+	 * Replace all placeholders in a string.
+	 * 
+	 * @param player
+	 *            The player to parse with respect to.
+	 * @param text
+	 *            The text to parse.
+	 * @param openText
+	 *            The opening string to prefix a placeholder
+	 * @param closeText
+	 *            The closing string to suffix a placeholder
+	 * @return The parsed text.
+	 */
+	public Text replacePlaceholders(Player player, Text text, String openText, String closeText);
+
+	/**
+	 * Replace all placeholders in a string.
+	 * 
+	 * @param player
+	 *            The player to parse with respect to.
+	 * @param text
+	 *            The text to parse.
+	 * @param pattern
+	 *            The pattern to match against. The parser assumes regular
+	 *            expression group 1 is the group that gets the whole
+	 *            placeholder. You can use non-capturing groups (?:...) to have
+	 *            matching groups ahead of the group. If there are no groups,
+	 *            the parser assumes one special character on either end of the
+	 *            whole matched string is not part of the placeholder and the
+	 *            rest is.
+	 * @return The parsed text.
+	 */
+	public Text replacePlaceholders(Player player, Text text, Pattern pattern);
+
+	/**
 	 * Replace all placeholders in a texttemplate.
 	 * 
 	 * @param player

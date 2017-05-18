@@ -23,6 +23,11 @@
  */
 package me.rojo8399.placeholderapi.utils;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -104,6 +109,76 @@ public class TextUtils {
 			out = out.concat(original);
 		}
 		return out;
+	}
+
+	/**
+	 * Turn a text into a list of texts
+	 */
+	public static List<Text> flatten(Text text) {
+		if (text == null || text.isEmpty()) {
+			return new ArrayList<>();
+		}
+		List<Text> out = new ArrayList<>();
+		List<Text> children = text.getChildren();
+		out.add(text.toBuilder().removeAll().build());
+		children.forEach(c -> out.addAll(flatten(c)));
+		return out;
+	}
+
+	/**
+	 * Convert from Text to TextTemplate
+	 */
+	public static TextTemplate toTemplate(Text text, Pattern pattern) {
+		List<Text> flat = flatten(text);
+		TextTemplate out = TextTemplate.EMPTY;
+		for (Text t : flat) {
+			String p = text.toPlain();
+			if (pattern.matcher(p).matches()) {
+				String ex = pattern.matcher(p).group(1);
+				String pre = p.substring(0, p.indexOf(ex));
+				String post = p.substring(p.indexOf(ex) + ex.length());
+				out = out.concat(
+						TextTemplate.of(pre, post, new Object[] { TextTemplate.arg(ex).format(t.getFormat()) }));
+			} else if (pattern.matcher(p).find()) {
+				String p2 = pattern.matcher(p).group();
+				String ex = pattern.matcher(p).group(1);
+				String pre = p2.substring(0, p2.indexOf(ex));
+				String post = p2.substring(p2.indexOf(ex) + ex.length());
+				String pt = p.substring(0, p.indexOf(p2));
+				String ppt = p.substring(p.indexOf(p2) + p2.length());
+				Text.Builder ptt = Text.builder(pt).format(t.getFormat());
+				Text.Builder pptt = Text.builder(ppt).format(t.getFormat());
+				t.getClickAction().ifPresent(c -> {
+					ptt.onClick(c);
+					pptt.onClick(c);
+				});
+				t.getShiftClickAction().ifPresent(c -> {
+					ptt.onShiftClick(c);
+					pptt.onShiftClick(c);
+				});
+				t.getHoverAction().ifPresent(c -> {
+					ptt.onHover(c);
+					pptt.onHover(c);
+				});
+				Text pretext = ptt.build();
+				Text posttext = pptt.build();
+				out = out.concat(TextTemplate.of(pre, post,
+						new Object[] { pretext, TextTemplate.arg(ex).format(t.getFormat()), posttext }));
+			} else {
+				out = out.concat(TextTemplate.of(t));
+			}
+		}
+		return out;
+	}
+
+	/**
+	 * Convert from TextTemplate to Text
+	 */
+	public static Text toText(TextTemplate template, Optional<Map<String, Object>> preexisting) {
+		Map<String, Object> a = preexisting.orElse(new HashMap<>());
+		template.getArguments().entrySet().stream().filter(e -> !a.containsKey(e.getKey())).forEach(
+				e -> a.put(e.getKey(), template.getOpenArgString() + e.getKey() + template.getCloseArgString()));
+		return template.apply(a).build();
 	}
 
 }
