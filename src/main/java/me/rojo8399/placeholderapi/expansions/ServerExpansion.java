@@ -133,12 +133,7 @@ public class ServerExpansion implements ConfigurableExpansion, ListeningExpansio
 
 	@Override
 	public Text onPlaceholderRequest(Player player, Optional<String> identifier) {
-		Object val = onValueRequest(player, identifier);
-		if (val instanceof Text) {
-			return (Text) val;
-		} else {
-			return Text.of(val);
-		}
+		return onValueRequest(player, identifier, Text.class).orElse(null);
 	}
 
 	/*
