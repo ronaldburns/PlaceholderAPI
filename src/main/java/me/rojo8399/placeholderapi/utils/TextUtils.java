@@ -1,26 +1,4 @@
-/*
- The MIT License (MIT)
 
- Copyright (c) 2016 Wundero
-
- Permission is hereby granted, free of charge, to any person obtaining a copy
- of this software and associated documentation files (the "Software"), to deal
- in the Software without restriction, including without limitation the rights
- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- copies of the Software, and to permit persons to whom the Software is
- furnished to do so, subject to the following conditions:
-
- The above copyright notice and this permission notice shall be included in all
- copies or substantial portions of the Software.
-
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- SOFTWARE.
- */
 package me.rojo8399.placeholderapi.utils;
 
 import java.util.ArrayList;
@@ -133,15 +111,16 @@ public class TextUtils {
 		TextTemplate out = TextTemplate.EMPTY;
 		for (Text t : flat) {
 			String p = text.toPlain();
-			if (pattern.matcher(p).matches()) {
-				String ex = pattern.matcher(p).group(1);
+			Matcher m;
+			if ((m = pattern.matcher(p)).matches()) {
+				String ex = m.group(1);
 				String pre = p.substring(0, p.indexOf(ex));
 				String post = p.substring(p.indexOf(ex) + ex.length());
 				out = out.concat(
 						TextTemplate.of(pre, post, new Object[] { TextTemplate.arg(ex).format(t.getFormat()) }));
-			} else if (pattern.matcher(p).find()) {
-				String p2 = pattern.matcher(p).group();
-				String ex = pattern.matcher(p).group(1);
+			} else if ((m = pattern.matcher(p)).find()) {
+				String p2 = m.group();
+				String ex = m.group(1);
 				String pre = p2.substring(0, p2.indexOf(ex));
 				String post = p2.substring(p2.indexOf(ex) + ex.length());
 				String pt = p.substring(0, p.indexOf(p2));
