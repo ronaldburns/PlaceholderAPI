@@ -24,32 +24,22 @@
 package me.rojo8399.placeholderapi.expansions;
 
 import java.text.NumberFormat;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.Nullable;
-
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.data.type.HandTypes;
 import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.statistic.Statistics;
 import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.action.TextActions;
-import org.spongepowered.api.text.serializer.TextSerializers;
 
 import com.flowpowered.math.vector.Vector3d;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
-import me.rojo8399.placeholderapi.PlaceholderServiceImpl;
 import me.rojo8399.placeholderapi.configs.Messages;
 
 public class PlayerExpansion implements RelationalExpansion {
@@ -193,38 +183,6 @@ public class PlayerExpansion implements RelationalExpansion {
 		default:
 			return null;
 		}
-	}
-
-	private static Text ofItem(@Nullable ItemStack item) {
-		if (item == null) {
-			return Text.EMPTY;
-		}
-		return Text.of(TextActions.showItem(item.createSnapshot()), item.getOrElse(Keys.DISPLAY_NAME, Text.of(item)));
-	}
-
-	@Override
-	public Text onPlaceholderRequest(Player p, Optional<String> identifier) {
-		Object val = onValueRequest(p, identifier);
-		if (val == null) {
-			return null;
-		}
-		if (val instanceof Text) {
-			return (Text) val;
-		}
-		if (val instanceof String) {
-			return TextSerializers.FORMATTING_CODE.deserialize((String) val);
-		}
-		if (val instanceof ItemStack) {
-			return ofItem((ItemStack) val);
-		}
-		if (val instanceof Instant) {
-			if (PlaceholderServiceImpl.get().getExpansion("time").isPresent()) {
-				return TextSerializers.FORMATTING_CODE.deserialize(DateTimeFormatter
-						.ofPattern(((DateTimeExpansion) PlaceholderServiceImpl.get().getExpansion("time").get()).format)
-						.format(LocalDateTime.ofInstant((Instant) val, ZoneOffset.systemDefault())));
-			}
-		}
-		return Text.of(val);
 	}
 
 	private static double getTime(Player player, TimeUnit unit) {

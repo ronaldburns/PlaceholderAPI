@@ -65,7 +65,7 @@ public class SoundExpansion implements Expansion {
 	}
 
 	@Override
-	public Text onPlaceholderRequest(Player p, Optional<String> identifier) {
+	public Object onValueRequest(Player p, Optional<String> identifier) {
 
 		if (!identifier.isPresent()) {
 			// No sound present

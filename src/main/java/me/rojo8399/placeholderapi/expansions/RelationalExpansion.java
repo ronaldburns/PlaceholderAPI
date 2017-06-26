@@ -39,7 +39,7 @@ import me.rojo8399.placeholderapi.utils.TypeUtils;
 public interface RelationalExpansion extends Expansion {
 
 	@Override
-	public default Text onPlaceholderRequest(Player player, Optional<String> token) {
+	public default Object onValueRequest(Player player, Optional<String> token) {
 		return null;
 	}
 

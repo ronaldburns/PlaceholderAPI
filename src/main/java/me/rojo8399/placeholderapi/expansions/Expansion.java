@@ -24,13 +24,20 @@
 package me.rojo8399.placeholderapi.expansions;
 
 import java.net.URL;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.serializer.TextSerializers;
 
+import me.rojo8399.placeholderapi.PlaceholderServiceImpl;
+import me.rojo8399.placeholderapi.utils.TextUtils;
 import me.rojo8399.placeholderapi.utils.TypeUtils;
 
 public interface Expansion {
@@ -108,6 +115,28 @@ public interface Expansion {
 			if (val instanceof Text) {
 				return TypeUtils.tryOptional(() -> expected.cast(val));
 			} else {
+				if (val instanceof ItemStack) {
+					return TypeUtils.tryOptional(() -> expected.cast(TextUtils.ofItem((ItemStack) val)));
+				}
+				if (val instanceof Instant) {
+					if (PlaceholderServiceImpl.get().getExpansion("time").isPresent()) {
+						return TypeUtils.tryOptional(() -> expected.cast(
+								TextSerializers.FORMATTING_CODE.deserialize(DateTimeFormatter
+										.ofPattern(((DateTimeExpansion) PlaceholderServiceImpl.get()
+												.getExpansion("time").get()).format)
+										.format(LocalDateTime.ofInstant((Instant) val, ZoneOffset.systemDefault())))));
+					}
+				}
+				if (val instanceof LocalDateTime) {
+					if (PlaceholderServiceImpl.get().getExpansion("time").isPresent()) {
+						return TypeUtils
+								.tryOptional(() -> expected
+										.cast(TextSerializers.FORMATTING_CODE.deserialize(DateTimeFormatter
+												.ofPattern(((DateTimeExpansion) PlaceholderServiceImpl.get()
+														.getExpansion("time").get()).format)
+												.format((LocalDateTime) val))));
+					}
+				}
 				return TypeUtils.tryOptional(
 						() -> expected.cast(TextSerializers.FORMATTING_CODE.deserialize(String.valueOf(val))));
 			}
@@ -120,16 +149,16 @@ public interface Expansion {
 	 * 
 	 * @return the value, as an object
 	 */
-	public default Object onValueRequest(Player player, Optional<String> token) {
-		return onPlaceholderRequestLegacy(player, token);
-	}
+	public Object onValueRequest(Player player, Optional<String> token);
 
 	/**
 	 * Parse the token for the player
 	 * 
 	 * @return the result of the parse as a text.
 	 */
-	public Text onPlaceholderRequest(Player player, Optional<String> token);
+	public default Text onPlaceholderRequest(Player player, Optional<String> token) {
+		return onValueRequest(player, token, Text.class).orElse(null);
+	}
 
 	/**
 	 * Parse the token for the player

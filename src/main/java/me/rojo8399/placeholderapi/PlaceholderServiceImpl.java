@@ -250,7 +250,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			}
 
 			@Override
-			public Text onPlaceholderRequest(Player player, Optional<String> token) {
+			public Object onValueRequest(Player player, Optional<String> token) {
 				return function.apply(player, token);
 			}
 

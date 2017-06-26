@@ -32,8 +32,13 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.annotation.Nullable;
+
+import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
+import org.spongepowered.api.text.action.TextActions;
 import org.spongepowered.api.text.format.TextFormat;
 import org.spongepowered.api.text.serializer.TextSerializers;
 
@@ -83,6 +88,13 @@ public class TextUtils {
 			x++;
 		}
 		return out;
+	}
+	
+	public static Text ofItem(@Nullable ItemStack item) {
+		if (item == null) {
+			return Text.EMPTY;
+		}
+		return Text.of(TextActions.showItem(item.createSnapshot()), item.getOrElse(Keys.DISPLAY_NAME, Text.of(item)));
 	}
 
 	private static Text fix(Text to, TextFormat l) {
