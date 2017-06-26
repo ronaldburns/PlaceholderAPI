@@ -42,6 +42,7 @@ import org.spongepowered.api.text.TextTemplate;
 import org.spongepowered.api.text.format.TextColors;
 
 import me.rojo8399.placeholderapi.expansions.Expansion;
+import me.rojo8399.placeholderapi.expansions.RelationalExpansion;
 import me.rojo8399.placeholderapi.utils.TextUtils;
 
 /**
@@ -164,6 +165,9 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 				format = placeholderMatcher.group(1);
 			} catch (Exception e) {
 				format = total.substring(1, total.length() - 1);
+			}
+			if (!format.isEmpty() && format.toLowerCase().startsWith("rel")) {
+				continue;
 			}
 			int index = format.indexOf("_");
 			if (index == 0 || index == format.length()) {
@@ -288,6 +292,13 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 				continue;
 			}
 			String format = a.toLowerCase();
+			if (!format.isEmpty() && format.toLowerCase().startsWith("rel")) {
+				// Again, filler string.
+				if (!template.getArguments().get(a).isOptional()) {
+					args.put(a, template.getOpenArgString() + a + template.getCloseArgString());
+				}
+				continue;
+			}
 			int index = format.indexOf("_");
 			if (index == 0 || index == format.length()) {
 				// We want to skip this but we cannot leave required arguments
@@ -375,5 +386,267 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	@Override
 	public Optional<Expansion> getExpansion(String id) {
 		return Optional.ofNullable(registry.get(id));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * me.rojo8399.placeholderapi.PlaceholderService#registerReloadListener(java
+	 * .lang.Runnable, java.util.Optional)
+	 */
+	@Override
+	public void registerReloadListener(Runnable run, Optional<String> placeholder) {
+		registry.registerListener(run, placeholder);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see me.rojo8399.placeholderapi.PlaceholderService#
+	 * replaceRelationalPlaceholders(org.spongepowered.api.entity.living.player.
+	 * Player, org.spongepowered.api.entity.living.player.Player,
+	 * java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public Text replaceRelationalPlaceholders(Player one, Player two, String text, String openText, String closeText) {
+		return replaceRelationalPlaceholders(one, two, text, generatePattern(openText, closeText));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see me.rojo8399.placeholderapi.PlaceholderService#
+	 * replaceRelationalPlaceholders(org.spongepowered.api.entity.living.player.
+	 * Player, org.spongepowered.api.entity.living.player.Player,
+	 * java.lang.String, java.util.regex.Pattern)
+	 */
+	@Override
+	public Text replaceRelationalPlaceholders(Player one, Player two, String text, Pattern pattern) {
+		return replaceRelationalPlaceholders(one, two, TextUtils.parse(text, pattern));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see me.rojo8399.placeholderapi.PlaceholderService#
+	 * replaceRelationalPlaceholders(org.spongepowered.api.entity.living.player.
+	 * Player, org.spongepowered.api.entity.living.player.Player,
+	 * org.spongepowered.api.text.Text, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public Text replaceRelationalPlaceholders(Player one, Player two, Text text, String openText, String closeText) {
+		return replaceRelationalPlaceholders(one, two,
+				TextUtils.toTemplate(text, generatePattern(openText, closeText)));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see me.rojo8399.placeholderapi.PlaceholderService#
+	 * replaceRelationalPlaceholders(org.spongepowered.api.entity.living.player.
+	 * Player, org.spongepowered.api.entity.living.player.Player,
+	 * org.spongepowered.api.text.Text, java.util.regex.Pattern)
+	 */
+	@Override
+	public Text replaceRelationalPlaceholders(Player one, Player two, Text text, Pattern pattern) {
+		return replaceRelationalPlaceholders(one, two, TextUtils.toTemplate(text, pattern));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see me.rojo8399.placeholderapi.PlaceholderService#
+	 * replaceRelationalPlaceholders(org.spongepowered.api.entity.living.player.
+	 * Player, org.spongepowered.api.entity.living.player.Player,
+	 * org.spongepowered.api.text.TextTemplate, java.util.Map)
+	 */
+	@Override
+	public Text replaceRelationalPlaceholders(Player one, Player two, TextTemplate template,
+			Map<String, Object> arguments) {
+		return template.apply(rrpt(one, two, template, arguments)).build();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * me.rojo8399.placeholderapi.PlaceholderService#fillRelationalPlaceholders(
+	 * org.spongepowered.api.entity.living.player.Player,
+	 * org.spongepowered.api.entity.living.player.Player,
+	 * org.spongepowered.api.text.TextTemplate)
+	 */
+	@Override
+	public Map<String, Object> fillRelationalPlaceholders(Player one, Player two, TextTemplate template) {
+		return rrpt(one, two, template, null);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see me.rojo8399.placeholderapi.PlaceholderService#
+	 * replaceRelationalPlaceholdersLegacy(org.spongepowered.api.entity.living.
+	 * player.Player, org.spongepowered.api.entity.living.player.Player,
+	 * java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public String replaceRelationalPlaceholdersLegacy(Player one, Player two, String text, String openText,
+			String closeText) {
+		return rrptl(one, two, text, generatePattern(openText, closeText));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see me.rojo8399.placeholderapi.PlaceholderService#
+	 * replaceRelationalPlaceholdersLegacy(org.spongepowered.api.entity.living.
+	 * player.Player, org.spongepowered.api.entity.living.player.Player,
+	 * java.lang.String, java.util.regex.Pattern)
+	 */
+	@Override
+	public String replaceRelationalPlaceholdersLegacy(Player one, Player two, String text, Pattern pattern) {
+		return rrptl(one, two, text, pattern);
+	}
+
+	private Map<String, Object> rrpt(Player one, Player two, TextTemplate template, Map<String, Object> args) {
+		if (args == null) {
+			args = new HashMap<>();
+		}
+		// For every existing argument
+		for (String a : template.getArguments().keySet()) {
+			if (args.containsKey(a)) {
+				continue;
+			}
+			String format = a.toLowerCase();
+			if (!format.isEmpty() && !format.toLowerCase().startsWith("rel")) {
+				// Again, filler string.
+				if (!template.getArguments().get(a).isOptional()) {
+					args.put(a, template.getOpenArgString() + a + template.getCloseArgString());
+				}
+				continue;
+			}
+			format = format.replace("rel_", "");
+			int index = format.indexOf("_");
+			if (index == 0 || index == format.length()) {
+				// We want to skip this but we cannot leave required arguments
+				// so filler string is used.
+				if (!template.getArguments().get(a).isOptional()) {
+					args.put(a, template.getOpenArgString() + a + template.getCloseArgString());
+				}
+				continue;
+			}
+			boolean noToken = false;
+			if (index == -1) {
+				noToken = true;
+				index = format.length();
+			}
+			String id = format.substring(0, index).toLowerCase();
+			if (!registry.has(id)) {
+				// Again, filler string.
+				if (!template.getArguments().get(a).isOptional()) {
+					args.put(a, template.getOpenArgString() + a + template.getCloseArgString());
+				}
+				continue;
+			}
+			String token = noToken ? null : format.substring(index + 1);
+			Expansion exp1 = registry.get(id);
+			if (!(exp1 instanceof RelationalExpansion)) {
+				// Again, filler string.
+				if (!template.getArguments().get(a).isOptional()) {
+					args.put(a, template.getOpenArgString() + a + template.getCloseArgString());
+				}
+				continue;
+			}
+			RelationalExpansion exp = (RelationalExpansion) exp1;
+			Text value = null;
+			try {
+				value = exp.onRelationalRequest(one, two, Optional.ofNullable(token));
+			} catch (Exception e) {
+				value = Text.of(TextColors.RED, "ERROR: " + e.getMessage());
+				e.printStackTrace();
+			}
+			if (value == null && PlaceholderAPIPlugin.getInstance().getConfig().relationaltoregular) {
+				try {
+					value = exp.onPlaceholderRequest(two, Optional.ofNullable(token));
+				} catch (Exception e) {
+					value = Text.of(TextColors.RED, "ERROR: " + e.getMessage());
+					e.printStackTrace();
+				}
+			}
+			PlaceholderAPIPlugin.getInstance().getLogger().debug("Format: " + a + ", ID: " + id + ", Value : " + value);
+			if (value == null) {
+				value = Text.of(template.getOpenArgString() + a + template.getCloseArgString());
+			}
+			args.put(a, value);
+		}
+		return args;
+	}
+
+	private String rrptl(Player one, Player two, String text, Pattern p) {
+		Matcher placeholderMatcher = p.matcher(text);
+		while (placeholderMatcher.find()) {
+			String total = placeholderMatcher.group();
+			String format;
+			try {
+				format = placeholderMatcher.group(1);
+			} catch (Exception e) {
+				format = total.substring(1, total.length() - 1);
+			}
+			if (!format.isEmpty() && !format.toLowerCase().startsWith("rel")) {
+				continue;
+			}
+			format = format.replace("rel_", "");
+			int index = format.indexOf("_");
+			if (index == 0 || index == format.length()) {
+				continue;
+			}
+			boolean noToken = false;
+			if (index == -1) {
+				noToken = true;
+				index = format.length();
+			}
+			String id = format.substring(0, index).toLowerCase();
+			if (!registry.has(id)) {
+				continue;
+			}
+			String token = noToken ? null : format.substring(index + 1);
+			Expansion exp1 = registry.get(id);
+			if (!(exp1 instanceof RelationalExpansion)) {
+				continue;
+			}
+			RelationalExpansion exp = (RelationalExpansion) exp1;
+			String value = null;
+			try {
+				value = exp.onRelationalRequestLegacy(one, two, Optional.ofNullable(token));
+			} catch (Exception e) {
+				if (e instanceof NullPointerException && e.getMessage().equals("null")) {
+					// Should theoretically only happen if player is null.
+					value = null;
+				} else {
+					value = "ERROR: " + e.getMessage();
+				}
+				e.printStackTrace();
+			}
+			if (value == null && PlaceholderAPIPlugin.getInstance().getConfig().relationaltoregular) {
+				try {
+					value = exp.onPlaceholderRequestLegacy(two, Optional.ofNullable(token));
+				} catch (Exception e) {
+					if (e instanceof NullPointerException && e.getMessage().equals("null")) {
+						// Should theoretically only happen if player is null.
+						value = null;
+					} else {
+						value = "ERROR: " + e.getMessage();
+					}
+					e.printStackTrace();
+				}
+			}
+			PlaceholderAPIPlugin.getInstance().getLogger()
+					.debug("Format: " + format + ", ID: " + id + ", Value : " + value);
+			if (value == null) {
+				value = total;
+			}
+			text = text.replace(total, Matcher.quoteReplacement(value));
+		}
+		return text;
 	}
 }

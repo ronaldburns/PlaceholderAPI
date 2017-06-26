@@ -147,9 +147,15 @@ public class Messages {
 		@Setting("all-supported-placeholders")
 		public Message allSupportedPlaceholders = of("&6&lAll supported placeholders:");
 		@Setting("all-placeholders-hover")
-		public Message allPlaceholdersHover = of("&bClick to see all placehodlers!");
+		public Message allPlaceholdersHover = of("&bClick to see all placeholders!");
 		@Setting("supported-placeholders")
-		public Message supportedPlaceholders = of("&6Supported placeholders:");
+		public Message supportedPlaceholders = of("&6Supported relational placeholders:");
+		@Setting("all-supported-relational-placeholders")
+		public Message allSupportedPlaceholdersRelational = of("&6&lAll supported relational placeholders:");
+		@Setting("all-relational-placeholders-hover")
+		public Message allPlaceholdersHoverRelational = of("&bClick to see all relational placeholders!");
+		@Setting("supported-relational-placeholders")
+		public Message supportedPlaceholdersRelational = of("&6Supported relational placeholders:");
 		@Setting("parse-button-hover")
 		public Message parseButtonHover = of("&bClick to parse this placeholder for you!");
 		@Setting("info-button-hover")

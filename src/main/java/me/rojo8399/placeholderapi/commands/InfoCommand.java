@@ -42,6 +42,7 @@ import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.PlaceholderService;
 import me.rojo8399.placeholderapi.configs.Messages;
 import me.rojo8399.placeholderapi.expansions.Expansion;
+import me.rojo8399.placeholderapi.expansions.RelationalExpansion;
 import me.rojo8399.placeholderapi.utils.TextUtils;
 
 public class InfoCommand implements CommandExecutor {
@@ -75,13 +76,13 @@ public class InfoCommand implements CommandExecutor {
 		List<Text> supportedTokens = tokens.stream().map(s -> s == null || s.isEmpty() ? null : s).distinct()
 				.sorted((s1, s2) -> s1 == null ? -1 : (s2 == null ? 1 : s1.compareTo(s2))).map(s -> {
 					if (s == null) {
-						return token(name, src);
+						return token(name, src, false);
 					}
 					String s2 = name.concat("_" + s);
 					if (OPT.matcher(s2).find()) {
-						return token(s2, src, true);
+						return token(s2, src, false, true);
 					}
-					return token(s2, src);
+					return token(s2, src, false);
 				}).collect(Collectors.toList());
 		boolean seeall = false;
 		List<Text> t2 = new ArrayList<Text>(supportedTokens);
@@ -89,6 +90,7 @@ public class InfoCommand implements CommandExecutor {
 			supportedTokens = supportedTokens.subList(0, 20);
 			seeall = true;
 		}
+
 		Text url = e.getURL() == null ? Text.EMPTY
 				: Text.of(Text.NEW_LINE, TextColors.BLUE, TextActions.openUrl(e.getURL()), e.getURL().toString());
 		Text desc = e.getDescription() == null ? Text.EMPTY
@@ -97,19 +99,51 @@ public class InfoCommand implements CommandExecutor {
 				reload(e.getIdentifier()));
 		Text support = supportedTokens.isEmpty() ? Text.EMPTY
 				: Text.of(Text.NEW_LINE, Messages.get().placeholder.supportedPlaceholders.t(),
-						seeall ? (seeall(t2)) : "", Text.NEW_LINE, Text.joinWith(Text.of(", "), supportedTokens));
+						seeall ? (seeall(t2, false)) : "", Text.NEW_LINE,
+						Text.joinWith(Text.of(", "), supportedTokens));
+		Text support2 = Text.EMPTY;
+		if (e instanceof RelationalExpansion) {
+			List<String> tokens2 = ((RelationalExpansion) e).getSupportedRelationalTokens();
+			if (tokens2 == null) {
+				tokens2 = new ArrayList<>();
+			}
+			List<Text> supportedTokens2 = tokens2.stream().map(s -> s == null || s.isEmpty() ? null : s).distinct()
+					.sorted((s1, s2) -> s1 == null ? -1 : (s2 == null ? 1 : s1.compareTo(s2))).map(s -> {
+						if (s == null) {
+							return token(name, src, true);
+						}
+						String s2 = name.concat("_" + s);
+						if (OPT.matcher(s2).find()) {
+							return token(s2, src, true, true);
+						}
+						return token(s2, src, true);
+					}).collect(Collectors.toList());
+			boolean seeall2 = false;
+			List<Text> t22 = new ArrayList<Text>(supportedTokens2);
+			if (supportedTokens2.size() > 20) {
+				supportedTokens2 = supportedTokens2.subList(0, 20);
+				seeall2 = true;
+			}
+			support2 = supportedTokens2.isEmpty() ? Text.EMPTY
+					: Text.of(Text.NEW_LINE, Messages.get().placeholder.supportedPlaceholdersRelational.t(),
+							seeall2 ? (seeall(t22, true)) : "", Text.NEW_LINE,
+							Text.joinWith(Text.of(", "), supportedTokens2));
+		}
 		return Text.of(TextColors.AQUA, name, TextColors.GREEN, " " + version, TextColors.GRAY, " ",
 				Messages.get().misc.by.t(), " ", TextColors.GOLD, author, TextColors.GRAY, ".", reload, desc, url,
-				support);
+				support, support2);
 	}
 
-	private static Text seeall(List<Text> tokens) {
+	private static Text seeall(List<Text> tokens, boolean relational) {
 		final Text t = Text.joinWith(Text.of(", "), tokens);
-		return Text.of("    ", TextActions.showText(Text.of(Messages.get().placeholder.allPlaceholdersHover.t())),
-				TextActions.executeCallback(s -> {
-					s.sendMessage(Messages.get().placeholder.allSupportedPlaceholders.t());
-					s.sendMessage(t);
-				}), Messages.get().placeholder.allPlaceholdersButton.t());
+		Text h = relational ? Messages.get().placeholder.allPlaceholdersHoverRelational.t()
+				: Messages.get().placeholder.allPlaceholdersHover.t();
+		Text a = relational ? Messages.get().placeholder.allSupportedPlaceholdersRelational.t()
+				: Messages.get().placeholder.allSupportedPlaceholders.t();
+		return Text.of("    ", TextActions.showText(Text.of(h)), TextActions.executeCallback(s -> {
+			s.sendMessage(a);
+			s.sendMessage(t);
+		}), Messages.get().placeholder.allPlaceholdersButton.t());
 	}
 
 	private static Text reload(String token) {
@@ -118,25 +152,27 @@ public class InfoCommand implements CommandExecutor {
 				.onClick(TextActions.runCommand("/papi r " + token)).build();
 	}
 
-	private static Text token(String token, CommandSource src, boolean opt) {
+	private static Text token(String token, CommandSource src, boolean relational, boolean opt) {
 		if (!opt) {
-			return token(token, src);
+			return token(token, src, relational);
 		}
 		if (!(src instanceof Player)) {
 			return Text.of(TextColors.GREEN, "%" + token + "%");
 		}
 		String p = src.getName();
 		return Text.of(TextColors.GREEN, TextActions.showText(Messages.get().placeholder.parseButtonHover.t()),
-				TextActions.suggestCommand("/papi p " + p + " %" + token + "%"), "%" + token + "%");
+				TextActions.suggestCommand("/papi p " + p + " %" + (relational ? "rel_" : "") + token + "%"),
+				"%" + (relational ? "rel_" : "") + token + "%");
 	}
 
-	private static Text token(String token, CommandSource src) {
+	private static Text token(String token, CommandSource src, boolean relational) {
 		if (!(src instanceof Player)) {
 			return Text.of(TextColors.GREEN, "%" + token + "%");
 		}
 		String p = src.getName();
 		return Text.of(TextColors.GREEN, TextActions.showText(Messages.get().placeholder.parseButtonHover.t()),
-				TextActions.runCommand("/papi p " + p + " %" + token + "%"), "%" + token + "%");
+				TextActions.runCommand("/papi p " + p + " %" + (relational ? "rel_" : "") + token + "%"),
+				"%" + (relational ? "rel_" : "") + token + "%");
 	}
 
 }

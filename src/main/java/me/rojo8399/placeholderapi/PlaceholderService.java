@@ -120,6 +120,19 @@ public interface PlaceholderService {
 	public Text replacePlaceholders(Player player, Text text, Pattern pattern);
 
 	/**
+	 * Replace all placeholders in a string.
+	 * 
+	 * @param player
+	 *            The player to parse with respect to.
+	 * @param text
+	 *            The text to parse.
+	 * @return The parsed text.
+	 */
+	public default Text replacePlaceholders(Player player, Text text) {
+		return replacePlaceholders(player, text, "%", "%");
+	}
+
+	/**
 	 * Replace all placeholders in a texttemplate.
 	 * 
 	 * @param player
@@ -228,6 +241,16 @@ public interface PlaceholderService {
 	public boolean registerPlaceholder(Expansion expansion);
 
 	/**
+	 * Register a reload listener.
+	 * 
+	 * @param listener
+	 *            An runnable that will be executed on reload.
+	 * @param placeholder
+	 *            An optional id to attach the listener to a placeholder
+	 */
+	public void registerReloadListener(Runnable run, Optional<String> placeholder);
+
+	/**
 	 * Register a placholder.
 	 * 
 	 * @param plugin
@@ -237,5 +260,207 @@ public interface PlaceholderService {
 	 * @return Whether the placeholder was successfully registered.
 	 */
 	public boolean registerPlaceholder(Object plugin, BiFunction<Player, Optional<String>, Text> function);
+
+	/**
+	 * Replace all placeholders in a string.
+	 * 
+	 * @param one
+	 *            The player to parse with respect to first.
+	 * @param two
+	 *            The player to parse with respect to second.
+	 * @param text
+	 *            The text to parse.
+	 * @return The parsed text.
+	 */
+	public default Text replaceRelationalPlaceholders(Player one, Player two, String text) {
+		return replaceRelationalPlaceholders(one, two, text, "%", "%");
+	}
+
+	/**
+	 * Replace all placeholders in a string.
+	 * 
+	 * @param one
+	 *            The player to parse with respect to first.
+	 * @param two
+	 *            The player to parse with respect to second.
+	 * @param text
+	 *            The text to parse.
+	 * @param openText
+	 *            The opening string to prefix a placeholder
+	 * @param closeText
+	 *            The closing string to suffix a placeholder
+	 * @return The parsed text.
+	 */
+	public Text replaceRelationalPlaceholders(Player one, Player two, String text, String openText, String closeText);
+
+	/**
+	 * Replace all placeholders in a string.
+	 * 
+	 * @param one
+	 *            The player to parse with respect to first.
+	 * @param two
+	 *            The player to parse with respect to second.
+	 * @param text
+	 *            The text to parse.
+	 * @param pattern
+	 *            The pattern to match against. The parser assumes regular
+	 *            expression group 1 is the group that gets the whole
+	 *            placeholder. You can use non-capturing groups (?:...) to have
+	 *            matching groups ahead of the group. If there are no groups,
+	 *            the parser assumes one special character on either end of the
+	 *            whole matched string is not part of the placeholder and the
+	 *            rest is.
+	 * @return The parsed text.
+	 */
+	public Text replaceRelationalPlaceholders(Player one, Player two, String text, Pattern pattern);
+
+	/**
+	 * Replace all placeholders in a string.
+	 * 
+	 * @param one
+	 *            The player to parse with respect to first.
+	 * @param two
+	 *            The player to parse with respect to second.
+	 * @param text
+	 *            The text to parse.
+	 * @param openText
+	 *            The opening string to prefix a placeholder
+	 * @param closeText
+	 *            The closing string to suffix a placeholder
+	 * @return The parsed text.
+	 */
+	public Text replaceRelationalPlaceholders(Player one, Player two, Text text, String openText, String closeText);
+
+	/**
+	 * Replace all placeholders in a string.
+	 * 
+	 * @param one
+	 *            The player to parse with respect to first.
+	 * @param two
+	 *            The player to parse with respect to second.
+	 * @param text
+	 *            The text to parse.
+	 * @return The parsed text.
+	 */
+	public default Text replaceRelationalPlaceholders(Player one, Player two, Text text) {
+		return replaceRelationalPlaceholders(one, two, text, "%", "%");
+	}
+
+	/**
+	 * Replace all placeholders in a string.
+	 * 
+	 * @param one
+	 *            The player to parse with respect to first.
+	 * @param two
+	 *            The player to parse with respect to second.
+	 * @param text
+	 *            The text to parse.
+	 * @param pattern
+	 *            The pattern to match against. The parser assumes regular
+	 *            expression group 1 is the group that gets the whole
+	 *            placeholder. You can use non-capturing groups (?:...) to have
+	 *            matching groups ahead of the group. If there are no groups,
+	 *            the parser assumes one special character on either end of the
+	 *            whole matched string is not part of the placeholder and the
+	 *            rest is.
+	 * @return The parsed text.
+	 */
+	public Text replaceRelationalPlaceholders(Player one, Player two, Text text, Pattern pattern);
+
+	/**
+	 * Replace all placeholders in a texttemplate.
+	 * 
+	 * @param one
+	 *            The player to parse with respect to first.
+	 * @param two
+	 *            The player to parse with respect to second.
+	 * @param template
+	 *            The template to parse.
+	 * @return The parsed text.
+	 */
+	public default Text replaceRelationalPlaceholders(Player one, Player two, TextTemplate template) {
+		return replaceRelationalPlaceholders(one, two, template, new HashMap<>());
+	}
+
+	/**
+	 * Replace all placeholders in a texttemplate.
+	 * 
+	 * @param one
+	 *            The player to parse with respect to first.
+	 * @param two
+	 *            The player to parse with respect to second.
+	 * @param template
+	 *            The template to parse.
+	 * @return The parsed text.
+	 */
+	public Text replaceRelationalPlaceholders(Player one, Player two, TextTemplate template,
+			Map<String, Object> arguments);
+
+	/**
+	 * Fill a map with placeholder replacements for a player.
+	 * 
+	 * @param one
+	 *            The player to parse with respect to first.
+	 * @param two
+	 *            The player to parse with respect to second.
+	 * @param template
+	 *            The template from which to take placeholders
+	 * @return the arguments that will fill the template.
+	 */
+	public Map<String, Object> fillRelationalPlaceholders(Player one, Player two, TextTemplate template);
+
+	/**
+	 * Replace all placeholders in a string.
+	 * 
+	 * @param one
+	 *            The player to parse with respect to first.
+	 * @param two
+	 *            The player to parse with respect to second.
+	 * @param text
+	 *            The text to parse.
+	 * @return The parsed text.
+	 */
+	public default String replaceRelationalPlaceholdersLegacy(Player one, Player two, String text) {
+		return replaceRelationalPlaceholdersLegacy(one, two, text, "%", "%");
+	}
+
+	/**
+	 * Replace all placeholders in a string.
+	 * 
+	 * @param one
+	 *            The player to parse with respect to first.
+	 * @param two
+	 *            The player to parse with respect to second.
+	 * @param text
+	 *            The text to parse.
+	 * @param openText
+	 *            The opening string to prefix a placeholder
+	 * @param closeText
+	 *            The closing string to suffix a placeholder
+	 * @return The parsed text.
+	 */
+	public String replaceRelationalPlaceholdersLegacy(Player one, Player two, String text, String openText,
+			String closeText);
+
+	/**
+	 * Replace all placeholders in a string.
+	 * 
+	 * @param one
+	 *            The player to parse with respect to first.
+	 * @param two
+	 *            The player to parse with respect to second.
+	 * @param text
+	 *            The text to parse.
+	 * @param pattern
+	 *            The pattern to match against. The parser assumes regular
+	 *            expression group 1 is the group that gets the whole
+	 *            placeholder. You can use non-capturing groups (?:...) to have
+	 *            matching groups ahead of the group. If there are no groups,
+	 *            the parser assumes one special character on either end of the
+	 *            whole matched string is not part of the placeholder and the
+	 *            rest is.
+	 * @return The parsed text.
+	 */
+	public String replaceRelationalPlaceholdersLegacy(Player one, Player two, String text, Pattern pattern);
 
 }

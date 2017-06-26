@@ -52,7 +52,7 @@ import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.PlaceholderServiceImpl;
 import me.rojo8399.placeholderapi.configs.Messages;
 
-public class PlayerExpansion implements Expansion {
+public class PlayerExpansion implements RelationalExpansion {
 
 	@Override
 	public boolean canRegister() {
@@ -76,7 +76,7 @@ public class PlayerExpansion implements Expansion {
 
 	@Override
 	public String getVersion() {
-		return "1.2";
+		return "1.3";
 	}
 
 	@Override
@@ -316,6 +316,48 @@ public class PlayerExpansion implements Expansion {
 				"first_join", "fly_speed", "walk_speed", "max_air", "remaining_air", "item_in_main_hand",
 				"item_in_off_hand", "time_played_seconds", "time_played_ticks", "time_played_minutes",
 				"time_played_hours", "time_played_days", "can_fly", "uuid");
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see me.rojo8399.placeholderapi.expansions.RelationalExpansion#
+	 * onRelationalValueRequest(org.spongepowered.api.entity.living.player.
+	 * Player, org.spongepowered.api.entity.living.player.Player,
+	 * java.util.Optional)
+	 */
+	@Override
+	public Object onRelationalValueRequest(Player one, Player two, Optional<String> token) {
+		if (!token.isPresent()) {
+			return null;
+		}
+		String t = token.get();
+		switch (t.toLowerCase().trim()) {
+		case "distance":
+			return Math.round(one.getLocation().getPosition().distance(two.getLocation().getPosition()));
+		case "visible":
+			return one.canSee(two) && !two.get(Keys.VANISH).orElse(false);
+		case "audible":
+			return one.getMessageChannel().getMembers().contains(two);
+		case "distance_x":
+			return Math.abs(one.getLocation().getBlockX() - two.getLocation().getBlockX());
+		case "distance_y":
+			return Math.abs(one.getLocation().getBlockY() - two.getLocation().getBlockY());
+		case "distance_z":
+			return Math.abs(one.getLocation().getBlockZ() - two.getLocation().getBlockZ());
+		}
+		return null;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see me.rojo8399.placeholderapi.expansions.RelationalExpansion#
+	 * getSupportedRelationalTokens()
+	 */
+	@Override
+	public List<String> getSupportedRelationalTokens() {
+		return Arrays.asList("distance", "distance_x", "distance_y", "distance_z", "visible", "audible");
 	}
 
 }

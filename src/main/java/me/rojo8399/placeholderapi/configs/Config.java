@@ -31,6 +31,10 @@ import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 @ConfigSerializable
 public class Config {
 	public static final TypeToken<Config> type = TypeToken.of(Config.class);
+	
+	@Setting("relational-parse-for-recipient")
+	public boolean relationaltoregular = true;
+	
 	@Setting
 	public Expansions expansions;
 

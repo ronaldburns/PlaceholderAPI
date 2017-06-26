@@ -44,6 +44,7 @@ public class RefreshCommand implements CommandExecutor {
 				PlaceholderAPIPlugin.getInstance().reloadConfig();
 				int current = PlaceholderServiceImpl.get().getExpansions().size();
 				int success = PlaceholderServiceImpl.get().refreshAll();
+				PlaceholderAPIPlugin.getInstance().registerPlaceholders();
 				int failed = current - success;
 				src.sendMessage(Messages.get().plugin.reloadSuccess.t());
 				src.sendMessage(Messages.get().plugin.reloadCount.t(success, failed));

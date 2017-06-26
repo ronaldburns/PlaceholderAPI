@@ -23,8 +23,10 @@
  */
 package me.rojo8399.placeholderapi;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -42,6 +44,7 @@ import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 public class Registry {
 
 	private Map<String, Expansion> registry = new ConcurrentHashMap<>();
+	private Map<String, List<Runnable>> listeners = new ConcurrentHashMap<>();
 
 	Registry() {
 	}
@@ -50,9 +53,17 @@ public class Registry {
 		return registry.containsKey(id.toLowerCase());
 	}
 
+	public void registerListener(Runnable runnable, Optional<String> id) {
+		String token = id.orElse("");
+		List<Runnable> ls = Optional.ofNullable(listeners.get(token)).orElse(new ArrayList<>());
+		ls.add(runnable);
+		listeners.put(token, ls);
+	}
+
 	public int refreshAll() {
 		List<Expansion> toRefresh = registry.values().stream().collect(Collectors.toList());
 		registry.clear();
+		Optional.ofNullable(listeners.get("")).ifPresent(l -> l.forEach(Runnable::run));
 		int count = 0;
 		for (Expansion e : toRefresh) {
 			count += refresh(e) ? 1 : 0;
@@ -70,6 +81,7 @@ public class Registry {
 		if (e instanceof ListeningExpansion) {
 			Sponge.getEventManager().unregisterListeners(e);
 		}
+		Optional.ofNullable(listeners.get(e.getIdentifier())).ifPresent(l -> l.forEach(Runnable::run));
 		return register(e);
 	}
 

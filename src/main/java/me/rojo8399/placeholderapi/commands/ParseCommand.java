@@ -53,6 +53,9 @@ public class ParseCommand implements CommandExecutor {
 		if (t == null) {
 			t = Text.EMPTY;
 		}
+		if (src instanceof Player) {
+			t = service.replaceRelationalPlaceholders(p, (Player) src, t, Pattern.compile("[%{]([^{%} ]+)[%}]", Pattern.CASE_INSENSITIVE));
+		}
 		if (!t.isEmpty()) {
 			src.sendMessage(t);
 		} else {
