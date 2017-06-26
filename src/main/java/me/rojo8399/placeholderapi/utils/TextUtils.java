@@ -141,35 +141,53 @@ public class TextUtils {
 				out = out.concat(
 						TextTemplate.of(pre, post, new Object[] { TextTemplate.arg(ex).format(t.getFormat()) }));
 			} else if ((m = pattern.matcher(p)).find()) {
-				String p2 = m.group();
-				String ex = m.group(1);
-				String pre = p2.substring(0, p2.indexOf(ex));
-				String post = p2.substring(p2.indexOf(ex) + ex.length());
-				String pt = p.substring(0, p.indexOf(p2));
-				String ppt = p.substring(p.indexOf(p2) + p2.length());
-				Text.Builder ptt = Text.builder(pt).format(t.getFormat());
-				Text.Builder pptt = Text.builder(ppt).format(t.getFormat());
-				t.getClickAction().ifPresent(c -> {
-					ptt.onClick(c);
-					pptt.onClick(c);
-				});
-				t.getShiftClickAction().ifPresent(c -> {
-					ptt.onShiftClick(c);
-					pptt.onShiftClick(c);
-				});
-				t.getHoverAction().ifPresent(c -> {
-					ptt.onHover(c);
-					pptt.onHover(c);
-				});
-				Text pretext = ptt.build();
-				Text posttext = pptt.build();
-				out = out.concat(TextTemplate.of(pre, post,
-						new Object[] { pretext, TextTemplate.arg(ex).format(t.getFormat()), posttext }));
+				out = out.concat(multi(p, pattern, t));
 			} else {
 				out = out.concat(TextTemplate.of(t));
 			}
 		}
 		return out;
+	}
+
+	private static TextTemplate multi(String p, Pattern pattern, Text t) {
+		TextTemplate out = TextTemplate.of();
+		Matcher m = pattern.matcher(p);
+		m.find();
+		String p2 = m.group();
+		String ex = m.group(1);
+		String pre = p2.substring(0, p2.indexOf(ex));
+		String post = p2.substring(p2.indexOf(ex) + ex.length());
+		String pt = p.substring(0, p.indexOf(p2));
+		String ppt = p.substring(p.indexOf(p2) + p2.length());
+		boolean recurse = false;
+		if (pattern.matcher(ppt).find()) {
+			recurse = true;
+		}
+		Text.Builder ptt = Text.builder(pt).format(t.getFormat());
+		Text.Builder pptt = Text.builder(ppt).format(t.getFormat());
+		t.getClickAction().ifPresent(c -> {
+			ptt.onClick(c);
+			pptt.onClick(c);
+		});
+		t.getShiftClickAction().ifPresent(c -> {
+			ptt.onShiftClick(c);
+			pptt.onShiftClick(c);
+		});
+		t.getHoverAction().ifPresent(c -> {
+			ptt.onHover(c);
+			pptt.onHover(c);
+		});
+		Text pretext = ptt.build();
+		Text posttext = pptt.build();
+		if (recurse) {
+			return out
+					.concat(TextTemplate.of(pre, post,
+							new Object[] { pretext, TextTemplate.arg(ex).format(t.getFormat()) }))
+					.concat(multi(ppt, pattern, t));
+		} else {
+			return out.concat(TextTemplate.of(pre, post,
+					new Object[] { pretext, TextTemplate.arg(ex).format(t.getFormat()), posttext }));
+		}
 	}
 
 	/**
