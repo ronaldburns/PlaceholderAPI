@@ -78,9 +78,14 @@ public class StatisticExpansion implements ConfigurableExpansion {
 		if (!token.isPresent()) {
 			return null;
 		}
-		return player.getOrNull(Keys.STATISTICS).entrySet().stream()
-				.filter(e -> e.getKey().getId().replace("._", ".").toLowerCase().startsWith(token.get().toLowerCase()))
-				.map(Map.Entry::getValue).reduce(0l, (a, b) -> a + b);
+		final String t = token.get().toLowerCase();
+		return player.getOrNull(Keys.STATISTICS).entrySet().stream().filter(e -> {
+			
+			String s = e.getKey().getId().replace("._", ".").toLowerCase();
+			String x = s.replace("_", "");
+			String z = s.replace("_",".");
+			return s.startsWith(t) || x.startsWith(t) || z.startsWith(t);
+		}).map(Map.Entry::getValue).reduce(-1l, (a, b) -> a >= 0 ? a + b : b);
 	}
 
 	@Override
