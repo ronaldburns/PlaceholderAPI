@@ -150,8 +150,8 @@ public class TextUtils {
 				String ex = m.group(1);
 				String pre = p.substring(0, p.indexOf(ex));
 				String post = p.substring(p.indexOf(ex) + ex.length());
-				out = out.concat(
-						TextTemplate.of(pre, post, new Object[] { TextTemplate.arg(ex).format(t.getFormat()) }));
+				out = out.concat(TextTemplate.of(pre, post,
+						new Object[] { t.getFormat(), TextTemplate.arg(ex).format(t.getFormat()) }));
 			} else if ((m = pattern.matcher(p)).find()) {
 				out = out.concat(multi(p, pattern, t));
 			} else {
@@ -193,12 +193,14 @@ public class TextUtils {
 		Text posttext = pptt.build();
 		if (recurse) {
 			return out
-					.concat(TextTemplate.of(pre, post,
-							new Object[] { pretext, TextTemplate.arg(ex).format(t.getFormat()) }))
+					.concat(TextTemplate
+							.of(pre, post,
+									new Object[] { t.getFormat(), pretext, t.getFormat(),
+											TextTemplate.arg(ex).format(t.getFormat()) }))
 					.concat(multi(ppt, pattern, t));
 		} else {
-			return out.concat(TextTemplate.of(pre, post,
-					new Object[] { pretext, TextTemplate.arg(ex).format(t.getFormat()), posttext }));
+			return out.concat(TextTemplate.of(pre, post, new Object[] { t.getFormat(), pretext, t.getFormat(),
+					TextTemplate.arg(ex).format(t.getFormat()), t.getFormat(), posttext }));
 		}
 	}
 
