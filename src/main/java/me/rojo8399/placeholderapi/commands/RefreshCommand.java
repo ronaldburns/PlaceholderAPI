@@ -32,7 +32,6 @@ import org.spongepowered.api.command.spec.CommandExecutor;
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.PlaceholderServiceImpl;
 import me.rojo8399.placeholderapi.configs.Messages;
-import me.rojo8399.placeholderapi.expansions.Expansion;
 
 public class RefreshCommand implements CommandExecutor {
 
@@ -42,19 +41,14 @@ public class RefreshCommand implements CommandExecutor {
 		if (placeholderid == null) {
 			try {
 				PlaceholderAPIPlugin.getInstance().reloadConfig();
-				int current = PlaceholderServiceImpl.get().getExpansions().size();
-				int success = PlaceholderServiceImpl.get().refreshAll();
-				PlaceholderAPIPlugin.getInstance().registerPlaceholders();
-				int failed = current - success;
+				PlaceholderServiceImpl.get().refreshAll();
 				src.sendMessage(Messages.get().plugin.reloadSuccess.t());
-				src.sendMessage(Messages.get().plugin.reloadCount.t(success, failed));
 			} catch (Exception e) {
 				throw new CommandException(Messages.get().plugin.reloadFailed.t());
 			}
 			return CommandResult.success();
 		}
-		Expansion e = PlaceholderServiceImpl.get().getExpansion(placeholderid).orElse(null);
-		if (e == null) {
+		if (!PlaceholderServiceImpl.get().isRegistered(placeholderid)) {
 			throw new CommandException(Messages.get().placeholder.invalidPlaceholder.t());
 		}
 		boolean s = PlaceholderServiceImpl.get().refreshPlaceholder(placeholderid);

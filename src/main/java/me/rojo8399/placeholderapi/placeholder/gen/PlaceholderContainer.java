@@ -21,38 +21,22 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-package me.rojo8399.placeholderapi.configs;
+package me.rojo8399.placeholderapi.placeholder.gen;
 
-import com.google.common.reflect.TypeToken;
+/**
+ * @author Wundero
+ *
+ */
+public abstract class PlaceholderContainer implements InternalPlaceholder {
 
-import ninja.leaping.configurate.objectmapping.Setting;
-import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
-
-@ConfigSerializable
-public class Config {
-	public static final TypeToken<Config> type = TypeToken.of(Config.class);
-
-	@Setting("relational-parse-for-recipient")
-	public boolean relationaltoregular = true;
-
-	@Setting("date-time-format")
-	public String dateFormat = "uuuu LLL dd HH:mm:ss";
-
-	@Setting
-	public Expansions expansions;
-
-	@ConfigSerializable
-	public static class Expansions {
-		@Setting
-		public boolean player = true;
-		@Setting
-		public boolean rank = false;
-		@Setting
-		public boolean sound = false;
-		@Setting
-		public boolean javascript = false;
-		@Setting
-		public boolean economy = false;
-
+	protected final Object handle;
+	
+	protected PlaceholderContainer(Object handle) {
+		this.handle = handle;
 	}
+	
+	public final Object getHandle() {
+		return this.handle;
+	}
+
 }

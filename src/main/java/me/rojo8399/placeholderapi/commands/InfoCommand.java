@@ -24,6 +24,7 @@
 package me.rojo8399.placeholderapi.commands;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -40,9 +41,9 @@ import org.spongepowered.api.text.format.TextColors;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.PlaceholderService;
+import me.rojo8399.placeholderapi.PlaceholderServiceImpl;
 import me.rojo8399.placeholderapi.configs.Messages;
-import me.rojo8399.placeholderapi.expansions.Expansion;
-import me.rojo8399.placeholderapi.expansions.RelationalExpansion;
+import me.rojo8399.placeholderapi.placeholder.FullContainer;
 import me.rojo8399.placeholderapi.utils.TextUtils;
 
 public class InfoCommand implements CommandExecutor {
@@ -53,11 +54,12 @@ public class InfoCommand implements CommandExecutor {
 				.orElseThrow(() -> new CommandException(Messages.get().placeholder.mustSpecify.t()));
 		PlaceholderService service = PlaceholderAPIPlugin.getInstance().getGame().getServiceManager()
 				.provideUnchecked(PlaceholderService.class);
-		Expansion e = service.getExpansion(placeholder)
-				.orElseThrow(() -> new CommandException(Messages.get().placeholder.invalidPlaceholder.t()));
+		if (!service.isRegistered(placeholder)) {
+			throw new CommandException(Messages.get().placeholder.invalidPlaceholder.t());
+		}
 		Text barrier = TextUtils.repeat(Text.of(TextColors.GOLD, "="), 35);
 		src.sendMessage(barrier);
-		src.sendMessage(formatExpansion(e, src));
+		src.sendMessage(formatExpansion(placeholder, src));
 		src.sendMessage(barrier);
 		return CommandResult.success();
 	}
@@ -65,24 +67,46 @@ public class InfoCommand implements CommandExecutor {
 	private static final Pattern OPT = Pattern.compile("[\\<\\[\\(\\{]([^ \\<\\>\\[\\]\\{\\}\\(\\)]+)[\\>\\}\\]\\)]",
 			Pattern.CASE_INSENSITIVE);
 
-	private static Text formatExpansion(Expansion e, CommandSource src) {
-		final String name = e.getIdentifier();
-		String version = e.getVersion();
-		String author = e.getAuthor();
-		List<String> tokens = e.getSupportedTokens();
+	private static Text formatExpansion(String e, CommandSource src) {
+		List<FullContainer> conts = PlaceholderServiceImpl.get().getContainers(e);
+		FullContainer norm;
+		try {
+			norm = conts.get(0);
+		} catch (Exception ex) {
+			return Text.of(
+					TextColors.RED + "Placeholder was not registered correctly! Please check the logs for details.");
+		}
+		FullContainer rel = null;
+		if (conts.size() > 1) {
+			rel = conts.get(1);
+		}
+		Text out = format(norm, src);
+		if (rel != null) {
+			out = out.concat(Text.NEW_LINE);
+			out = out.concat(format(rel, src));
+		}
+		return out;
+	}
+
+	private static Text format(FullContainer e, CommandSource src) {
+		final String name = e.id();
+		String version = e.version();
+		String author = e.author();
+		final boolean rel = e.relational();
+		List<String> tokens = Arrays.asList(e.tokens());
 		if (tokens == null) {
 			tokens = new ArrayList<>();
 		}
 		List<Text> supportedTokens = tokens.stream().map(s -> s == null || s.isEmpty() ? null : s).distinct()
 				.sorted((s1, s2) -> s1 == null ? -1 : (s2 == null ? 1 : s1.compareTo(s2))).map(s -> {
 					if (s == null) {
-						return token(name, src, false);
+						return token(name, src, rel);
 					}
 					String s2 = name.concat("_" + s);
 					if (OPT.matcher(s2).find()) {
-						return token(s2, src, false, true);
+						return token(s2, src, rel, true);
 					}
-					return token(s2, src, false);
+					return token(s2, src, rel);
 				}).collect(Collectors.toList());
 		boolean seeall = false;
 		List<Text> t2 = new ArrayList<Text>(supportedTokens);
@@ -90,48 +114,18 @@ public class InfoCommand implements CommandExecutor {
 			supportedTokens = supportedTokens.subList(0, 20);
 			seeall = true;
 		}
-
-		Text url = e.getURL() == null ? Text.EMPTY
-				: Text.of(Text.NEW_LINE, TextColors.BLUE, TextActions.openUrl(e.getURL()), e.getURL().toString());
-		Text desc = e.getDescription() == null ? Text.EMPTY
-				: Text.of(Text.NEW_LINE, TextColors.AQUA, e.getDescription());
-		Text reload = Text.of(Text.NEW_LINE, Messages.get().placeholder.clickReload.t(), " ",
-				reload(e.getIdentifier()));
+		Text url = e.url2() == null ? Text.EMPTY
+				: Text.of(Text.NEW_LINE, TextColors.BLUE, TextActions.openUrl(e.url2()), e.url());
+		String d = e.desc();
+		Text desc = d.isEmpty() || d == null ? Text.EMPTY : Text.of(Text.NEW_LINE, TextColors.AQUA, e.desc());
+		Text reload = Text.of(Text.NEW_LINE, Messages.get().placeholder.clickReload.t(), " ", reload(e.id()));
 		Text support = supportedTokens.isEmpty() ? Text.EMPTY
 				: Text.of(Text.NEW_LINE, Messages.get().placeholder.supportedPlaceholders.t(),
 						seeall ? (seeall(t2, false)) : "", Text.NEW_LINE,
 						Text.joinWith(Text.of(", "), supportedTokens));
-		Text support2 = Text.EMPTY;
-		if (e instanceof RelationalExpansion) {
-			List<String> tokens2 = ((RelationalExpansion) e).getSupportedRelationalTokens();
-			if (tokens2 == null) {
-				tokens2 = new ArrayList<>();
-			}
-			List<Text> supportedTokens2 = tokens2.stream().map(s -> s == null || s.isEmpty() ? null : s).distinct()
-					.sorted((s1, s2) -> s1 == null ? -1 : (s2 == null ? 1 : s1.compareTo(s2))).map(s -> {
-						if (s == null) {
-							return token(name, src, true);
-						}
-						String s2 = name.concat("_" + s);
-						if (OPT.matcher(s2).find()) {
-							return token(s2, src, true, true);
-						}
-						return token(s2, src, true);
-					}).collect(Collectors.toList());
-			boolean seeall2 = false;
-			List<Text> t22 = new ArrayList<Text>(supportedTokens2);
-			if (supportedTokens2.size() > 20) {
-				supportedTokens2 = supportedTokens2.subList(0, 20);
-				seeall2 = true;
-			}
-			support2 = supportedTokens2.isEmpty() ? Text.EMPTY
-					: Text.of(Text.NEW_LINE, Messages.get().placeholder.supportedPlaceholdersRelational.t(),
-							seeall2 ? (seeall(t22, true)) : "", Text.NEW_LINE,
-							Text.joinWith(Text.of(", "), supportedTokens2));
-		}
 		return Text.of(TextColors.AQUA, name, TextColors.GREEN, " " + version, TextColors.GRAY, " ",
 				Messages.get().misc.by.t(), " ", TextColors.GOLD, author, TextColors.GRAY, ".", reload, desc, url,
-				support, support2);
+				support);
 	}
 
 	private static Text seeall(List<Text> tokens, boolean relational) {

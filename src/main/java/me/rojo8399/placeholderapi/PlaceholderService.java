@@ -23,444 +23,302 @@
  */
 package me.rojo8399.placeholderapi;
 
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.function.BiFunction;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
 
-import me.rojo8399.placeholderapi.expansions.Expansion;
+import me.rojo8399.placeholderapi.utils.TextUtils;
+import me.rojo8399.placeholderapi.utils.TypeUtils;
 
 public interface PlaceholderService {
 
 	/**
-	 * Replace all placeholders in a string.
+	 * Register placeholder methods in an object with the API.
 	 * 
-	 * @param player
-	 *            The player to parse with respect to.
-	 * @param text
-	 *            The text to parse.
-	 * @return The parsed text.
-	 */
-	public default Text replacePlaceholders(Player player, String text) {
-		return replacePlaceholders(player, text, "%", "%");
-	}
-
-	/**
-	 * Replace all placeholders in a string.
+	 * Methods denoted with the "@Placeholder" annotation will be parsed to see
+	 * if they support placeholder replacing. If they do, they will be loaded in
+	 * as placeholders. See the documentation for "@Placeholder", "@Relational",
+	 * "@Source", "@Observer", "@Token" and "@Listening" for more information on
+	 * configuring a placeholder.
 	 * 
-	 * @param player
-	 *            The player to parse with respect to.
-	 * @param text
-	 *            The text to parse.
-	 * @param openText
-	 *            The opening string to prefix a placeholder
-	 * @param closeText
-	 *            The closing string to suffix a placeholder
-	 * @return The parsed text.
-	 */
-	public Text replacePlaceholders(Player player, String text, String openText, String closeText);
-
-	/**
-	 * Replace all placeholders in a string.
-	 * 
-	 * @param player
-	 *            The player to parse with respect to.
-	 * @param text
-	 *            The text to parse.
-	 * @param pattern
-	 *            The pattern to match against. The parser assumes regular
-	 *            expression group 1 is the group that gets the whole
-	 *            placeholder. You can use non-capturing groups (?:...) to have
-	 *            matching groups ahead of the group. If there are no groups,
-	 *            the parser assumes one special character on either end of the
-	 *            whole matched string is not part of the placeholder and the
-	 *            rest is.
-	 * @return The parsed text.
-	 */
-	public Text replacePlaceholders(Player player, String text, Pattern pattern);
-
-	/**
-	 * Replace all placeholders in a string.
-	 * 
-	 * @param player
-	 *            The player to parse with respect to.
-	 * @param text
-	 *            The text to parse.
-	 * @param openText
-	 *            The opening string to prefix a placeholder
-	 * @param closeText
-	 *            The closing string to suffix a placeholder
-	 * @return The parsed text.
-	 */
-	public Text replacePlaceholders(Player player, Text text, String openText, String closeText);
-
-	/**
-	 * Replace all placeholders in a string.
-	 * 
-	 * @param player
-	 *            The player to parse with respect to.
-	 * @param text
-	 *            The text to parse.
-	 * @param pattern
-	 *            The pattern to match against. The parser assumes regular
-	 *            expression group 1 is the group that gets the whole
-	 *            placeholder. You can use non-capturing groups (?:...) to have
-	 *            matching groups ahead of the group. If there are no groups,
-	 *            the parser assumes one special character on either end of the
-	 *            whole matched string is not part of the placeholder and the
-	 *            rest is.
-	 * @return The parsed text.
-	 */
-	public Text replacePlaceholders(Player player, Text text, Pattern pattern);
-
-	/**
-	 * Replace all placeholders in a string.
-	 * 
-	 * @param player
-	 *            The player to parse with respect to.
-	 * @param text
-	 *            The text to parse.
-	 * @return The parsed text.
-	 */
-	public default Text replacePlaceholders(Player player, Text text) {
-		return replacePlaceholders(player, text, "%", "%");
-	}
-
-	/**
-	 * Replace all placeholders in a texttemplate.
-	 * 
-	 * @param player
-	 *            The player to parse with respect to.
-	 * @param template
-	 *            The template to parse.
-	 * @return The parsed text.
-	 */
-	public default Text replacePlaceholders(Player player, TextTemplate template) {
-		return replacePlaceholders(player, template, new HashMap<>());
-	}
-
-	/**
-	 * Replace all placeholders in a texttemplate.
-	 * 
-	 * @param player
-	 *            The player to parse with respect to.
-	 * @param template
-	 *            The template to parse.
-	 * @return The parsed text.
-	 */
-	public Text replacePlaceholders(Player player, TextTemplate template, Map<String, Object> arguments);
-
-	/**
-	 * Fill a map with placeholder replacements for a player.
-	 * 
-	 * @param player
-	 *            The player to parse with respect to.
-	 * @param template
-	 *            The template from which to take placeholders
-	 * @return the arguments that will fill the template.
-	 */
-	public Map<String, Object> fillPlaceholders(Player player, TextTemplate template);
-
-	/**
-	 * Replace all placeholders in a string.
-	 * 
-	 * @param player
-	 *            The player to parse with respect to.
-	 * @param text
-	 *            The text to parse.
-	 * @return The parsed text.
-	 */
-	public default String replacePlaceholdersLegacy(Player player, String text) {
-		return replacePlaceholdersLegacy(player, text, "%", "%");
-	}
-
-	/**
-	 * Replace all placeholders in a string.
-	 * 
-	 * @param player
-	 *            The player to parse with respect to.
-	 * @param text
-	 *            The text to parse.
-	 * @param openText
-	 *            The opening string to prefix a placeholder
-	 * @param closeText
-	 *            The closing string to suffix a placeholder
-	 * @return The parsed text.
-	 */
-	public String replacePlaceholdersLegacy(Player player, String text, String openText, String closeText);
-
-	/**
-	 * Replace all placeholders in a string.
-	 * 
-	 * @param player
-	 *            The player to parse with respect to.
-	 * @param text
-	 *            The text to parse.
-	 * @param pattern
-	 *            The pattern to match against. The parser assumes regular
-	 *            expression group 1 is the group that gets the whole
-	 *            placeholder. You can use non-capturing groups (?:...) to have
-	 *            matching groups ahead of the group. If there are no groups,
-	 *            the parser assumes one special character on either end of the
-	 *            whole matched string is not part of the placeholder and the
-	 *            rest is.
-	 * @return The parsed text.
-	 */
-	public String replacePlaceholdersLegacy(Player player, String text, Pattern pattern);
-
-	/**
-	 * Return the Expansion represented by a key.
-	 * 
-	 * @param the
-	 *            identifier of the expansion.
-	 * 
-	 * @return the expansion, if present.
-	 */
-	public Optional<Expansion> getExpansion(String id);
-
-	/**
-	 * Return all registered expansions.
-	 * 
-	 * @return the set of expansions.
-	 */
-	public Set<Expansion> getExpansions();
-
-	/**
-	 * Register a placeholder.
-	 * 
-	 * @param expansion
-	 *            The placeholder to register.
-	 * @return Whether the placeholder was successfully registered.
-	 */
-	public boolean registerPlaceholder(Expansion expansion);
-
-	/**
-	 * Register a reload listener.
-	 * 
-	 * @param listener
-	 *            An runnable that will be executed on reload.
-	 * @param placeholder
-	 *            An optional id to attach the listener to a placeholder
-	 */
-	public void registerReloadListener(Runnable run, Optional<String> placeholder);
-
-	/**
-	 * Register a placholder.
-	 * 
+	 * @param loader
+	 *            A supplier to provide the object in which the methods reside.
+	 *            This will be called on method call, and every time
+	 *            PlaceholderAPI or a placeholder held by the object is
+	 *            reloaded.
 	 * @param plugin
-	 *            The owner of the placeholder.
-	 * @param function
-	 *            The function that parses placeholders.
-	 * @return Whether the placeholder was successfully registered.
+	 *            The plugin which holds the placeholder.
 	 */
-	public boolean registerPlaceholder(Object plugin, BiFunction<Player, Optional<String>, Text> function);
+	public void registerPlaceholders(Supplier<Object> loader, Object plugin);
 
 	/**
-	 * Replace all placeholders in a string.
+	 * Register placeholder methods in an object with the API.
 	 * 
-	 * @param one
-	 *            The player to parse with respect to first.
-	 * @param two
-	 *            The player to parse with respect to second.
-	 * @param text
-	 *            The text to parse.
-	 * @return The parsed text.
+	 * Methods denoted with the "@Placeholder" annotation will be parsed to see
+	 * if they support placeholder replacing. If they do, they will be loaded in
+	 * as placeholders. See the documentation for "@Placeholder", "@Relational",
+	 * "@Source", "@Observer", "@Token" and "@Listening" for more information on
+	 * configuring a placeholder.
+	 * 
+	 * @param object
+	 *            The object in which the methods reside. On reloading
+	 *            PlaceholderAPI or any placeholder within this object, the same
+	 *            object will be re-added to the register. Note that this should
+	 *            reload any fields with the "@Setting" annotation in a
+	 *            configurable placeholder, however it does nothing else to the
+	 *            object. Note that the object should be final or effectively
+	 *            final.
+	 * @param plugin
+	 *            The plugin which holds the placeholder.
 	 */
-	public default Text replaceRelationalPlaceholders(Player one, Player two, String text) {
-		return replaceRelationalPlaceholders(one, two, text, "%", "%");
+	public default void registerPlaceholders(final Object object, Object plugin) {
+		registerPlaceholders(() -> object, plugin);
 	}
 
 	/**
-	 * Replace all placeholders in a string.
+	 * Fill a map with placeholders from a template.
 	 * 
-	 * @param one
-	 *            The player to parse with respect to first.
-	 * @param two
-	 *            The player to parse with respect to second.
-	 * @param text
-	 *            The text to parse.
-	 * @param openText
-	 *            The opening string to prefix a placeholder
-	 * @param closeText
-	 *            The closing string to suffix a placeholder
-	 * @return The parsed text.
-	 */
-	public Text replaceRelationalPlaceholders(Player one, Player two, String text, String openText, String closeText);
-
-	/**
-	 * Replace all placeholders in a string.
-	 * 
-	 * @param one
-	 *            The player to parse with respect to first.
-	 * @param two
-	 *            The player to parse with respect to second.
-	 * @param text
-	 *            The text to parse.
-	 * @param pattern
-	 *            The pattern to match against. The parser assumes regular
-	 *            expression group 1 is the group that gets the whole
-	 *            placeholder. You can use non-capturing groups (?:...) to have
-	 *            matching groups ahead of the group. If there are no groups,
-	 *            the parser assumes one special character on either end of the
-	 *            whole matched string is not part of the placeholder and the
-	 *            rest is.
-	 * @return The parsed text.
-	 */
-	public Text replaceRelationalPlaceholders(Player one, Player two, String text, Pattern pattern);
-
-	/**
-	 * Replace all placeholders in a string.
-	 * 
-	 * @param one
-	 *            The player to parse with respect to first.
-	 * @param two
-	 *            The player to parse with respect to second.
-	 * @param text
-	 *            The text to parse.
-	 * @param openText
-	 *            The opening string to prefix a placeholder
-	 * @param closeText
-	 *            The closing string to suffix a placeholder
-	 * @return The parsed text.
-	 */
-	public Text replaceRelationalPlaceholders(Player one, Player two, Text text, String openText, String closeText);
-
-	/**
-	 * Replace all placeholders in a string.
-	 * 
-	 * @param one
-	 *            The player to parse with respect to first.
-	 * @param two
-	 *            The player to parse with respect to second.
-	 * @param text
-	 *            The text to parse.
-	 * @return The parsed text.
-	 */
-	public default Text replaceRelationalPlaceholders(Player one, Player two, Text text) {
-		return replaceRelationalPlaceholders(one, two, text, "%", "%");
-	}
-
-	/**
-	 * Replace all placeholders in a string.
-	 * 
-	 * @param one
-	 *            The player to parse with respect to first.
-	 * @param two
-	 *            The player to parse with respect to second.
-	 * @param text
-	 *            The text to parse.
-	 * @param pattern
-	 *            The pattern to match against. The parser assumes regular
-	 *            expression group 1 is the group that gets the whole
-	 *            placeholder. You can use non-capturing groups (?:...) to have
-	 *            matching groups ahead of the group. If there are no groups,
-	 *            the parser assumes one special character on either end of the
-	 *            whole matched string is not part of the placeholder and the
-	 *            rest is.
-	 * @return The parsed text.
-	 */
-	public Text replaceRelationalPlaceholders(Player one, Player two, Text text, Pattern pattern);
-
-	/**
-	 * Replace all placeholders in a texttemplate.
-	 * 
-	 * @param one
-	 *            The player to parse with respect to first.
-	 * @param two
-	 *            The player to parse with respect to second.
 	 * @param template
-	 *            The template to parse.
-	 * @return The parsed text.
+	 *            The template to draw the values from. Any non-optional values
+	 *            which cannot be parsed will be should be filled with the
+	 *            string representation of the template argument.
+	 * @param source
+	 *            The source to draw placeholders from. This object must be of
+	 *            the type CommandSource, Locatable, User, or any subtypes of
+	 *            those classes. Any other object type will throw an exception.
+	 * @param observer
+	 *            The observer of the placeholders drawn from the source. For
+	 *            example, "distance" would be the distance from the source to
+	 *            the observer, and "visible" would be if the observer can see
+	 *            the source. This object must be of the type CommandSource,
+	 *            Locatable, User, or any subtypes of those classes. Any other
+	 *            object type will throw an exception.
+	 * @return The filled map.
 	 */
-	public default Text replaceRelationalPlaceholders(Player one, Player two, TextTemplate template) {
-		return replaceRelationalPlaceholders(one, two, template, new HashMap<>());
+	public Map<String, Object> fillPlaceholders(TextTemplate template, Object source, Object observer);
+
+	/**
+	 * Parse a placeholder.
+	 * 
+	 * @param placeholder
+	 *            The placeholder to parse.
+	 * @param source
+	 *            The source to draw placeholders from. This object must be of
+	 *            the type CommandSource, Locatable, User, or any subtypes of
+	 *            those classes. Any other object type will throw an exception.
+	 * @param observer
+	 *            The observer of the placeholders drawn from the source. For
+	 *            example, "distance" would be the distance from the source to
+	 *            the observer, and "visible" would be if the observer can see
+	 *            the source. This object must be of the type CommandSource,
+	 *            Locatable, User, or any subtypes of those classes. Any other
+	 *            object type will throw an exception.
+	 * @return The parsed object.
+	 */
+	public Object parse(String placeholder, Object source, Object observer);
+
+	/**
+	 * Parse a list of placeholders.
+	 * 
+	 * @param placeholders
+	 *            The placeholders to parse.
+	 * @param source
+	 *            The source to draw placeholders from. This object must be of
+	 *            the type CommandSource, Locatable, User, or any subtypes of
+	 *            those classes. Any other object type will throw an exception.
+	 * @param observer
+	 *            The observer of the placeholders drawn from the source. For
+	 *            example, "distance" would be the distance from the source to
+	 *            the observer, and "visible" would be if the observer can see
+	 *            the source. This object must be of the type CommandSource,
+	 *            Locatable, User, or any subtypes of those classes. Any other
+	 *            object type will throw an exception.
+	 * @return The parsed placeholders mapped to their identifiers.
+	 */
+	public default Map<String, Object> fill(List<String> placeholders, Object source, Object observer) {
+		return placeholders.stream().collect(Collectors.toMap(s -> s, s -> parse(s, source, observer)));
 	}
 
 	/**
-	 * Replace all placeholders in a texttemplate.
+	 * Parse a placeholder.
 	 * 
-	 * @param one
-	 *            The player to parse with respect to first.
-	 * @param two
-	 *            The player to parse with respect to second.
-	 * @param template
-	 *            The template to parse.
-	 * @return The parsed text.
+	 * @param placeholder
+	 *            The placeholder to parse.
+	 * @param source
+	 *            The source to draw placeholders from. This object must be of
+	 *            the type CommandSource, Locatable, User, or any subtypes of
+	 *            those classes. Any other object type will throw an exception.
+	 * @param observer
+	 *            The observer of the placeholders drawn from the source. For
+	 *            example, "distance" would be the distance from the source to
+	 *            the observer, and "visible" would be if the observer can see
+	 *            the source. This object must be of the type CommandSource,
+	 *            Locatable, User, or any subtypes of those classes. Any other
+	 *            object type will throw an exception.
+	 * @param expected
+	 *            The expected class. If possible, this will try to cast the
+	 *            returned parsed object to the provided class. If said class is
+	 *            the Text class, it will parse the object into a text object
+	 *            automatically. If it is the String class, it will return the
+	 *            object's toString method. Any other objects will just be
+	 *            casted.
+	 * @return The parsed object, if available.
 	 */
-	public Text replaceRelationalPlaceholders(Player one, Player two, TextTemplate template,
-			Map<String, Object> arguments);
-
-	/**
-	 * Fill a map with placeholder replacements for a player.
-	 * 
-	 * @param one
-	 *            The player to parse with respect to first.
-	 * @param two
-	 *            The player to parse with respect to second.
-	 * @param template
-	 *            The template from which to take placeholders
-	 * @return the arguments that will fill the template.
-	 */
-	public Map<String, Object> fillRelationalPlaceholders(Player one, Player two, TextTemplate template);
-
-	/**
-	 * Replace all placeholders in a string.
-	 * 
-	 * @param one
-	 *            The player to parse with respect to first.
-	 * @param two
-	 *            The player to parse with respect to second.
-	 * @param text
-	 *            The text to parse.
-	 * @return The parsed text.
-	 */
-	public default String replaceRelationalPlaceholdersLegacy(Player one, Player two, String text) {
-		return replaceRelationalPlaceholdersLegacy(one, two, text, "%", "%");
+	public default <T> Optional<T> parse(String placeholder, Object source, Object observer, Class<T> expected) {
+		return TypeUtils.tryCast(parse(placeholder, source, observer), expected);
 	}
 
 	/**
-	 * Replace all placeholders in a string.
+	 * Parse a placeholder.
 	 * 
-	 * @param one
-	 *            The player to parse with respect to first.
-	 * @param two
-	 *            The player to parse with respect to second.
-	 * @param text
-	 *            The text to parse.
-	 * @param openText
-	 *            The opening string to prefix a placeholder
-	 * @param closeText
-	 *            The closing string to suffix a placeholder
-	 * @return The parsed text.
+	 * @param placeholder
+	 *            The placeholder to parse.
+	 * @param source
+	 *            The source to draw placeholders from. This object must be of
+	 *            the type CommandSource, Locatable, User, or any subtypes of
+	 *            those classes. Any other object type will throw an exception.
+	 * @param observer
+	 *            The observer of the placeholders drawn from the source. For
+	 *            example, "distance" would be the distance from the source to
+	 *            the observer, and "visible" would be if the observer can see
+	 *            the source. This object must be of the type CommandSource,
+	 *            Locatable, User, or any subtypes of those classes. Any other
+	 *            object type will throw an exception.
+	 * @param expected
+	 *            The expected class. If possible, this will try to cast the
+	 *            returned parsed object to the provided class. If said class is
+	 *            the Text class, it will parse the object into a text object
+	 *            automatically. If it is the String class, it will return the
+	 *            object's toString method. Any other objects will just be
+	 *            casted.
+	 * @return The parsed object.
 	 */
-	public String replaceRelationalPlaceholdersLegacy(Player one, Player two, String text, String openText,
-			String closeText);
+	public default <T> T parseNullable(String placeholder, Object source, Object observer, Class<T> expected) {
+		return parse(placeholder, source, observer, expected).orElse(null);
+	}
 
 	/**
-	 * Replace all placeholders in a string.
+	 * Replace placeholders in a template with parsed values.
 	 * 
-	 * @param one
-	 *            The player to parse with respect to first.
-	 * @param two
-	 *            The player to parse with respect to second.
+	 * @param template
+	 *            The template to draw the values from. Any non-optional values
+	 *            which cannot be parsed will be replaced with the string
+	 *            version of the template argument.
+	 * @param source
+	 *            The source to draw placeholders from. This object must be of
+	 *            the type CommandSource, Locatable, User, or any subtypes of
+	 *            those classes. Any other object type will throw an exception.
+	 * @param observer
+	 *            The observer of the placeholders drawn from the source. For
+	 *            example, "distance" would be the distance from the source to
+	 *            the observer, and "visible" would be if the observer can see
+	 *            the source. This object must be of the type CommandSource,
+	 *            Locatable, User, or any subtypes of those classes. Any other
+	 *            object type will throw an exception.
+	 * @return The parsed text.
+	 */
+	public Text replacePlaceholders(TextTemplate template, Object source, Object observer);
+
+	/**
+	 * Replace placeholders in a text with parsed values.
+	 * 
 	 * @param text
-	 *            The text to parse.
+	 *            The text to draw values from. This will replace any
+	 *            placeholders found by the pattern.
+	 * @param source
+	 *            The source to draw placeholders from. This object must be of
+	 *            the type CommandSource, Locatable, User, or any subtypes of
+	 *            those classes. Any other object type will throw an exception.
+	 * @param observer
+	 *            The observer of the placeholders drawn from the source. For
+	 *            example, "distance" would be the distance from the source to
+	 *            the observer, and "visible" would be if the observer can see
+	 *            the source. This object must be of the type CommandSource,
+	 *            Locatable, User, or any subtypes of those classes. Any other
+	 *            object type will throw an exception.
 	 * @param pattern
-	 *            The pattern to match against. The parser assumes regular
-	 *            expression group 1 is the group that gets the whole
-	 *            placeholder. You can use non-capturing groups (?:...) to have
-	 *            matching groups ahead of the group. If there are no groups,
-	 *            the parser assumes one special character on either end of the
-	 *            whole matched string is not part of the placeholder and the
-	 *            rest is.
+	 *            The pattern to match placeholders with. Placeholders will be
+	 *            matched to group 1, so any other groups ahead of where you
+	 *            want the placeholders in the pattern should be non-capturing.
 	 * @return The parsed text.
 	 */
-	public String replaceRelationalPlaceholdersLegacy(Player one, Player two, String text, Pattern pattern);
+	public default Text replacePlaceholders(Text text, Object source, Object observer, Pattern pattern) {
+		return replacePlaceholders(TextUtils.toTemplate(text, pattern), source, observer);
+	}
+
+	/**
+	 * Replace placeholders in a string with parsed values.
+	 * 
+	 * @param text
+	 *            The string to draw values from. This will replace any
+	 *            placeholders found by the pattern.
+	 * @param source
+	 *            The source to draw placeholders from. This object must be of
+	 *            the type CommandSource, Locatable, User, or any subtypes of
+	 *            those classes. Any other object type will throw an exception.
+	 * @param observer
+	 *            The observer of the placeholders drawn from the source. For
+	 *            example, "distance" would be the distance from the source to
+	 *            the observer, and "visible" would be if the observer can see
+	 *            the source. This object must be of the type CommandSource,
+	 *            Locatable, User, or any subtypes of those classes. Any other
+	 *            object type will throw an exception.
+	 * @param pattern
+	 *            The pattern to match placeholders with. Placeholders will be
+	 *            matched to group 1, so any other groups ahead of where you
+	 *            want the placeholders in the pattern should be non-capturing.
+	 * @return The parsed text.
+	 */
+	public default Text replacePlaceholders(String text, Object source, Object observer, Pattern pattern) {
+		return replacePlaceholders(TextUtils.parse(text, pattern), source, observer);
+	}
+
+	static final Pattern DEFAULT_PATTERN = Pattern.compile("[%\\{]([^ \\{\\}%]+)[\\}%]");
+
+	public default Pattern getDefaultPattern() {
+		return DEFAULT_PATTERN;
+	}
+
+	public default Text replacePlaceholders(Text text, Object source, Object observer) {
+		return replacePlaceholders(text, source, observer, DEFAULT_PATTERN);
+	}
+
+	public default Text replacePlaceholders(String text, Object source, Object observer) {
+		return replacePlaceholders(text, source, observer, DEFAULT_PATTERN);
+	}
+
+	public default Text replacePlaceholders(TextTemplate template, Object source) {
+		return replacePlaceholders(template, source, source);
+	}
+
+	public default Text replacePlaceholders(Text text, Object source, Pattern pattern) {
+		return replacePlaceholders(text, source, source, pattern);
+	}
+
+	public default Text replacePlaceholders(String text, Object source, Pattern pattern) {
+		return replacePlaceholders(text, source, source, pattern);
+	}
+
+	public default Text replacePlaceholders(Text text, Object source) {
+		return replacePlaceholders(text, source, DEFAULT_PATTERN);
+	}
+
+	public default Text replacePlaceholders(String text, Object source) {
+		return replacePlaceholders(text, source, DEFAULT_PATTERN);
+	}
+	
+	public boolean isRegistered(String id);
+
+	public boolean verifySource(Object source);
+
+	public default boolean verifyObserver(Object target) {
+		return verifySource(target);
+	}
 
 }

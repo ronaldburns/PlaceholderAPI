@@ -27,7 +27,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -64,15 +67,7 @@ import me.rojo8399.placeholderapi.commands.RefreshCommand;
 import me.rojo8399.placeholderapi.configs.Config;
 import me.rojo8399.placeholderapi.configs.JavascriptManager;
 import me.rojo8399.placeholderapi.configs.Messages;
-import me.rojo8399.placeholderapi.expansions.CurrencyExpansion;
-import me.rojo8399.placeholderapi.expansions.DateTimeExpansion;
-import me.rojo8399.placeholderapi.expansions.Expansion;
-import me.rojo8399.placeholderapi.expansions.JavascriptExpansion;
-import me.rojo8399.placeholderapi.expansions.PlayerExpansion;
-import me.rojo8399.placeholderapi.expansions.RankExpansion;
-import me.rojo8399.placeholderapi.expansions.ServerExpansion;
-import me.rojo8399.placeholderapi.expansions.SoundExpansion;
-import me.rojo8399.placeholderapi.expansions.StatisticExpansion;
+import me.rojo8399.placeholderapi.placeholder.impl.Defaults;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
@@ -116,8 +111,13 @@ public class PlaceholderAPIPlugin {
 	private ConfigurationNode msgRoot;
 	private Messages msgs;
 	private ConfigurationLoader<CommentedConfigurationNode> msgloader;
+	private DateTimeFormatter formatter;
 
 	private PlaceholderService s;
+
+	public DateTimeFormatter formatter() {
+		return formatter;
+	}
 
 	public ConfigurationNode getRootConfig() {
 		return root;
@@ -201,6 +201,7 @@ public class PlaceholderAPIPlugin {
 			}
 		}
 		Messages.init(msgs);
+		this.formatter = DateTimeFormatter.ofPattern(config.dateFormat);
 	}
 
 	@Listener
@@ -242,30 +243,24 @@ public class PlaceholderAPIPlugin {
 		metrics.addCustomChart(new Metrics.SimpleBarChart("placeholders") {
 			@Override
 			public HashMap<String, Integer> getValues(HashMap<String, Integer> valueMap) {
-				Set<Expansion> exp = s.getExpansions();
-				if (exp.isEmpty()) {
+				Set<String> rids = ((PlaceholderServiceImpl) s).getStore().ids(true);
+				Set<String> ids = ((PlaceholderServiceImpl) s).getStore().ids(false);
+				if (rids.isEmpty() && ids.isEmpty()) {
 					HashMap<String, Integer> out = new HashMap<>();
 					out.put("none", 1);
 					return out;
 				}
-				return (HashMap<String, Integer>) exp.stream()
-						.collect(Collectors.toMap(Expansion::getIdentifier, e -> 1));
+				List<String> exp = new ArrayList<>();
+				rids.forEach(e -> exp.add("rel_" + e));
+				ids.forEach(exp::add);
+				return (HashMap<String, Integer>) exp.stream().collect(Collectors.toMap(e -> e, e -> 1));
 			}
 		});
 	}
 
 	public void registerPlaceholders() {
-		s.registerPlaceholder(new JavascriptExpansion(jsm));
-		s.registerPlaceholder(new PlayerExpansion());
-		s.registerPlaceholder(new ServerExpansion());
-		s.registerPlaceholder(new SoundExpansion());
-		s.registerPlaceholder(new RankExpansion());
-		if (game.getServiceManager().provide(EconomyService.class).isPresent()) {
-			s.registerPlaceholder(
-					new CurrencyExpansion(game.getServiceManager().provideUnchecked(EconomyService.class)));
-		}
-		s.registerPlaceholder(new DateTimeExpansion());
-		s.registerPlaceholder(new StatisticExpansion());
+		EconomyService ex = game.getServiceManager().provide(EconomyService.class).orElse(null);
+		s.registerPlaceholders(() -> new Defaults(ex, this.jsm), this);
 	}
 
 	@Listener

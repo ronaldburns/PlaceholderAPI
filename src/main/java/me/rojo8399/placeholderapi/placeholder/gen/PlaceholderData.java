@@ -21,13 +21,39 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-package me.rojo8399.placeholderapi.expansions;
+package me.rojo8399.placeholderapi.placeholder.gen;
 
-public interface ReloadableExpansion extends Expansion {
+import java.util.Optional;
 
-	/**
-	 * Reload data for the expansion.
-	 */
-	public boolean reload();
+/**
+ * @author Wundero
+ *
+ */
+public class PlaceholderData {
+
+	private final Object source, target;
+	private final Optional<String> token;
+
+	public PlaceholderData(Object s, Object t, String to) {
+		this(s, t, Optional.ofNullable(to));
+	}
+
+	public PlaceholderData(Object s, Object t, Optional<String> to) {
+		this.source = s;
+		this.target = t;
+		this.token = to;
+	}
+
+	public Object source() {
+		return source;
+	}
+
+	public Object target() {
+		return target;
+	}
+
+	public Optional<String> token() {
+		return token;
+	}
 
 }

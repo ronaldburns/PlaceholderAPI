@@ -23,8 +23,6 @@
  */
 package me.rojo8399.placeholderapi.commands;
 
-import java.util.regex.Pattern;
-
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -48,13 +46,9 @@ public class ParseCommand implements CommandExecutor {
 		PlaceholderService service = PlaceholderAPIPlugin.getInstance().getGame().getServiceManager()
 				.provide(PlaceholderService.class)
 				.orElseThrow(() -> new CommandException(Messages.get().plugin.serviceUnavailable.t()));
-		Text t = service.replacePlaceholders(p, placeholder,
-				Pattern.compile("[%{]([^{%} ]+)[%}]", Pattern.CASE_INSENSITIVE));
+		Text t = service.replacePlaceholders(placeholder, p, src);
 		if (t == null) {
 			t = Text.EMPTY;
-		}
-		if (src instanceof Player) {
-			t = service.replaceRelationalPlaceholders(p, (Player) src, t, Pattern.compile("[%{]([^{%} ]+)[%}]", Pattern.CASE_INSENSITIVE));
 		}
 		if (!t.isEmpty()) {
 			src.sendMessage(t);

@@ -21,17 +21,21 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-package me.rojo8399.placeholderapi.expansions;
+package me.rojo8399.placeholderapi.placeholder.gen;
 
-import java.util.Optional;
+/**
+ * @author Wundero
+ *
+ */
+public class DefineableClassLoader extends ClassLoader {
 
-public interface ListeningExpansion extends Expansion {
+	public DefineableClassLoader(ClassLoader loader) {
+		super(loader);
+	}
 
-	/**
-	 * Return the plugin which the listener will be attached to.
-	 * 
-	 * If the optional is empty, PlaceholderAPI will use itself as the plugin.
-	 */
-	public Optional<Object> getPlugin();
+	@SuppressWarnings("unchecked")
+	public <T> Class<T> defineClass(String name, byte[] b) {
+		return (Class<T>) defineClass(name, b, 0, b.length);
+	}
 
 }

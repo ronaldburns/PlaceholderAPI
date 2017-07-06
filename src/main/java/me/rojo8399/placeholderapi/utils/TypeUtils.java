@@ -23,8 +23,17 @@
  */
 package me.rojo8399.placeholderapi.utils;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.function.Supplier;
+
+import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.serializer.TextSerializers;
+
+import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 
 public class TypeUtils {
 
@@ -57,9 +66,56 @@ public class TypeUtils {
 		throw new IllegalArgumentException("Class is not primitive or a wrapper!");
 	}
 
+	public static <T> Optional<T> tryCast(Object val, Class<T> expected) {
+		if (val == null) {
+			return Optional.empty();
+		}
+		if (expected == null) {
+			throw new IllegalArgumentException(
+					"Must provide an expected class! If you do not know which class to use, use onValueRequest(player, token) instead.");
+		}
+		if (Text.class.isAssignableFrom(expected)) {
+			if (val instanceof Text) {
+				return TypeUtils.tryOptional(() -> expected.cast(val));
+			} else {
+				if (val instanceof ItemStack) {
+					return TypeUtils.tryOptional(() -> expected.cast(TextUtils.ofItem((ItemStack) val)));
+				}
+				if (val instanceof Instant) {
+					return TypeUtils.tryOptional(() -> expected.cast(
+							TextSerializers.FORMATTING_CODE.deserialize(PlaceholderAPIPlugin.getInstance().formatter()
+									.format(LocalDateTime.ofInstant((Instant) val, ZoneOffset.systemDefault())))));
+				}
+				if (val instanceof LocalDateTime) {
+					return TypeUtils.tryOptional(() -> expected.cast(TextSerializers.FORMATTING_CODE
+							.deserialize(PlaceholderAPIPlugin.getInstance().formatter().format((LocalDateTime) val))));
+				}
+				return TypeUtils.tryOptional(
+						() -> expected.cast(TextSerializers.FORMATTING_CODE.deserialize(String.valueOf(val))));
+			}
+		}
+		return TypeUtils.tryOptional(() -> expected.cast(val));
+	}
+
+	public static boolean and(boolean one, boolean two) {
+		return one && two;
+	}
+
+	public static int add(int one, int two) {
+		return one + two;
+	}
+
+	public static boolean xor(boolean o, boolean t) {
+		return !xnor(o, t);
+	}
+
+	public static boolean xnor(boolean o, boolean t) {
+		return (o && t) || (!o && !t);
+	}
+
 	public static <T> Optional<T> tryOptional(Supplier<T> fun) {
 		try {
-			return Optional.of(fun.get());
+			return Optional.ofNullable(fun.get());
 		} catch (Exception e) {
 			return Optional.empty();
 		}
