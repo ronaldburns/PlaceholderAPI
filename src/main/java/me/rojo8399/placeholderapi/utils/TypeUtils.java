@@ -71,8 +71,7 @@ public class TypeUtils {
 			return Optional.empty();
 		}
 		if (expected == null) {
-			throw new IllegalArgumentException(
-					"Must provide an expected class! If you do not know which class to use, use onValueRequest(player, token) instead.");
+			throw new IllegalArgumentException("Must provide an expected class!");
 		}
 		if (Text.class.isAssignableFrom(expected)) {
 			if (val instanceof Text) {

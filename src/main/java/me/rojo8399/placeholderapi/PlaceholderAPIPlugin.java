@@ -31,7 +31,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -67,6 +66,9 @@ import me.rojo8399.placeholderapi.commands.RefreshCommand;
 import me.rojo8399.placeholderapi.configs.Config;
 import me.rojo8399.placeholderapi.configs.JavascriptManager;
 import me.rojo8399.placeholderapi.configs.Messages;
+import me.rojo8399.placeholderapi.placeholder.Expansion;
+import me.rojo8399.placeholderapi.placeholder.ExpansionBuilder;
+import me.rojo8399.placeholderapi.placeholder.Store;
 import me.rojo8399.placeholderapi.placeholder.impl.Defaults;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
@@ -243,8 +245,8 @@ public class PlaceholderAPIPlugin {
 		metrics.addCustomChart(new Metrics.SimpleBarChart("placeholders") {
 			@Override
 			public HashMap<String, Integer> getValues(HashMap<String, Integer> valueMap) {
-				Set<String> rids = ((PlaceholderServiceImpl) s).getStore().ids(true);
-				Set<String> ids = ((PlaceholderServiceImpl) s).getStore().ids(false);
+				List<String> rids = Store.get().ids(true);
+				List<String> ids = Store.get().ids(false);
 				if (rids.isEmpty() && ids.isEmpty()) {
 					HashMap<String, Integer> out = new HashMap<>();
 					out.put("none", 1);
@@ -260,7 +262,79 @@ public class PlaceholderAPIPlugin {
 
 	public void registerPlaceholders() {
 		EconomyService ex = game.getServiceManager().provide(EconomyService.class).orElse(null);
-		s.registerPlaceholders(() -> new Defaults(ex, this.jsm), this);
+		Defaults handle = new Defaults(ex, this.jsm);
+		ExpansionBuilder.loadAll(handle, this).stream().map(builder -> {
+			switch (builder.getId()) {
+			case "player": {
+				if (builder.isRelational()) {
+					return builder.description(Messages.get().placeholder.relplayerdesc.value)
+							.tokens("distance", "audible", "visible", "distance_x", "distance_y", "distance_z")
+							.version("2.0");
+				} else {
+					return builder.description(Messages.get().placeholder.playerdesc.value)
+							.tokens(null, "prefix", "suffix", "option_[option]", "permission_[permission]", "name",
+									"displayname", "uuid", "can_fly", "world", "ping", "language", "flying", "health",
+									"max_health", "food", "saturation", "gamemode", "x", "y", "z", "direction", "exp",
+									"exp_total", "exp_to_next", "level", "first_join", "fly_speed", "max_air",
+									"remaining_air", "item_in_main_hand", "item_in_off_hand", "walk_speed",
+									"time_played", "time_played_ticks", "time_played_seconds", "time_played_minutes",
+									"time_played_hours", "time_played_days")
+							.version("2.0");
+				}
+			}
+			case "rank": {
+				if (builder.isRelational()) {
+					return builder.description(Messages.get().placeholder.relrankdesc.value)
+							.tokens("greater_than", "less_than").version("1.0");
+				} else {
+					return builder.description(Messages.get().placeholder.rankdesc.value)
+							.tokens(null, "prefix", "suffix", "name", "permission_[permission]", "option_[option]")
+							.version("2.0");
+				}
+			}
+			case "javascript":
+				return builder.description(Messages.get().placeholder.jsdesc.value).tokens(jsm.getScriptNames())
+						.reloadFunction(e -> {
+							try {
+								jsm.reloadScripts();
+							} catch (Exception exc) {
+								getLogger().warn("Error reloading JavaScript placeholders!");
+								exc.printStackTrace();
+								return false;
+							}
+							e.setTokens(jsm.getScriptNames());
+							return true;
+						}).version("2.0");
+			case "economy":
+				return builder.description(Messages.get().placeholder.curdesc.value)
+						.tokens("", "[currency]", "balance", "balance_[currency]", "bal_format_[currency]",
+								"bal_format", "display", "display_[currency]", "plural_display_[currency]",
+								"symbol_[currency]", "plural_display", "symbol")
+						.version("2.0");
+			case "server":
+				return builder
+						.description(Messages.get().placeholder.serverdesc.value).tokens("unique_players", "online",
+								"max_players", "motd", "cores", "tps", "ram_used", "ram_free", "ram_total", "ram_max")
+						.version("2.0");
+			case "sound":
+				return builder.description(Messages.get().placeholder.sounddesc.value)
+						.tokens("[sound]-[volume]-[pitch]").version("2.0");
+			case "statistic":
+				return builder.description(Messages.get().placeholder.statdesc.value).version("2.0");
+			case "time":
+				return builder.description(Messages.get().placeholder.timedesc.value).tokens("").version("2.0");
+			}
+			return builder;
+		}).forEach(t -> {
+			try {
+				t.author("Wundero").plugin(this).buildAndRegister();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		});
+		if (ex == null) {
+			Store.get().get("economy", false).ifPresent(Expansion::disable);
+		}
 	}
 
 	@Listener

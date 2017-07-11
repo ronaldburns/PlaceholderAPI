@@ -23,14 +23,9 @@
  */
 package me.rojo8399.placeholderapi;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.entity.living.player.User;
@@ -41,7 +36,7 @@ import org.spongepowered.api.world.Locatable;
 
 import com.google.common.base.Preconditions;
 
-import me.rojo8399.placeholderapi.placeholder.FullContainer;
+import me.rojo8399.placeholderapi.placeholder.Expansion;
 import me.rojo8399.placeholderapi.placeholder.Store;
 
 /**
@@ -60,46 +55,21 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	}
 
 	public boolean refreshPlaceholder(String id) {
-		if (store.norm(id) && store.rel(id)) {
-			return store.reload(id, true) && store.reload(id, false);
-		}
-		return store.reload(id, store.rel(id));
+		return store.reload(id);
 	}
 
 	public void refreshAll() {
-		store.reload();
-	}
-
-	public List<FullContainer> getContainers(String id) {
-		List<FullContainer> out = new ArrayList<>();
-		store.cont(id, false).ifPresent(out::add);
-		store.cont(id, true).ifPresent(out::add);
-		return out;
+		store.reloadAll();
 	}
 
 	Store getStore() {
 		return store;
 	}
 
-	public List<String> getIds() {
-		return Stream.concat(store.ids(false).stream(), store.ids(true).stream()).distinct()
-				.collect(Collectors.toList());
-	}
-
 	/**
 	 * Hold the expansions in a separate file
 	 */
 	private Store store = Store.get();
-
-	/**
-	 * Register expansion
-	 */
-	@Override
-	public void registerPlaceholders(Supplier<Object> getter, Object plugin) {
-		Preconditions.checkNotNull(getter, "getter");
-		Preconditions.checkNotNull(plugin);
-		store.register(getter, plugin);
-	}
 
 	/*
 	 * Replace placeholders then parse value using the function
@@ -151,7 +121,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 
 			if (value == null && PlaceholderAPIPlugin.getInstance().getConfig().relationaltoregular && rel) {
 				try {
-					value = store.parse(id, false, o, o, Optional.ofNullable(token), Text.class).orElse(null);
+					value = store.parse(id, false, o, s, Optional.ofNullable(token), Text.class).orElse(null);
 				} catch (Exception e) {
 					value = Text.of(TextColors.RED, "ERROR: " + e.getMessage());
 					e.printStackTrace();
@@ -200,11 +170,15 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 		if (placeholder.contains("_")) {
 			String id = placeholder.substring(0, placeholder.indexOf('_'));
 			String token = placeholder.substring(id.indexOf('-'));
+			if (!store.has(id)) {
+				return null;
+			}
 			try {
-				Object out = store.parse(id, store.rel(id), source, observer,
+				Object out = store.parse(id, store.isRelational(id), source, observer,
 						Optional.ofNullable(token.isEmpty() ? null : token));
-				if (out == null && store.norm(id)) {
-					return store.parse(id, false, source, observer,
+				if (out == null && store.isNormal(id)
+						&& PlaceholderAPIPlugin.getInstance().getConfig().relationaltoregular) {
+					return store.parse(id, false, observer, source,
 							Optional.ofNullable(token.isEmpty() ? null : token));
 				} else {
 					return out;
@@ -213,8 +187,18 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 				return null;
 			}
 		} else {
+			if (!store.has(placeholder)) {
+				return null;
+			}
 			try {
-				return store.parse(placeholder, store.rel(placeholder), source, observer, Optional.empty());
+				Object out = store.parse(placeholder, store.isRelational(placeholder), source, observer,
+						Optional.empty());
+				if (out == null && store.isNormal(placeholder)
+						&& PlaceholderAPIPlugin.getInstance().getConfig().relationaltoregular) {
+					return store.parse(placeholder, false, observer, source, Optional.empty());
+				} else {
+					return out;
+				}
 			} catch (Exception e) {
 				return null;
 			}
@@ -256,6 +240,17 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	@Override
 	public boolean isRegistered(String id) {
 		return store.has(id);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see me.rojo8399.placeholderapi.PlaceholderService#registerExpansion(me.
+	 * rojo8399.placeholderapi.placeholder.Expansion)
+	 */
+	@Override
+	public boolean registerExpansion(Expansion<?, ?, ?> expansion) {
+		return store.register(expansion);
 	}
 
 }

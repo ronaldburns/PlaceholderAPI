@@ -94,7 +94,9 @@ public class TextUtils {
 		if (item == null) {
 			return Text.EMPTY;
 		}
-		return Text.of(TextActions.showItem(item.createSnapshot()), item.getOrElse(Keys.DISPLAY_NAME, Text.of(item)));
+		String q = item.getQuantity() > 1 ? " (" + item.getQuantity() + ")" : "";
+		return Text.of(TextActions.showItem(item.createSnapshot()), item.getOrElse(Keys.DISPLAY_NAME, Text.of(item)),
+				q);
 	}
 
 	private static Text fix(Text to, TextFormat l) {

@@ -26,60 +26,51 @@ package me.rojo8399.placeholderapi;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
 
+import me.rojo8399.placeholderapi.placeholder.Expansion;
+import me.rojo8399.placeholderapi.placeholder.ExpansionBuilder;
 import me.rojo8399.placeholderapi.utils.TextUtils;
 import me.rojo8399.placeholderapi.utils.TypeUtils;
 
 public interface PlaceholderService {
 
 	/**
-	 * Register placeholder methods in an object with the API.
+	 * Create a new ExpansionBuilder to build an expansion.
 	 * 
-	 * Methods denoted with the "@Placeholder" annotation will be parsed to see
-	 * if they support placeholder replacing. If they do, they will be loaded in
-	 * as placeholders. See the documentation for "@Placeholder", "@Relational",
-	 * "@Source", "@Observer", "@Token" and "@Listening" for more information on
-	 * configuring a placeholder.
+	 * ExpansionBuilder is a fluent, resettable builder, which allows you to
+	 * chain method calls and then build.
 	 * 
-	 * @param loader
-	 *            A supplier to provide the object in which the methods reside.
-	 *            This will be called on method call, and every time
-	 *            PlaceholderAPI or a placeholder held by the object is
-	 *            reloaded.
-	 * @param plugin
-	 *            The plugin which holds the placeholder.
+	 * This is the recommended way of creating and registering expansions.
+	 * 
+	 * See ExpansionBuilder method docs for more information.
+	 * 
+	 * @return the expansion builder.
 	 */
-	public void registerPlaceholders(Supplier<Object> loader, Object plugin);
+	public default <S, O, V> ExpansionBuilder<S, O, V> createBuilder() {
+		return ExpansionBuilder.builder();
+	}
 
 	/**
-	 * Register placeholder methods in an object with the API.
+	 * Register an Expansion.
 	 * 
-	 * Methods denoted with the "@Placeholder" annotation will be parsed to see
-	 * if they support placeholder replacing. If they do, they will be loaded in
-	 * as placeholders. See the documentation for "@Placeholder", "@Relational",
-	 * "@Source", "@Observer", "@Token" and "@Listening" for more information on
-	 * configuring a placeholder.
+	 * This method is not preferred as the builder allows standardization of
+	 * most features and, more importantly, both prevents many errors and
+	 * simplifies the creation process. The builder also allows you to register
+	 * your placeholder upon creation, which makes this not a very useful
+	 * method. It is included in case you want to create an expansion then
+	 * modify it heavily.
 	 * 
-	 * @param object
-	 *            The object in which the methods reside. On reloading
-	 *            PlaceholderAPI or any placeholder within this object, the same
-	 *            object will be re-added to the register. Note that this should
-	 *            reload any fields with the "@Setting" annotation in a
-	 *            configurable placeholder, however it does nothing else to the
-	 *            object. Note that the object should be final or effectively
-	 *            final.
-	 * @param plugin
-	 *            The plugin which holds the placeholder.
+	 * @param expansion
+	 *            The expansion to attempt to register.
+	 * 
+	 * @return whether the expansion was successfully registered.
 	 */
-	public default void registerPlaceholders(final Object object, Object plugin) {
-		registerPlaceholders(() -> object, plugin);
-	}
+	public boolean registerExpansion(Expansion<?, ?, ?> expansion);
 
 	/**
 	 * Fill a map with placeholders from a template.
@@ -463,7 +454,9 @@ public interface PlaceholderService {
 	 * Verify that the object provided matches the valid types of CommandSource,
 	 * Locatable or User. In the future these types may change, so using this
 	 * method is preferred if you do not know the type or if the type you are
-	 * going to provide is correct.
+	 * going to provide is correct. This method is identical to verifySource,
+	 * but is provided for the sake of differentiation and potential change in
+	 * the future.
 	 * 
 	 * @param source
 	 *            The object to verify.

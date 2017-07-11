@@ -35,8 +35,13 @@ import java.lang.annotation.Target;
 @Target(METHOD)
 /**
  * This annotation denotes a method as being relational, provided the method is
- * already a Placeholder method. Methods with this annotation support the
- * "@Observer" annotation.
+ * already a Placeholder method. Methods with this annotation are parsed with
+ * "rel_[id]" instead of just the id.
+ * 
+ * Important: This annotation only specifies two things: That the id needs
+ * "rel_" in front of it, and that it, depending on a configuration setting for
+ * PlaceholderAPI, may fall back onto a non-relational placeholder of the same
+ * id, using observer in favour of source.
  */
 public @interface Relational {
 }

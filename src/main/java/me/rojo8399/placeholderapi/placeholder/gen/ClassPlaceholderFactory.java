@@ -28,6 +28,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.objectweb.asm.Opcodes.ACC_FINAL;
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static org.objectweb.asm.Opcodes.ACC_SUPER;
+import static org.objectweb.asm.Opcodes.ACONST_NULL;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ARETURN;
 import static org.objectweb.asm.Opcodes.ASTORE;
@@ -39,6 +40,7 @@ import static org.objectweb.asm.Opcodes.RETURN;
 import static org.objectweb.asm.Opcodes.V1_8;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -52,11 +54,13 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
+import org.spongepowered.api.world.Locatable;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
+import me.rojo8399.placeholderapi.placeholder.Expansion;
 import me.rojo8399.placeholderapi.placeholder.Observer;
 import me.rojo8399.placeholderapi.placeholder.Placeholder;
 import me.rojo8399.placeholderapi.placeholder.Source;
@@ -72,10 +76,10 @@ public class ClassPlaceholderFactory {
 	private String targetPackage;
 	private DefineableClassLoader classLoader;
 
-	private final LoadingCache<Method, Class<? extends PlaceholderContainer>> cache = CacheBuilder.newBuilder()
-			.concurrencyLevel(1).weakValues().build(new CacheLoader<Method, Class<? extends PlaceholderContainer>>() {
+	private final LoadingCache<Method, Class<? extends Expansion<?, ?, ?>>> cache = CacheBuilder.newBuilder()
+			.concurrencyLevel(1).weakValues().build(new CacheLoader<Method, Class<? extends Expansion<?, ?, ?>>>() {
 				@Override
-				public Class<? extends PlaceholderContainer> load(Method method) throws Exception {
+				public Class<? extends Expansion<?, ?, ?>> load(Method method) throws Exception {
 					return createClass(method);
 				}
 			});
@@ -87,12 +91,24 @@ public class ClassPlaceholderFactory {
 		this.classLoader = checkNotNull(loader, "classLoader");
 	}
 
-	public PlaceholderContainer create(Object handle, Method method) throws Exception {
+	public Expansion<?, ?, ?> create(Object handle, Method method) throws Exception {
+		if (!Modifier.isPublic(handle.getClass().getModifiers())) {
+			throw new IllegalArgumentException("Class must be public!");
+		}
+		if (!Modifier.isPublic(method.getModifiers())) {
+			throw new IllegalArgumentException("Method must be public!");
+		}
 		return this.cache.get(method).getConstructor(method.getDeclaringClass()).newInstance(handle);
 	}
 
-	Class<? extends PlaceholderContainer> createClass(Method method) throws Exception {
+	Class<? extends Expansion<?, ?, ?>> createClass(Method method) throws Exception {
 		Class<?> handle = method.getDeclaringClass();
+		if (!Modifier.isPublic(handle.getModifiers())) {
+			throw new IllegalArgumentException("Class must be public!");
+		}
+		if (!Modifier.isPublic(method.getModifiers())) {
+			throw new IllegalArgumentException("Method must be public!");
+		}
 		String id = method.getAnnotation(Placeholder.class).id();
 		String name = this.targetPackage + id + "Placeholder_" + handle.getSimpleName() + "_" + method.getName()
 				+ iid.incrementAndGet();
@@ -101,12 +117,8 @@ public class ClassPlaceholderFactory {
 	}
 
 	private static final String OBJECT_NAME = Type.getInternalName(Object.class);
-	private static final String PLACEHOLDER_NAME = Type.getInternalName(PlaceholderContainer.class);
-	private static final String HANDLE_METHOD_DESCRIPTOR = "(" + Type.getDescriptor(PlaceholderData.class) + ")L"
-			+ OBJECT_NAME + ";";
-	private static final String DATA_NAME = Type.getInternalName(PlaceholderData.class);
-	private static final String SRCTRG_DESC = "()L" + OBJECT_NAME + ";";
-	private static final String TOK_DESC;
+	private static final String STRING_NAME = Type.getInternalName(String.class);
+	private static final String PLACEHOLDER_NAME = Type.getInternalName(InternalExpansion.class);
 	private static final String OPT_NAME = Type.getInternalName(Optional.class);
 	private static final String OPT_SIG;
 
@@ -128,13 +140,6 @@ public class ClassPlaceholderFactory {
 		SignatureVisitor prtv = rtv.visitTypeArgument('=');
 		ppsv.visitClassType(Type.getInternalName(String.class));
 		OPT_SIG = sv.toString() + ";";
-		String f;
-		try {
-			f = Type.getMethodDescriptor(PlaceholderData.class.getDeclaredMethod("token"));
-		} catch (Exception e) {
-			f = "()" + rtv.toString();
-		}
-		TOK_DESC = f;
 	}
 
 	private byte[] generateClass(String name, Class<?> handle, Method method) {
@@ -142,7 +147,21 @@ public class ClassPlaceholderFactory {
 		final String handleName = Type.getInternalName(handle);
 		final String handleDescriptor = Type.getDescriptor(handle);
 		List<Parameter> pm = Arrays.asList(method.getParameters());
-		final boolean token = pm.stream().anyMatch(p -> p.getAnnotation(Token.class) != null);
+		final boolean token = pm.stream().anyMatch(p -> p.isAnnotationPresent(Token.class));
+		final boolean source = pm.stream().anyMatch(p -> p.isAnnotationPresent(Source.class));
+		final boolean observer = pm.stream().anyMatch(p -> p.isAnnotationPresent(Observer.class));
+		final Optional<Class<?>> sourceType = pm.stream().filter(p -> p.isAnnotationPresent(Source.class)).findFirst()
+				.map(p -> p.getType());
+		final Optional<Class<?>> observerType = pm.stream().filter(p -> p.isAnnotationPresent(Observer.class))
+				.findFirst().map(p -> p.getType());
+		Class<?> returnType = method.getReturnType();
+		if (returnType.equals(Void.TYPE)) {
+			returnType = Object.class;
+		}
+		String parseMethodDescriptor = "(L" + Type.getInternalName(sourceType.orElse(Locatable.class)) + ";L"
+				+ Type.getInternalName(observerType.orElse(Locatable.class)) + ";L" + OPT_NAME + ";)L"
+				+ Type.getInternalName(returnType) + ";";
+		String externalParseDescriptor = "(Ljava/lang/Object;Ljava/lang/Object;Ljava/util/Optional;)Ljava/lang/Object;";
 		final boolean optionalTokenType = pm.stream()
 				.anyMatch(p -> p.getParameterizedType().getTypeName().equals("java.util.Optional<java.lang.String>"));
 		String methodDescriptor = Type.getMethodDescriptor(method);
@@ -153,43 +172,56 @@ public class ClassPlaceholderFactory {
 			mv = cw.visitMethod(ACC_PUBLIC, "<init>", '(' + handleDescriptor + ")V", null, null);
 			mv.visitCode();
 			mv.visitVarInsn(ALOAD, 0);
+			mv.visitLdcInsn(method.getAnnotation(Placeholder.class).id());
 			mv.visitVarInsn(ALOAD, 1);
-			mv.visitMethodInsn(INVOKESPECIAL, PLACEHOLDER_NAME, "<init>", "(L" + OBJECT_NAME + ";)V", false);
+			mv.visitMethodInsn(INVOKESPECIAL, PLACEHOLDER_NAME, "<init>",
+					"(L" + STRING_NAME + ";L" + OBJECT_NAME + ";)V", false);
 			mv.visitInsn(RETURN);
 			mv.visitMaxs(0, 0);
 			mv.visitEnd();
 		}
 		{
-			mv = cw.visitMethod(ACC_PUBLIC, "handle", HANDLE_METHOD_DESCRIPTOR, null,
+			mv = cw.visitMethod(ACC_PUBLIC, "parse", parseMethodDescriptor, null,
 					new String[] { "java/lang/Exception" });
 			mv.visitCode();
 			mv.visitVarInsn(ALOAD, 0);
 			mv.visitFieldInsn(GETFIELD, name, "handle", "L" + OBJECT_NAME + ";");
 			mv.visitTypeInsn(CHECKCAST, handleName);
-			mv.visitVarInsn(ALOAD, 1);
-			mv.visitMethodInsn(INVOKEVIRTUAL, DATA_NAME, "token", TOK_DESC, false);
-			mv.visitVarInsn(ASTORE, 6);
-			mv.visitVarInsn(ALOAD, 6);
 			if (!optionalTokenType && token) {
+				mv.visitVarInsn(ALOAD, 3);
 				mv.visitLdcInsn("");
 				mv.visitMethodInsn(INVOKEVIRTUAL, OPT_NAME, "orElse", "(Ljava/lang/Object;)Ljava/lang/Object;", false);
+				mv.visitVarInsn(ASTORE, 4);
 			}
-			mv.visitVarInsn(ASTORE, 4);
-			mv.visitVarInsn(ALOAD, 1);
-			mv.visitMethodInsn(INVOKEVIRTUAL, DATA_NAME, "target", SRCTRG_DESC, false);
-			mv.visitVarInsn(ASTORE, 3);
-			mv.visitVarInsn(ALOAD, 1);
-			mv.visitMethodInsn(INVOKEVIRTUAL, DATA_NAME, "source", SRCTRG_DESC, false);
-			mv.visitVarInsn(ASTORE, 2);
 			for (int i = 0; i < method.getParameterCount(); i++) {
 				int x = 0;
 				Parameter p = method.getParameters()[i];
 				x = getOrder(p);
-				mv.visitVarInsn(ALOAD, x + 2);
+				if (x == 2 && !optionalTokenType) {
+					x = 3;
+				}
+				mv.visitVarInsn(ALOAD, x + 1);
 				mv.visitTypeInsn(CHECKCAST, Type.getInternalName(p.getType()));
-
 			}
 			mv.visitMethodInsn(INVOKEVIRTUAL, handleName, method.getName(), methodDescriptor, false);
+			if (method.getReturnType().equals(Void.TYPE)) {
+				mv.visitInsn(ACONST_NULL);
+			}
+			mv.visitInsn(ARETURN);
+			mv.visitMaxs(0, 0);
+			mv.visitEnd();
+		}
+		{
+			mv = cw.visitMethod(ACC_PUBLIC, "parse", externalParseDescriptor, null,
+					new String[] { "java/lang/Exception" });
+			mv.visitCode();
+			mv.visitVarInsn(ALOAD, 0);
+			mv.visitVarInsn(ALOAD, 1);
+			mv.visitTypeInsn(CHECKCAST, Type.getInternalName(sourceType.orElse(Object.class)));
+			mv.visitVarInsn(ALOAD, 2);
+			mv.visitTypeInsn(CHECKCAST, Type.getInternalName(observerType.orElse(Object.class)));
+			mv.visitVarInsn(ALOAD, 3);
+			mv.visitMethodInsn(INVOKEVIRTUAL, name, "parse", parseMethodDescriptor, false);
 			mv.visitInsn(ARETURN);
 			mv.visitMaxs(0, 0);
 			mv.visitEnd();

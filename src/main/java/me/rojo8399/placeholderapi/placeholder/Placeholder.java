@@ -44,29 +44,4 @@ public @interface Placeholder {
 	 */
 	public String id();
 
-	/**
-	 * @return The author of the placeholder. Defaults to empty.
-	 */
-	public String author() default "";
-
-	/**
-	 * @return The version of the placeholder. Defaults to 1.0.
-	 */
-	public String version() default "1.0";
-
-	/**
-	 * @return The description of the placeholder. Defaults to empty.
-	 */
-	public String desc() default "";
-
-	/**
-	 * @return The possible tokens this placeholder can use (informational only, does not affect placeholder usage). Defaults to an empty array.
-	 */
-	public String[] tokens() default {};
-
-	/**
-	 * @return The url for the placeholder. Defaults to empty.
-	 */
-	public String url() default "";
-
 }

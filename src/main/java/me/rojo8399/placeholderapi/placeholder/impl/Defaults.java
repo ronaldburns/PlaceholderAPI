@@ -76,9 +76,7 @@ import me.rojo8399.placeholderapi.placeholder.Placeholder;
 import me.rojo8399.placeholderapi.placeholder.Relational;
 import me.rojo8399.placeholderapi.placeholder.Source;
 import me.rojo8399.placeholderapi.placeholder.Token;
-import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 
-@ConfigSerializable
 @Listening
 public class Defaults {
 
@@ -361,6 +359,25 @@ public class Defaults {
 	}
 
 	@Placeholder(id = "rank")
+	@Relational
+	public Boolean isAbove(@Token String token, @Source User underrank, @Observer User overrank) {
+		if (token == null || !(token.equalsIgnoreCase("greater_than") || token.equalsIgnoreCase("less_than"))) {
+			return null;
+		}
+		if (token.equalsIgnoreCase("greater_than")) {
+			if (underrank.isChildOf(overrank)) {
+				return true;
+			}
+			return getParentGroup(underrank).isChildOf(getParentGroup(overrank));
+		} else {
+			if (overrank.isChildOf(underrank)) {
+				return true;
+			}
+			return getParentGroup(overrank).isChildOf(getParentGroup(underrank));
+		}
+	}
+
+	@Placeholder(id = "rank")
 	public Object rank(@Source User player, @Token Optional<String> token) {
 		if (!token.isPresent()) {
 			return getParentGroup(player).getIdentifier();
@@ -487,14 +504,20 @@ public class Defaults {
 		switch (t) {
 		case "balance":
 			return acc.getBalance(toUse).toPlainString();
-		case "balformat":
+		case "bal_format":
 			return toUse.format(acc.getBalance(toUse));
 		case "display":
 			return toUse.getDisplayName();
-		case "pluraldisplay":
+		case "plural_display":
 			return toUse.getPluralDisplayName();
 		case "symbol":
 			return toUse.getSymbol();
+		}
+		if (currencies.containsKey(t)) {
+			toUse = currencies.get(t);
+			Text amt = toUse.format(BigDecimal.valueOf(1234.56));
+			Text v = Text.of(toUse.getName() + " (" + toUse.getId() + ") - ");
+			return v.concat(amt);
 		}
 		return null;
 	}

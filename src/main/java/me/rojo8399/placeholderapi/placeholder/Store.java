@@ -24,32 +24,26 @@
 package me.rojo8399.placeholderapi.placeholder;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Supplier;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.world.Locatable;
 
-import com.google.common.base.Preconditions;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.placeholder.gen.ClassPlaceholderFactory;
 import me.rojo8399.placeholderapi.placeholder.gen.DefineableClassLoader;
-import me.rojo8399.placeholderapi.placeholder.gen.InternalPlaceholder;
+import me.rojo8399.placeholderapi.placeholder.gen.InternalExpansion;
 import me.rojo8399.placeholderapi.utils.TypeUtils;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMapper;
@@ -74,141 +68,128 @@ public class Store {
 	private Store() {
 	}
 
-	public Set<String> ids(boolean rel) {
-		return getLoader(rel).keySet();
-	}
+	private Map<String, Expansion<?, ?, ?>> normal = new ConcurrentHashMap<>(), rel = new ConcurrentHashMap<>();
 
-	private Map<String, LoaderTuple> getLoader(boolean rel) {
-		return rel ? relLoader : normalLoader;
-	}
-
-	public boolean has(String id, boolean... rel) {
-		id = fix(id);
-		if (rel.length == 0) {
-			return normalLoader.containsKey(id) || this.relLoader.containsKey(id);
-		}
-		return rel[0] ? this.relLoader.containsKey(id) : normalLoader.containsKey(id);
-	}
-
-	private static String fix(String id) {
-		return id.toLowerCase().trim().replaceFirst("rel\\_", "");
-	}
-
-	public Optional<FullContainer> cont(String id, boolean rel) {
-		if (!has(id, rel)) {
-			return Optional.empty();
-		}
-		id = fix(id);
-		try {
-			return Optional.ofNullable(getCache(rel).get(id));
-		} catch (Exception e) {
-			return Optional.empty();
-		}
-	}
-
-	public void reload() {
-		normal.invalidateAll();
-		rel.invalidateAll();
-		for (LoaderTuple n : normalLoader.values()) {
-			List<FullContainer> l = createAll(n.getter, n.plugin, false);
-			l.forEach(c -> {
-				normal.put(fix(c.id()), c);
-			});
-		}
-
-		for (LoaderTuple n : relLoader.values()) {
-			List<FullContainer> l = createAll(n.getter, n.plugin, true);
-			l.forEach(c -> {
-				rel.put(fix(c.id()), c);
-			});
-		}
-	}
-
-	public boolean rel(String id) {
-		return rel.asMap().containsKey(fix(id));
-	}
-
-	public boolean norm(String id) {
-		return normal.asMap().containsKey(fix(id));
-	}
-
-	private LoadingCache<String, FullContainer> getCache(boolean rel) {
-		return rel ? this.rel : this.normal;
-	}
-
-	public boolean isEnabled(String id, boolean rel) {
-		if (!has(id, rel)) {
-			return false;
-		}
-		LoadingCache<String, FullContainer> cache = getCache(rel);
-		try {
-			return cache.get(fix(id)).isEnabled();
-		} catch (ExecutionException e) {
-			e.printStackTrace();
-		}
-		return false;
-	}
-
-	public void disable(String id, boolean rel) {
-		if (!has(id, rel)) {
-			return;
-		}
-		LoadingCache<String, FullContainer> cache = getCache(rel);
-		try {
-			cache.get(fix(id)).disable();
-		} catch (ExecutionException e) {
-			e.printStackTrace();
-		}
-	}
-
-	public void enable(String id, boolean rel) {
-		if (!has(id, rel)) {
-			return;
-		}
-		LoadingCache<String, FullContainer> cache = getCache(rel);
-		try {
-			cache.get(fix(id)).enable();
-		} catch (ExecutionException e) {
-			e.printStackTrace();
-		}
-	}
-
-	public boolean reload(String id, boolean rel) {
-		if (!has(id, rel)) {
-			return false;
-		}
-		id = fix(id);
-		try {
-			if (rel) {
-				this.rel.get(id).unregisterListeners();
-				this.rel.refresh(id);
-			} else {
-				this.normal.get(id).unregisterListeners();
-				this.normal.refresh(id);
-			}
-			return true;
-		} catch (Exception e) {
-			return false;
-		}
-	}
-
-	public <T> Optional<T> parse(String p, boolean r, Object s, Object o, Optional<String> t, Class<T> expected)
+	public Object parse(String id, boolean relational, Object src, Object obs, Optional<String> token)
 			throws Exception {
-		Object val = parse(p, r, s, o, t);
-		return TypeUtils.tryCast(val, expected);
-	}
-
-	public Object parse(String id, boolean rel, Object source, Object observer, Optional<String> token)
-			throws Exception {
-		id = fix(id);
-		if (!has(id, rel)) {
+		if (!has(id, relational)) {
 			return null;
 		}
-		if (rel) {
-			return this.rel.get(id).replace(source, observer, token);
-		} else {
-			return this.normal.get(id).replace(source, observer, token);
+		@SuppressWarnings("unchecked")
+		Expansion<Object, Object, ?> exp = (Expansion<Object, Object, ?>) get(id, relational).get();
+		if (!exp.isEnabled()) {
+			return null;
 		}
+		if (exp.getSourceClass().isAssignableFrom(src.getClass())
+				&& exp.getObserverClass().isAssignableFrom(obs.getClass())) {
+			return exp.parse(exp.convertSource(src), exp.convertObserver(obs), token);
+		}
+		return null;
+	}
+
+	public <T> Optional<T> parse(String id, boolean relational, Object src, Object obs, Optional<String> token,
+			Class<T> expected) throws Exception {
+		Object o = parse(id, relational, src, obs, token);
+		return TypeUtils.tryCast(o, expected);
+	}
+
+	public boolean register(Expansion<?, ?, ?> expansion) {
+		String id = fix(expansion.id());
+		if (getMap(expansion.relational()).containsKey(id)) {
+			return false;
+		}
+		expansion.populateConfig();
+		expansion.registerListeners();
+		getMap(expansion.relational()).put(id, expansion);
+		return true;
+	}
+
+	public boolean has(String id, boolean relational) {
+		return getMap(relational).containsKey(fix(id));
+	}
+
+	public boolean has(String id) {
+		return has(id, true) || has(id, false);
+	}
+
+	public boolean isRelational(String id) {
+		return rel.containsKey(fix(id));
+	}
+
+	public boolean isBoth(String id) {
+		return isRelational(id) && isNormal(id);
+	}
+
+	public boolean isNormal(String id) {
+		return normal.containsKey(fix(id));
+	}
+
+	public Optional<Expansion<?, ?, ?>> get(String id, boolean relational) {
+		if (!has(id, relational)) {
+			return Optional.empty();
+		}
+		return Optional.ofNullable(getMap(relational).get(id));
+	}
+
+	public List<String> allIds() {
+		return Stream.concat(getMap(true).entrySet().stream(), getMap(false).entrySet().stream())
+				.filter(e -> e.getValue().isEnabled()).map(Map.Entry::getKey).distinct().collect(Collectors.toList());
+	}
+
+	public List<String> ids(boolean relational) {
+		return getMap(relational).entrySet().stream().filter(e -> e.getValue().isEnabled()).map(Map.Entry::getKey)
+				.collect(Collectors.toList());
+	}
+
+	public int reloadAll() {
+		return Stream.concat(getMap(true).keySet().stream(), getMap(false).keySet().stream()).distinct()
+				.map(this::reload).map(b -> b ? 1 : 0).reduce(0, TypeUtils::add);
+	}
+
+	public boolean reload(String id) {
+		if (!has(id)) {
+			return false;
+		}
+		id = fix(id);
+		Optional<Expansion<?, ?, ?>> rel = get(id, true);
+		Optional<Expansion<?, ?, ?>> norm = get(id, false);
+		boolean out = true;
+		if (rel.isPresent()) {
+			out = out && reload(rel.get(), id, true);
+		}
+		if (norm.isPresent()) {
+			out = out && reload(norm.get(), id, false);
+		}
+		return out;
+	}
+
+	private boolean reload(Expansion<?, ?, ?> e, String id, boolean rel) {
+		if (!e.refresh()) {
+			return false;
+		}
+		boolean out = true;
+		if (e instanceof InternalExpansion<?, ?, ?>) {
+			Object handle = ((InternalExpansion<?, ?, ?>) e).getHandle();
+			getMap(rel).remove(id);
+			try {
+				out = ExpansionBuilder.builder().fromUnknown(e).from(handle, id, e.getPlugin()).buildAndRegister();
+			} catch (Exception e1) {
+				return false;
+			}
+		}
+		return out;
+	}
+
+	private Map<String, Expansion<?, ?, ?>> getMap(boolean rel) {
+		return rel ? this.rel : normal;
+	}
+
+	private static final String fix(String id) {
+		id = id.toLowerCase().trim();
+		if (id.startsWith("rel_")) {
+			id = id.substring(4);
+		}
+		return id.replace("_", "").replace(" ", "");
 	}
 
 	private final DefineableClassLoader classLoader = new DefineableClassLoader(
@@ -216,89 +197,24 @@ public class Store {
 	private final ClassPlaceholderFactory factory = new ClassPlaceholderFactory(
 			"me.rojo8399.placeholderapi.placeholder", classLoader);
 
-	private final LoadingCache<String, FullContainer> normal = CacheBuilder.newBuilder().initialCapacity(15)
-			.concurrencyLevel(4).removalListener(not -> ((FullContainer) not.getValue()).unregisterListeners())
-			.build(new CacheLoader<String, FullContainer>() {
-
-				@Override
-				public FullContainer load(String key) throws Exception {
-					key = fix(key);
-					if (!normalLoader.containsKey(key)) {
-						throw new IllegalArgumentException("Placeholder must be registered!");
-					}
-					LoaderTuple t = normalLoader.get(key);
-					return create(t.getter, key, t.plugin, false);
-				}
-
-			});
-	private final LoadingCache<String, FullContainer> rel = CacheBuilder.newBuilder().initialCapacity(15)
-			.concurrencyLevel(4).removalListener(not -> ((FullContainer) not.getValue()).unregisterListeners())
-			.build(new CacheLoader<String, FullContainer>() {
-
-				@Override
-				public FullContainer load(String key) throws Exception {
-					key = fix(key);
-					if (!relLoader.containsKey(key)) {
-						throw new IllegalArgumentException("Placeholder must be registered!");
-					}
-					LoaderTuple t = relLoader.get(key);
-					return create(t.getter, key, t.plugin, true);
-				}
-
-			});
-
-	public void register(Supplier<Object> getter, Object plugin) {
-		Object o = getter.get();
-		Preconditions.checkNotNull(o, "object");
-		LoaderTuple t = new LoaderTuple(getter, plugin);
-		List<String> ids = findNames(o, false);
-		for (String s : ids) {
-			s = fix(s);
-			if (!normalLoader.containsKey(s)) {
-				normalLoader.put(s, t);
+	static Map<Method, Boolean> findAll(Object object) {
+		Class<?> c = object.getClass();
+		if (!Modifier.isPublic(c.getModifiers())) {
+			throw new IllegalArgumentException("Class must be public!");
+		}
+		Map<Method, Boolean> out = new HashMap<>();
+		for (Method m : c.getMethods()) {
+			if (!Modifier.isPublic(m.getModifiers())) {
+				continue;
+			}
+			if (m.isAnnotationPresent(Placeholder.class)) {
+				out.put(m, m.isAnnotationPresent(Relational.class));
 			}
 		}
-		ids = findNames(o, true);
-		for (String s : ids) {
-			s = fix(s);
-			if (!relLoader.containsKey(s)) {
-				relLoader.put(s, t);
-			}
-		}
+		return out;
 	}
 
-	private final Map<String, LoaderTuple> normalLoader = new HashMap<>(), relLoader = new HashMap<>();
-
-	private static class LoaderTuple {
-		private Supplier<Object> getter;
-		private Object plugin;
-
-		public LoaderTuple(Supplier<Object> getter, Object plugin) {
-			this.getter = getter;
-			this.plugin = plugin;
-		}
-
-		public Supplier<Object> getter() {
-			return getter;
-		}
-
-		public Object plugin() {
-			return plugin;
-		}
-	}
-
-	private static List<String> findNames(Object object, boolean rel) {
-		return findAll(object, rel).stream().map(m -> m.getAnnotation(Placeholder.class).id())
-				.collect(Collectors.toList());
-	}
-
-	private static List<Method> findAll(Object object, boolean rel) {
-		return Arrays.asList(object.getClass().getMethods()).stream()
-				.filter(m -> TypeUtils.xnor(m.isAnnotationPresent(Relational.class), rel))
-				.filter(m -> m.isAnnotationPresent(Placeholder.class)).collect(Collectors.toList());
-	}
-
-	private static Method find(Object object, String id, boolean rel) {
+	static Method find(Object object, String id, boolean rel) {
 		for (Method m : object.getClass().getMethods()) {
 			Placeholder p;
 			if ((p = m.getAnnotation(Placeholder.class)) != null && fix(p.id()).equals(fix(id))) {
@@ -325,11 +241,11 @@ public class Store {
 			List<Parameter> params = Arrays.asList(m.getParameters());
 			boolean relational = m.isAnnotationPresent(Relational.class);
 			if (relational) {
-				if (this.rel.asMap().containsKey(id)) {
+				if (this.rel.containsKey(id)) {
 					return 5;
 				}
 			} else {
-				if (this.normal.asMap().containsKey(id)) {
+				if (this.normal.containsKey(id)) {
 					return 6;
 				}
 			}
@@ -349,28 +265,7 @@ public class Store {
 		return 1;
 	}
 
-	private List<FullContainer> createAll(Supplier<Object> getter, Object plugin, boolean rel) {
-		Object o = getter.get();
-		Preconditions.checkNotNull(o, "object");
-		List<FullContainer> out = new ArrayList<>();
-		for (Method m : findAll(o, rel)) {
-			out.add(createForMethod(m, o, plugin));
-		}
-		return out;
-	}
-
-	private FullContainer create(Supplier<Object> getter, String id, Object plugin, boolean rel) {
-		Object o = getter.get();
-		Preconditions.checkNotNull(o, "object");
-		Method m = find(o, id, rel);
-		if (m == null) {
-			PlaceholderAPIPlugin.getInstance().getLogger().warn("No placeholder found with id " + id + " in object!");
-			return null;
-		}
-		return createForMethod(m, o, plugin);
-	}
-
-	private FullContainer createForMethod(Method m, Object o, Object plugin) {
+	Expansion<?, ?, ?> createForMethod(Method m, Object o, Object plugin) {
 		Class<?> c = o.getClass();
 		boolean l = c.isAnnotationPresent(Listening.class), co = c.isAnnotationPresent(ConfigSerializable.class);
 		int code = verify(o, m);
@@ -393,7 +288,9 @@ public class Store {
 			}
 			return null;
 		}
-		InternalPlaceholder pl;
+		Placeholder p = m.getAnnotation(Placeholder.class);
+		boolean r = m.isAnnotationPresent(Relational.class);
+		Expansion<?, ?, ?> pl;
 		try {
 			pl = factory.create(o, m);
 		} catch (Exception e) {
@@ -403,8 +300,8 @@ public class Store {
 		}
 		if (co) {
 			ConfigurationNode node = PlaceholderAPIPlugin.getInstance().getRootConfig().getNode("expansions",
-					Sponge.getPluginManager().fromInstance(plugin).get().getId(),
-					o.getClass().getSimpleName().replace(".class", "").toLowerCase().trim());
+					(r ? "rel_" : "") + Sponge.getPluginManager().fromInstance(plugin).get().getId(),
+					p.id().toLowerCase().trim());
 			if (node.isVirtual()) {
 				try {
 					ObjectMapper.forObject(o).serialize(node);
@@ -425,9 +322,9 @@ public class Store {
 		if (l) {
 			Sponge.getEventManager().registerListeners(plugin, o);
 		}
-		boolean r = m.isAnnotationPresent(Relational.class);
-		Placeholder p = m.getAnnotation(Placeholder.class);
-		return FullContainer.from(p, pl, r, plugin);
+		pl.setId(p.id());
+		pl.setRelational(r);
+		return pl;
 	}
 
 	private static boolean verifyToken(Parameter param) {

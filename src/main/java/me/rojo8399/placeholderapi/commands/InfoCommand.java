@@ -26,6 +26,7 @@ package me.rojo8399.placeholderapi.commands;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -41,9 +42,9 @@ import org.spongepowered.api.text.format.TextColors;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.PlaceholderService;
-import me.rojo8399.placeholderapi.PlaceholderServiceImpl;
 import me.rojo8399.placeholderapi.configs.Messages;
-import me.rojo8399.placeholderapi.placeholder.FullContainer;
+import me.rojo8399.placeholderapi.placeholder.Expansion;
+import me.rojo8399.placeholderapi.placeholder.Store;
 import me.rojo8399.placeholderapi.utils.TextUtils;
 
 public class InfoCommand implements CommandExecutor {
@@ -68,15 +69,16 @@ public class InfoCommand implements CommandExecutor {
 			Pattern.CASE_INSENSITIVE);
 
 	private static Text formatExpansion(String e, CommandSource src) {
-		List<FullContainer> conts = PlaceholderServiceImpl.get().getContainers(e);
-		FullContainer norm;
+		List<Expansion<?, ?, ?>> conts = Arrays.asList(Store.get().get(e, true), Store.get().get(e, false)).stream()
+				.filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+		Expansion<?, ?, ?> norm;
 		try {
 			norm = conts.get(0);
 		} catch (Exception ex) {
 			return Text.of(
 					TextColors.RED + "Placeholder was not registered correctly! Please check the logs for details.");
 		}
-		FullContainer rel = null;
+		Expansion<?, ?, ?> rel = null;
 		if (conts.size() > 1) {
 			rel = conts.get(1);
 		}
@@ -88,16 +90,17 @@ public class InfoCommand implements CommandExecutor {
 		return out;
 	}
 
-	private static Text format(FullContainer e, CommandSource src) {
+	private static Text format(Expansion<?, ?, ?> e, CommandSource src) {
 		final String name = e.id();
 		String version = e.version();
 		String author = e.author();
 		final boolean rel = e.relational();
-		List<String> tokens = Arrays.asList(e.tokens());
+		List<String> tokens = e.tokens();
 		if (tokens == null) {
 			tokens = new ArrayList<>();
 		}
-		List<Text> supportedTokens = tokens.stream().map(s -> s == null || s.isEmpty() ? null : s).distinct()
+		List<Text> supportedTokens = tokens.stream().map(s -> s == null || s.isEmpty() ? null : s)
+				.map(s -> s == null ? null : s.toLowerCase().trim()).distinct()
 				.sorted((s1, s2) -> s1 == null ? -1 : (s2 == null ? 1 : s1.compareTo(s2))).map(s -> {
 					if (s == null) {
 						return token(name, src, rel);
@@ -114,10 +117,10 @@ public class InfoCommand implements CommandExecutor {
 			supportedTokens = supportedTokens.subList(0, 20);
 			seeall = true;
 		}
-		Text url = e.url2() == null ? Text.EMPTY
-				: Text.of(Text.NEW_LINE, TextColors.BLUE, TextActions.openUrl(e.url2()), e.url());
-		String d = e.desc();
-		Text desc = d.isEmpty() || d == null ? Text.EMPTY : Text.of(Text.NEW_LINE, TextColors.AQUA, e.desc());
+		Text url = e.url() == null ? Text.EMPTY
+				: Text.of(Text.NEW_LINE, TextColors.BLUE, TextActions.openUrl(e.url()), e.url().toString());
+		String d = e.description();
+		Text desc = d.isEmpty() || d == null ? Text.EMPTY : Text.of(Text.NEW_LINE, TextColors.AQUA, e.description());
 		Text reload = Text.of(Text.NEW_LINE, Messages.get().placeholder.clickReload.t(), " ", reload(e.id()));
 		Text support = supportedTokens.isEmpty() ? Text.EMPTY
 				: Text.of(Text.NEW_LINE, Messages.get().placeholder.supportedPlaceholders.t(),

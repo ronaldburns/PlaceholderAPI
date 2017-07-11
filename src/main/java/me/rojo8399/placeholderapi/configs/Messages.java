@@ -128,6 +128,10 @@ public class Messages {
 		public Message timedesc = of("View the current date and time.");
 		@Setting("player-description")
 		public Message playerdesc = of("View information about a player.");
+		@Setting("relational-player-description")
+		public Message relplayerdesc = of("View information about a player relative to another player.");
+		@Setting("relational-rank-description")
+		public Message relrankdesc = of("View information about a player's rank relative to another player.");
 		@Setting("rank-description")
 		public Message rankdesc = of("View information about a player's rank.");
 		@Setting("server-description")
