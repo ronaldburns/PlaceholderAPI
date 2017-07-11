@@ -630,10 +630,12 @@ public class ExpansionBuilder<S, O, V> implements ResettableBuilder<Expansion<S,
 	public static List<ExpansionBuilder<?, ?, ?>> loadAll(Object object, Object plugin) {
 		Class<?> clazz = object.getClass();
 		Map<Method, Boolean> methods = Store.findAll(object);
-		return methods.entrySet()
+		@SuppressWarnings("rawtypes")
+		List<ExpansionBuilder> l = methods.entrySet()
 				.stream().map(e -> unverified().relational(e.getValue())
 						.id(e.getKey().getAnnotation(Placeholder.class).id()).frommethod(object, e.getKey(), plugin))
 				.collect(Collectors.toList());
+		return l.stream().map(e -> (ExpansionBuilder<?, ?, ?>) e).collect(Collectors.toList());
 	}
 
 	@SuppressWarnings({ "rawtypes" })
