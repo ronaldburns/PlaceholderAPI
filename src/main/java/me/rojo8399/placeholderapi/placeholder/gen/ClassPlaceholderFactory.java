@@ -205,7 +205,7 @@ public class ClassPlaceholderFactory {
 			}
 			mv.visitMethodInsn(INVOKEVIRTUAL, handleName, method.getName(), methodDescriptor, false);
 			if (method.getReturnType().equals(Void.TYPE)) {
-				mv.visitInsn(ACONST_NULL);
+				mv.visitLdcInsn("");
 			}
 			mv.visitInsn(ARETURN);
 			mv.visitMaxs(0, 0);
