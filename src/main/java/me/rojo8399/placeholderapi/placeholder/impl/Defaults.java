@@ -119,19 +119,19 @@ public class Defaults {
 		if (!identifier.isPresent()) {
 			return p.getName();
 		}
-		String token = identifier.get();
-		if (token.toLowerCase().startsWith("option_")) {
+		String token = identifier.get().toLowerCase().trim();
+		if (token.startsWith("option_")) {
 			String op = token.substring("option_".length());
 			return p.getOption(op).orElse("");
 		}
-		if (token.toLowerCase().startsWith("perm") && token.contains("_")) {
+		if (token.startsWith("perm") && token.contains("_")) {
 			String op = token.substring(token.indexOf("_"));
 			return p.getPermissionValue(p.getActiveContexts(), op).toString();
 		}
 		switch (token) {
 		case "prefix":
 		case "suffix":
-			return p.getOption(identifier.get()).orElse("");
+			return p.getOption(token).orElse("");
 		case "name":
 			return p.getName();
 		case "displayname":
@@ -309,11 +309,28 @@ public class Defaults {
 	@Placeholder(id = "player")
 	@Relational
 	public Object relPlayer(@Source Player one, @Observer CommandSource two, @Token Optional<String> token) {
+		if (!(two instanceof Player)) {
+			if (!token.isPresent()) {
+				return two.getName();
+			}
+			String t = token.get().toLowerCase().trim();
+			if (t.startsWith("option_")) {
+				String op = t.substring("option_".length());
+				return two.getOption(op).orElse("");
+			}
+			if (t.startsWith("perm") && t.contains("_")) {
+				String op = t.substring(t.indexOf("_"));
+				return two.getPermissionValue(two.getActiveContexts(), op).toString();
+			}
+			if (t.equalsIgnoreCase("prefix") || t.equalsIgnoreCase("suffix")) {
+				return two.getOption(t).orElse("");
+			}
+		}
 		if (!token.isPresent()) {
 			return null;
 		}
-		String t = token.get();
-		switch (t.toLowerCase().trim()) {
+		String t = token.get().toLowerCase().trim();
+		switch (t) {
 		case "distance":
 			if (!(two instanceof Locatable)) {
 				return 0;
@@ -383,7 +400,7 @@ public class Defaults {
 			return getParentGroup(player).getIdentifier();
 		}
 		Subject rank = getParentGroup(player);
-		String t = token.get();
+		String t = token.get().toLowerCase().trim();
 		switch (t) {
 		case "prefix":
 		case "suffix":

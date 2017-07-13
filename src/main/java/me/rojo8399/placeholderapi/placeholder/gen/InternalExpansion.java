@@ -50,12 +50,12 @@ public abstract class InternalExpansion<S, O, V> extends Expansion<S, O, V> {
 
 	@Override
 	public void unregisterListeners() {
-		Sponge.getEventManager().unregisterListeners(handle);
+		PlaceholderAPIPlugin.getInstance().unregisterListeners(handle);
 	}
 
 	@Override
 	public void registerListeners() {
-		Sponge.getEventManager().registerListeners(PlaceholderAPIPlugin.getInstance(), handle);
+		PlaceholderAPIPlugin.getInstance().registerListeners(handle);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -67,7 +67,7 @@ public abstract class InternalExpansion<S, O, V> extends Expansion<S, O, V> {
 			return null;
 		}
 	}
-	
+
 	@Override
 	protected void populateConfigObject() {
 		ConfigurationNode node = PlaceholderAPIPlugin.getInstance().getRootConfig().getNode("expansions",

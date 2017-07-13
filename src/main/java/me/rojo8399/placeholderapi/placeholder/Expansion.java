@@ -506,7 +506,7 @@ public abstract class Expansion<S, O, V> {
 				.filter(m -> m.getName().equalsIgnoreCase("parse") && Arrays.asList(m.getGenericParameterTypes())
 						.stream().map(Type::getTypeName).anyMatch(s -> s.contains("java.util.Optional")))
 				.map(m -> Arrays.asList(m.getParameterTypes())).map(List::stream).reduce(Stream.empty(), Stream::concat)
-				.peek(System.out::println).collect(Collectors.toList());
+				.collect(Collectors.toList());
 		try {
 			return verifySource(params.get(0)) && verifySource(params.get(1));
 		} catch (Exception e) {

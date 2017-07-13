@@ -126,8 +126,8 @@ public class InfoCommand implements CommandExecutor {
 				: Text.of(Text.NEW_LINE, Messages.get().placeholder.supportedPlaceholders.t(),
 						seeall ? (seeall(t2, false)) : "", Text.NEW_LINE,
 						Text.joinWith(Text.of(", "), supportedTokens));
-		return Text.of(TextColors.AQUA, name, TextColors.GREEN, " " + version, TextColors.GRAY, " ",
-				Messages.get().misc.by.t(), " ", TextColors.GOLD, author, TextColors.GRAY, ".", reload, desc, url,
+		return Text.of(TextColors.AQUA, (rel ? "rel_" : "") + name, TextColors.GREEN, " " + version, TextColors.GRAY,
+				" ", Messages.get().misc.by.t(), " ", TextColors.GOLD, author, TextColors.GRAY, ".", reload, desc, url,
 				support);
 	}
 
@@ -154,22 +154,22 @@ public class InfoCommand implements CommandExecutor {
 			return token(token, src, relational);
 		}
 		if (!(src instanceof Player)) {
-			return Text.of(TextColors.GREEN, "%" + token + "%");
+			return Text.of(TextColors.GREEN, token);
 		}
 		String p = src.getName();
 		return Text.of(TextColors.GREEN, TextActions.showText(Messages.get().placeholder.parseButtonHover.t()),
 				TextActions.suggestCommand("/papi p " + p + " %" + (relational ? "rel_" : "") + token + "%"),
-				"%" + (relational ? "rel_" : "") + token + "%");
+				(relational ? "rel_" : "") + token);
 	}
 
 	private static Text token(String token, CommandSource src, boolean relational) {
 		if (!(src instanceof Player)) {
-			return Text.of(TextColors.GREEN, "%" + token + "%");
+			return Text.of(TextColors.GREEN, token);
 		}
 		String p = src.getName();
 		return Text.of(TextColors.GREEN, TextActions.showText(Messages.get().placeholder.parseButtonHover.t()),
 				TextActions.runCommand("/papi p " + p + " %" + (relational ? "rel_" : "") + token + "%"),
-				"%" + (relational ? "rel_" : "") + token + "%");
+				(relational ? "rel_" : "") + token);
 	}
 
 }

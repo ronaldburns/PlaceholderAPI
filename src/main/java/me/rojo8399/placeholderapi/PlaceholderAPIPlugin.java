@@ -30,11 +30,14 @@ import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.asset.Asset;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
@@ -237,6 +240,23 @@ public class PlaceholderAPIPlugin {
 				.child(reloadCommand, "reload", "r").build();
 		game.getCommandManager().register(plugin, baseCmd, "placeholderapi", "papi");
 
+	}
+
+	private Set<Object> alreadyRegistered = new HashSet<>();
+
+	public void registerListeners(Object object) {
+		if (alreadyRegistered.contains(object)) {
+			return;
+		}
+		Sponge.getEventManager().registerListeners(this, object);
+		alreadyRegistered.add(object);
+	}
+
+	public void unregisterListeners(Object object) {
+		Sponge.getEventManager().unregisterListeners(object);
+		if (alreadyRegistered.contains(object)) {
+			alreadyRegistered.remove(object);
+		}
 	}
 
 	@Listener

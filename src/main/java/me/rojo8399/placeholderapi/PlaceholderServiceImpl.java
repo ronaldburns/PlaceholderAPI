@@ -127,8 +127,6 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 					e.printStackTrace();
 				}
 			}
-
-			PlaceholderAPIPlugin.getInstance().getLogger().debug("Format: " + a + ", ID: " + id + ", Value : " + value);
 			if (value == null) {
 				value = Text.of(template.getOpenArgString() + a + template.getCloseArgString());
 			}

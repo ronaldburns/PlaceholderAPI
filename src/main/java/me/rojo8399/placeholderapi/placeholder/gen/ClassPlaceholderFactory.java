@@ -33,6 +33,7 @@ import static org.objectweb.asm.Opcodes.ARETURN;
 import static org.objectweb.asm.Opcodes.ASTORE;
 import static org.objectweb.asm.Opcodes.CHECKCAST;
 import static org.objectweb.asm.Opcodes.GETFIELD;
+import static org.objectweb.asm.Opcodes.GOTO;
 import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.RETURN;
@@ -47,8 +48,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureVisitor;
@@ -216,9 +219,17 @@ public class ClassPlaceholderFactory {
 			mv.visitCode();
 			mv.visitVarInsn(ALOAD, 0);
 			mv.visitVarInsn(ALOAD, 1);
-			mv.visitTypeInsn(CHECKCAST, Type.getInternalName(sourceType.orElse(Object.class)));
+			tryCatch(mv, mv2 -> mv2.visitTypeInsn(CHECKCAST, Type.getInternalName(sourceType.orElse(Object.class))),
+					mv2 -> {
+						mv2.visitLdcInsn("");
+						mv2.visitInsn(ARETURN);
+					});
 			mv.visitVarInsn(ALOAD, 2);
-			mv.visitTypeInsn(CHECKCAST, Type.getInternalName(observerType.orElse(Object.class)));
+			tryCatch(mv, mv2 -> mv2.visitTypeInsn(CHECKCAST, Type.getInternalName(observerType.orElse(Object.class))),
+					mv2 -> {
+						mv2.visitLdcInsn("");
+						mv2.visitInsn(ARETURN);
+					});
 			mv.visitVarInsn(ALOAD, 3);
 			mv.visitMethodInsn(INVOKEVIRTUAL, name, "parse", parseMethodDescriptor, false);
 			mv.visitInsn(ARETURN);
@@ -227,6 +238,18 @@ public class ClassPlaceholderFactory {
 		}
 		cw.visitEnd();
 		return cw.toByteArray();
+	}
+
+	private static void tryCatch(MethodVisitor mv, Consumer<MethodVisitor> t, Consumer<MethodVisitor> c) {
+		Label st = new Label(), et = new Label(), sc = new Label(), ec = new Label();
+		mv.visitTryCatchBlock(st, et, sc, "java/lang/Exception");
+		mv.visitLabel(st);
+		t.accept(mv);
+		mv.visitLabel(et);
+		mv.visitJumpInsn(GOTO, ec);
+		mv.visitLabel(sc);
+		c.accept(mv);
+		mv.visitLabel(ec);
 	}
 
 	private static int getOrder(Parameter p) {
