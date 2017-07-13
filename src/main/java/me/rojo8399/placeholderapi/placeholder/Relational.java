@@ -21,17 +21,27 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-package me.rojo8399.placeholderapi.expansions;
+package me.rojo8399.placeholderapi.placeholder;
 
-import java.util.Optional;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-public interface ListeningExpansion extends Expansion {
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-	/**
-	 * Return the plugin which the listener will be attached to.
-	 * 
-	 * If the optional is empty, PlaceholderAPI will use itself as the plugin.
-	 */
-	public Optional<Object> getPlugin();
-
+@Documented
+@Retention(RUNTIME)
+@Target(METHOD)
+/**
+ * This annotation denotes a method as being relational, provided the method is
+ * already a Placeholder method. Methods with this annotation are parsed with
+ * "rel_[id]" instead of just the id.
+ * 
+ * Important: This annotation only specifies two things: That the id needs
+ * "rel_" in front of it, and that it, depending on a configuration setting for
+ * PlaceholderAPI, may fall back onto a non-relational placeholder of the same
+ * id, using observer in favour of source.
+ */
+public @interface Relational {
 }

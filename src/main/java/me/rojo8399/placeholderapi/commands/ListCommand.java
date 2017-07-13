@@ -38,6 +38,7 @@ import org.spongepowered.api.text.format.TextColors;
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.PlaceholderService;
 import me.rojo8399.placeholderapi.configs.Messages;
+import me.rojo8399.placeholderapi.placeholder.Store;
 
 public class ListCommand implements CommandExecutor {
 
@@ -46,9 +47,9 @@ public class ListCommand implements CommandExecutor {
 		PlaceholderService service = PlaceholderAPIPlugin.getInstance().getGame().getServiceManager()
 				.provide(PlaceholderService.class)
 				.orElseThrow(() -> new CommandException(Messages.get().plugin.serviceUnavailable.t()));
-		List<Text> l = service.getExpansions().stream()
-				.map(e -> Text.of(TextColors.GOLD, TextActions.runCommand("/papi i " + e.getIdentifier()),
-						TextActions.showText(Messages.get().placeholder.infoButtonHover.t()), e.getIdentifier()))
+		List<Text> l = Store.get().allIds().stream()
+				.map(e -> Text.of(TextColors.GOLD, TextActions.runCommand("/papi i " + e),
+						TextActions.showText(Messages.get().placeholder.infoButtonHover.t()), e))
 				.collect(Collectors.toList());
 		src.sendMessage(Messages.get().placeholder.availablePlaceholders.t());
 		src.sendMessage(Text.joinWith(Text.of(", "), l));

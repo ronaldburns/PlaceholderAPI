@@ -21,20 +21,21 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-package me.rojo8399.placeholderapi.expansions;
+package me.rojo8399.placeholderapi.placeholder;
 
-import com.google.common.reflect.TypeToken;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-@ConfigSerializable
-public interface ConfigurableExpansion extends Expansion {
-
-	/**
-	 * Get the TypeToken with which to load the object.
-	 * 
-	 * @return the token to load the object with
-	 */
-	public TypeToken<? extends ConfigurableExpansion> getToken();
-
+@Documented
+@Retention(RUNTIME)
+@Target(PARAMETER)
+/**
+ * This annotation denotes the token which will hold more intricate details about the placeholders needed.
+ * Supported types: Optional<String>, String.
+ */
+public @interface Token {
 }

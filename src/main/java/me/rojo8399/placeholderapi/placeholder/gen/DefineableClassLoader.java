@@ -21,13 +21,21 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-package me.rojo8399.placeholderapi.expansions;
+package me.rojo8399.placeholderapi.placeholder.gen;
 
-public interface ReloadableExpansion extends Expansion {
+/**
+ * @author Wundero
+ *
+ */
+public class DefineableClassLoader extends ClassLoader {
 
-	/**
-	 * Reload data for the expansion.
-	 */
-	public boolean reload();
+	public DefineableClassLoader(ClassLoader loader) {
+		super(loader);
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> Class<T> defineClass(String name, byte[] b) {
+		return (Class<T>) defineClass(name, b, 0, b.length);
+	}
 
 }
