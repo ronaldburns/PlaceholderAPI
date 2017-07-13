@@ -36,6 +36,7 @@ import javax.annotation.Nullable;
 
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
 import org.spongepowered.api.text.action.TextActions;
@@ -95,6 +96,13 @@ public class TextUtils {
 			return Text.EMPTY;
 		}
 		return Text.of(TextActions.showItem(item.createSnapshot()), item.getOrElse(Keys.DISPLAY_NAME, Text.of(item)));
+	}
+	
+	public static Text ofItem(@Nullable ItemStackSnapshot item) {
+		if(item==null) {
+			return Text.EMPTY;
+		}
+		return Text.of(TextActions.showItem(item), item.getOrElse(Keys.DISPLAY_NAME, Text.of(item)));
 	}
 
 	private static Text fix(Text to, TextFormat l) {

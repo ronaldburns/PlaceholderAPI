@@ -33,6 +33,7 @@ import java.util.Optional;
 
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.serializer.TextSerializers;
 
@@ -115,6 +116,9 @@ public interface Expansion {
 			if (val instanceof Text) {
 				return TypeUtils.tryOptional(() -> expected.cast(val));
 			} else {
+				if (val instanceof ItemStackSnapshot) {
+					return TypeUtils.tryOptional(() -> expected.cast(TextUtils.ofItem((ItemStackSnapshot) val)));
+				}
 				if (val instanceof ItemStack) {
 					return TypeUtils.tryOptional(() -> expected.cast(TextUtils.ofItem((ItemStack) val)));
 				}
@@ -149,16 +153,32 @@ public interface Expansion {
 	 * 
 	 * @return the value, as an object
 	 */
-	public Object onValueRequest(Player player, Optional<String> token);
+	public default Object onValueRequest(Player player, Optional<String> token) {
+		Text v = onPlaceholderRequest(player, token);
+		boolean rets = v.getClickAction().isPresent() || v.getHoverAction().isPresent()
+				|| v.getShiftClickAction().isPresent();
+		String p = v.toPlain().toLowerCase().trim();
+		try {
+			return Integer.parseInt(p);
+		} catch (Exception e) {
+			try {
+				return Double.parseDouble(p);
+			} catch (Exception e2) {
+				try {
+					return Boolean.valueOf(p);
+				} catch (Exception e3) {
+				}
+			}
+		}
+		return rets ? v : p;
+	}
 
 	/**
 	 * Parse the token for the player
 	 * 
 	 * @return the result of the parse as a text.
 	 */
-	public default Text onPlaceholderRequest(Player player, Optional<String> token) {
-		return onValueRequest(player, token, Text.class).orElse(null);
-	}
+	public Text onPlaceholderRequest(Player player, Optional<String> token);
 
 	/**
 	 * Parse the token for the player

@@ -29,6 +29,7 @@ import java.util.Optional;
 
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.service.permission.Subject;
+import org.spongepowered.api.text.Text;
 
 import me.rojo8399.placeholderapi.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.configs.Messages;
@@ -130,6 +131,18 @@ public class RankExpansion implements Expansion {
 			}
 		}
 		return null;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * me.rojo8399.placeholderapi.expansions.Expansion#onPlaceholderRequest(org.
+	 * spongepowered.api.entity.living.player.Player, java.util.Optional)
+	 */
+	@Override
+	public Text onPlaceholderRequest(Player player, Optional<String> token) {
+		return onValueRequest(player, token, Text.class).orElse(null);
 	}
 
 	/*

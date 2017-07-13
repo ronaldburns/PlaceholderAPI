@@ -91,6 +91,18 @@ public class SoundExpansion implements Expansion {
 	/*
 	 * (non-Javadoc)
 	 * 
+	 * @see
+	 * me.rojo8399.placeholderapi.expansions.Expansion#onPlaceholderRequest(org.
+	 * spongepowered.api.entity.living.player.Player, java.util.Optional)
+	 */
+	@Override
+	public Text onPlaceholderRequest(Player player, Optional<String> token) {
+		return onValueRequest(player, token, Text.class).orElse(null);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see me.rojo8399.placeholderapi.expansions.Expansion#getSupportedTokens()
 	 */
 	@Override
