@@ -120,7 +120,7 @@ public class InfoCommand implements CommandExecutor {
 		Text url = e.url() == null ? Text.EMPTY
 				: Text.of(Text.NEW_LINE, TextColors.BLUE, TextActions.openUrl(e.url()), e.url().toString());
 		String d = e.description();
-		Text desc = d.isEmpty() || d == null ? Text.EMPTY : Text.of(Text.NEW_LINE, TextColors.AQUA, e.description());
+		Text desc = d == null || d.isEmpty() ? Text.EMPTY : Text.of(Text.NEW_LINE, TextColors.AQUA, e.description());
 		Text reload = Text.of(Text.NEW_LINE, Messages.get().placeholder.clickReload.t(), " ", reload(e.id()));
 		Text support = supportedTokens.isEmpty() ? Text.EMPTY
 				: Text.of(Text.NEW_LINE, Messages.get().placeholder.supportedPlaceholders.t(),

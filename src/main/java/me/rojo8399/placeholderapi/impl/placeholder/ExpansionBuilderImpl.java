@@ -45,7 +45,6 @@ import com.google.common.base.Preconditions;
 
 import me.rojo8399.placeholderapi.ExpansionBuilder;
 import me.rojo8399.placeholderapi.Placeholder;
-import me.rojo8399.placeholderapi.impl.utils.TypeUtils;
 
 /**
  * @author Wundero
@@ -142,7 +141,7 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 		return new ExpansionBuilderImpl<S, O, V>(true);
 	}
 
-	private static <S, O, V> ExpansionBuilderImpl<S, O, V> unverified() {
+	public static <S, O, V> ExpansionBuilderImpl<S, O, V> unverified() {
 		return new ExpansionBuilderImpl<S, O, V>(false);
 	}
 
@@ -512,13 +511,13 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 	@SuppressWarnings({ "rawtypes" })
 	private ExpansionBuilderImpl frommethod(Object o, Method m, Object p) {
 		Expansion<?, ?, ?> exp = Store.get().createForMethod(m, o, p);
-		return from(this, exp);
+		return from(this.id(exp.id()).plugin(p), exp);
 	}
 
 	@SuppressWarnings("unchecked")
 	private static <S, O, V> ExpansionBuilderImpl<S, O, V> from(ExpansionBuilderImpl<?, ?, ?> builder,
 			final Expansion<S, O, V> exp) {
-		if (!(builder instanceof ExpansionBuilderImpl) || !exp.verify()) {
+		if (!exp.verify()) {
 			return (ExpansionBuilderImpl<S, O, V>) builder;
 		}
 		ExpansionBuilderImpl<?, ?, ?> b = (ExpansionBuilderImpl<?, ?, ?>) builder;
@@ -566,6 +565,7 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 	 *            The plugin holding the expansion.
 	 * @return This builder.
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public ExpansionBuilderImpl<S, O, V> from(Object obj, String id, Object plugin) {
 		Class<?> clazz = obj.getClass();
@@ -578,10 +578,7 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 			}
 			togglerel = true;
 		}
-		frommethod(obj, m, plugin);
-		this.id(id);
-		this.relational = TypeUtils.xor(togglerel, relational);
-		return plugin(plugin);
+		return frommethod(obj, m, plugin);
 	}
 
 	/**

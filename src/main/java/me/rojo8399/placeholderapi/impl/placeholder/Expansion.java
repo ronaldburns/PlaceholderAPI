@@ -347,7 +347,8 @@ public abstract class Expansion<S, O, V> {
 	 * Popoulate configuration object. Override only if necessary.
 	 */
 	protected void populateConfigObject() {
-		if (configObject == null) {
+		if (configObject == null || PlaceholderAPIPlugin.getInstance() == null
+				|| PlaceholderAPIPlugin.getInstance().getRootConfig() == null) {
 			return;
 		}
 		ConfigurationNode node = PlaceholderAPIPlugin.getInstance().getRootConfig().getNode("expansions",

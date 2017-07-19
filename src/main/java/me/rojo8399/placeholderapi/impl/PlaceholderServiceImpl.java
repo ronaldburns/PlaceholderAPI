@@ -274,4 +274,12 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 		return ExpansionBuilderImpl.loadAll(handle, plugin);
 	}
 
+	/* (non-Javadoc)
+	 * @see me.rojo8399.placeholderapi.PlaceholderService#load(java.lang.Object, java.lang.String, java.lang.Object)
+	 */
+	@Override
+	public ExpansionBuilder<?, ?, ?, ?> load(Object handle, String id, Object plugin) {
+		return ExpansionBuilderImpl.unverified().from(handle, id, plugin);
+	}
+
 }

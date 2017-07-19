@@ -62,10 +62,7 @@ public interface PlaceholderService {
 	 * 
 	 * @return the expansion builder.
 	 */
-	public default ExpansionBuilder<?, ?, ?, ?> load(Object handle, String id, Object plugin) {
-		return builder().from(handle, id, plugin);
-	}
-
+	public ExpansionBuilder<?, ?, ?, ?> load(Object handle, String id, Object plugin);
 	/**
 	 * Create new ExpansionBuilders for all methods annotated with
 	 * '@Placeholder' in an object.
