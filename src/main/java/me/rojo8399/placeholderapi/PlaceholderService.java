@@ -32,10 +32,9 @@ import java.util.stream.Collectors;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
 
-import me.rojo8399.placeholderapi.placeholder.Expansion;
-import me.rojo8399.placeholderapi.placeholder.ExpansionBuilder;
-import me.rojo8399.placeholderapi.utils.TextUtils;
-import me.rojo8399.placeholderapi.utils.TypeUtils;
+import me.rojo8399.placeholderapi.impl.placeholder.Expansion;
+import me.rojo8399.placeholderapi.impl.utils.TextUtils;
+import me.rojo8399.placeholderapi.impl.utils.TypeUtils;
 
 public interface PlaceholderService {
 
@@ -51,9 +50,47 @@ public interface PlaceholderService {
 	 * 
 	 * @return the expansion builder.
 	 */
-	public default <S, O, V> ExpansionBuilder<S, O, V> createBuilder() {
-		return ExpansionBuilder.builder();
+	public <S, O, V> ExpansionBuilder<S, O, V, ?> builder();
+
+	/**
+	 * Create an expansion builder based off of the '@Placeholder' annotated
+	 * method with the provided id.
+	 * 
+	 * This method returns a builder that is ready to register. This means that
+	 * the builder has the id, plugin and function fields filled in, and can
+	 * therefor be built and registered immediately.
+	 * 
+	 * @return the expansion builder.
+	 */
+	public default ExpansionBuilder<?, ?, ?, ?> load(Object handle, String id, Object plugin) {
+		return builder().from(handle, id, plugin);
 	}
+
+	/**
+	 * Create new ExpansionBuilders for all methods annotated with
+	 * '@Placeholder' in an object.
+	 * 
+	 * This is equivalent to calling load(handle, id, plugin) on all methods in
+	 * an object, but much faster.
+	 * 
+	 * Every builder is ready to register upon reception. This means that all
+	 * builders have the necessary id, function and plugin fields filled in, and
+	 * all that is left are the optional fields.
+	 * 
+	 * This method is likely to be the one primarily used by developers
+	 * registering placeholders. Since the annotated method system is more
+	 * powerful, this method allows quick use of that system and provides a
+	 * streamable list of builders. The only downside is that it takes a bit
+	 * more effort to link builders to their optional fields, but a simple
+	 * switch statement in a stream map works well.
+	 * 
+	 * @param handle
+	 *            The object from which to draw parsing methods.
+	 * @param plugin
+	 *            The plugin which holds the placeholders.
+	 * @return The list of builders matching the methods.
+	 */
+	public List<? extends ExpansionBuilder<?, ?, ?, ?>> loadAll(Object handle, Object plugin);
 
 	/**
 	 * Register an Expansion.
