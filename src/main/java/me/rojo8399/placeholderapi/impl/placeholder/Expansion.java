@@ -64,6 +64,7 @@ public abstract class Expansion<S, O, V> {
 	private Class<? extends V> valueClass;
 	private boolean relational = false;
 	private boolean enabled = true;
+	private Runnable reloadListeners;
 
 	/**
 	 * Parse the placeholder for the provided arguments.
@@ -87,9 +88,23 @@ public abstract class Expansion<S, O, V> {
 	 */
 	final boolean refresh() {
 		populateConfig();
-		unregisterListeners();
-		registerListeners();
+		reloadListeners();
 		return reload();
+	}
+	
+	final void reloadListeners() {
+		if (reloadListeners != null) {
+			reloadListeners.run();
+		}
+	}
+	
+	/**
+	 * Set the function to call to reload listeners. Will be called upon reload.
+	 * @param run
+	 * 			The code to execute.
+	 */
+	final void setReloadListeners(Runnable run) {
+		this.reloadListeners = run;
 	}
 
 	/**
@@ -431,18 +446,6 @@ public abstract class Expansion<S, O, V> {
 	 */
 	public final void disable() {
 		this.enabled = false;
-	}
-
-	/**
-	 * Unregister listeners. By default this does nothing.
-	 */
-	public void unregisterListeners() {
-	}
-
-	/**
-	 * Register listeners. By default this does nothing.
-	 */
-	public void registerListeners() {
 	}
 
 	private final void checkClasses() {

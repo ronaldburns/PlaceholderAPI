@@ -48,16 +48,6 @@ public abstract class InternalExpansion<S, O, V> extends Expansion<S, O, V> {
 		return handle;
 	}
 
-	@Override
-	public void unregisterListeners() {
-		PlaceholderAPIPlugin.getInstance().unregisterListeners(handle);
-	}
-
-	@Override
-	public void registerListeners() {
-		PlaceholderAPIPlugin.getInstance().registerListeners(handle);
-	}
-
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getConfiguration() {

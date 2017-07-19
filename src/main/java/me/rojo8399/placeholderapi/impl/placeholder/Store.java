@@ -105,12 +105,15 @@ public class Store {
 			return false;
 		}
 		expansion.populateConfig();
-		expansion.registerListeners();
+		expansion.reloadListeners();
 		getMap(expansion.relational()).put(id, expansion);
 		return true;
 	}
 
 	public boolean has(String id, boolean relational) {
+		if(id==null) {
+			return false;
+		}
 		return getMap(relational).containsKey(fix(id));
 	}
 
@@ -329,7 +332,11 @@ public class Store {
 			}
 		}
 		if (l) {
-			Sponge.getEventManager().registerListeners(plugin, o);
+			final Object o2 = o;
+			pl.setReloadListeners(() -> {
+				PlaceholderAPIPlugin.getInstance().unregisterListeners(o2);
+				PlaceholderAPIPlugin.getInstance().registerListeners(o2, plugin);
+			});
 		}
 		pl.setId(p.id());
 		pl.setRelational(r);

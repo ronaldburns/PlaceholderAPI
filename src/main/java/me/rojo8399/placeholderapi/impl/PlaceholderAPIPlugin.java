@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -85,7 +86,7 @@ public class PlaceholderAPIPlugin {
 
 	public static final String PLUGIN_ID = "placeholderapi";
 	public static final String PLUGIN_NAME = "PlaceholderAPI";
-	public static final String PLUGIN_VERSION = "4.0";
+	public static final String PLUGIN_VERSION = "4.1";
 	private static PlaceholderAPIPlugin instance;
 
 	@Inject
@@ -227,6 +228,55 @@ public class PlaceholderAPIPlugin {
 		CommandSpec reloadCommand = CommandSpec.builder()
 				.arguments(GenericArguments.optional(GenericArguments.string(Text.of("id"))))
 				.permission("placeholderapi.admin").executor(new RefreshCommand()).build();
+		CommandSpec enable = CommandSpec.builder().executor((src, params) -> {
+			String id = params.<String>getOne("id").orElse(null);
+			if (!Store.get().has(id)) {
+				throw new CommandException(Messages.get().placeholder.invalidPlaceholder.t());
+			}
+			Boolean rel = params.<Boolean>getOne("relational").orElse(null);
+			if (rel != null) {
+				Optional<Expansion<?, ?, ?>> e = Store.get().get(id, rel);
+				if (!e.isPresent()) {
+					throw new CommandException(Messages.get().placeholder.invalidPlaceholder.t());
+				}
+				e.get().enable();
+				src.sendMessage(Messages.get().placeholder.placeholderEnabled.t());
+				return CommandResult.success();
+			} else {
+				Expansion<?, ?, ?> e = Store.get().get(id, false).orElse(Store.get().get(id, false)
+						.orElseThrow(() -> new CommandException(Messages.get().placeholder.invalidPlaceholder.t())));
+				e.enable();
+				src.sendMessage(Messages.get().placeholder.placeholderEnabled.t());
+				return CommandResult.success();
+			}
+		}).arguments(GenericArguments.string(Text.of("id")),
+				GenericArguments.optional(GenericArguments.bool(Text.of("relational"))))
+				.permission("placeholderapi.admin").build();
+
+		CommandSpec disable = CommandSpec.builder().executor((src, params) -> {
+			String id = params.<String>getOne("id").orElse(null);
+			if (!Store.get().has(id)) {
+				throw new CommandException(Messages.get().placeholder.invalidPlaceholder.t());
+			}
+			Boolean rel = params.<Boolean>getOne("relational").orElse(null);
+			if (rel != null) {
+				Optional<Expansion<?, ?, ?>> e = Store.get().get(id, rel);
+				if (!e.isPresent()) {
+					throw new CommandException(Messages.get().placeholder.invalidPlaceholder.t());
+				}
+				e.get().disable();
+				src.sendMessage(Messages.get().placeholder.placeholderDisabled.t());
+				return CommandResult.success();
+			} else {
+				Expansion<?, ?, ?> e = Store.get().get(id, false).orElse(Store.get().get(id, false)
+						.orElseThrow(() -> new CommandException(Messages.get().placeholder.invalidPlaceholder.t())));
+				e.disable();
+				src.sendMessage(Messages.get().placeholder.placeholderDisabled.t());
+				return CommandResult.success();
+			}
+		}).arguments(GenericArguments.string(Text.of("id")),
+				GenericArguments.optional(GenericArguments.bool(Text.of("relational"))))
+				.permission("placeholderapi.admin").build();
 		// placeholderapi
 		CommandSpec baseCmd = CommandSpec.builder().executor(new CommandExecutor() {
 			// send plugin name + version
@@ -237,25 +287,29 @@ public class PlaceholderAPIPlugin {
 				return CommandResult.success();
 			}
 		}).child(parseCmd, "parse", "p").child(listCmd, "list", "l").child(infoCmd, "info", "i")
-				.child(reloadCommand, "reload", "r").build();
+				.child(reloadCommand, "reload", "r").child(enable, "enable").child(disable, "disable").build();
 		game.getCommandManager().register(plugin, baseCmd, "placeholderapi", "papi");
 
 	}
 
 	private Set<Object> alreadyRegistered = new HashSet<>();
 
-	public void registerListeners(Object object) {
+	public void registerListeners(Object object, Object plugin) {
 		if (alreadyRegistered.contains(object)) {
 			return;
 		}
-		Sponge.getEventManager().registerListeners(this, object);
+		Sponge.getEventManager().registerListeners(plugin, object);
 		alreadyRegistered.add(object);
 	}
 
+	public void registerListeners(Object object) {
+		registerListeners(object, this);
+	}
+
 	public void unregisterListeners(Object object) {
-		Sponge.getEventManager().unregisterListeners(object);
 		if (alreadyRegistered.contains(object)) {
 			alreadyRegistered.remove(object);
+			Sponge.getEventManager().unregisterListeners(object);
 		}
 	}
 

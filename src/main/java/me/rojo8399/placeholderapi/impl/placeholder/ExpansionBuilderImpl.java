@@ -45,6 +45,7 @@ import com.google.common.base.Preconditions;
 
 import me.rojo8399.placeholderapi.ExpansionBuilder;
 import me.rojo8399.placeholderapi.Placeholder;
+import me.rojo8399.placeholderapi.impl.PlaceholderAPIPlugin;
 
 /**
  * @author Wundero
@@ -150,7 +151,7 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 	private ExpansionFunction<S, O, V> func;
 	private Predicate<Expansion<S, O, V>> reload = (func) -> true;
 	private boolean relational = false;
-	private Object plugin, config;
+	private Object plugin, config, listeners;
 
 	/**
 	 * @return The description of the expansion.
@@ -233,6 +234,14 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 			throw new IllegalArgumentException("Plugin object is not valid!");
 		}
 		this.plugin = plugin;
+		return this;
+	}
+
+	@Override
+	public ExpansionBuilderImpl<S, O, V> listen(Object o) {
+		if (o != null) {
+			this.listeners = o;
+		}
 		return this;
 	}
 
@@ -460,25 +469,15 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 			public boolean reload() {
 				return reload.test(this);
 			}
-
-			@Override
-			public void registerListeners() {
-				super.registerListeners();
-				if (regList != null) {
-					regList.run();
-				}
-			}
-
-			@Override
-			public void unregisterListeners() {
-				super.unregisterListeners();
-				if (unregList != null) {
-					unregList.run();
-				}
-			}
 		};
 		if (config != null) {
 			exp.setConfig(config);
+		}
+		if (listeners != null) {
+			exp.setReloadListeners(() -> {
+				PlaceholderAPIPlugin.getInstance().unregisterListeners(listeners);
+				PlaceholderAPIPlugin.getInstance().registerListeners(listeners, plugin);
+			});
 		}
 		return exp;
 	}
@@ -534,8 +533,6 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 		if (n.config == null) {
 			n.config = exp.getConfiguration();
 		}
-		n.regList = exp::registerListeners;
-		n.unregList = exp::unregisterListeners;
 		n.func = exp::parse;
 		return n;
 	}
@@ -600,8 +597,6 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 		this.plugin = exp.getPlugin();
 		this.config = exp.getConfiguration();
 		this.relational = exp.relational();
-		this.regList = exp::registerListeners;
-		this.unregList = exp::unregisterListeners;
 		this.func = exp::parse;
 		return this;
 	}

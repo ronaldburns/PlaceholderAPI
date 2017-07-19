@@ -134,6 +134,14 @@ public interface ExpansionBuilder<S, O, V, B extends ExpansionBuilder<S, O, V, B
 	boolean buildAndRegister() throws Exception;
 
 	/**
+	 * Register listeners via the placeholder. This will attempt to use the
+	 * provided plugin object for registration.
+	 * 
+	 * This listener will be unregistered and then registered again on reload.
+	 */
+	B listen(Object listeners);
+
+	/**
 	 * Adds to the list of supported tokens for the expansion.
 	 * 
 	 * @param tokens

@@ -174,6 +174,10 @@ public class Messages {
 		public Message reloadSuccess = of("&aPlaceholder reloaded successfully!");
 		@Setting("reload-failed")
 		public Message reloadFailed = of("&cPlaceholder failed to reload!");
+		@Setting("placeholder-enabled")
+		public Message placeholderEnabled = of("&aPlaceholder enabled!");
+		@Setting("placeholder-disabled")
+		public Message placeholderDisabled = of("&aPlaceholder disabled!");
 	}
 
 	@Setting
