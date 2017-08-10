@@ -34,8 +34,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.spongepowered.api.Sponge;
-import org.spongepowered.api.command.CommandSource;
-import org.spongepowered.api.entity.living.player.User;
+import org.spongepowered.api.data.DataHolder;
+import org.spongepowered.api.service.permission.Subject;
+import org.spongepowered.api.text.channel.MessageReceiver;
 import org.spongepowered.api.world.Locatable;
 
 import com.google.common.base.Preconditions;
@@ -91,17 +92,18 @@ public abstract class Expansion<S, O, V> {
 		reloadListeners();
 		return reload();
 	}
-	
+
 	final void reloadListeners() {
 		if (reloadListeners != null) {
 			reloadListeners.run();
 		}
 	}
-	
+
 	/**
 	 * Set the function to call to reload listeners. Will be called upon reload.
+	 * 
 	 * @param run
-	 * 			The code to execute.
+	 *            The code to execute.
 	 */
 	final void setReloadListeners(Runnable run) {
 		this.reloadListeners = run;
@@ -367,8 +369,8 @@ public abstract class Expansion<S, O, V> {
 			return;
 		}
 		ConfigurationNode node = PlaceholderAPIPlugin.getInstance().getRootConfig().getNode("expansions",
-				(relational ? "rel_" : "") + Sponge.getPluginManager().fromInstance(plugin).get().getId(),
-				id().toLowerCase().trim());
+				Sponge.getPluginManager().fromInstance(plugin).get().getId(),
+				(relational ? "rel_" : "") + id().toLowerCase().trim(), "data");
 		if (node.isVirtual()) {
 			try {
 				ObjectMapper.forObject(configObject).serialize(node);
@@ -393,6 +395,15 @@ public abstract class Expansion<S, O, V> {
 	 */
 	public void populateConfig() {
 		populateConfigObject();
+		ConfigurationNode node = PlaceholderAPIPlugin.getInstance().getRootConfig().getNode("expansions",
+				Sponge.getPluginManager().fromInstance(plugin).get().getId(),
+				(relational ? "rel_" : "") + id().toLowerCase().trim());
+		if (node.isVirtual()) {
+			node.getNode("enabled").setValue(enabled);
+		} else {
+			this.enabled = node.getNode("enabled").getBoolean(true);
+			node.getNode("enabled").setValue(enabled);
+		}
 	}
 
 	final void setId(String id) {
@@ -414,7 +425,7 @@ public abstract class Expansion<S, O, V> {
 	 * Toggle whether this expansion is enabled.
 	 */
 	public final void toggleEnabled() {
-		this.enabled = !this.enabled;
+		setEnabled(isEnabled());
 	}
 
 	/**
@@ -431,21 +442,25 @@ public abstract class Expansion<S, O, V> {
 	 *            Whether the expansion is enabled.
 	 */
 	public final void setEnabled(boolean enabled) {
+		ConfigurationNode node = PlaceholderAPIPlugin.getInstance().getRootConfig().getNode("expansions",
+				Sponge.getPluginManager().fromInstance(plugin).get().getId(),
+				(relational ? "rel_" : "") + id().toLowerCase().trim());
 		this.enabled = enabled;
+		node.getNode("enabled").setValue(enabled);
 	}
 
 	/**
 	 * Enable this expansion.
 	 */
 	public final void enable() {
-		this.enabled = true;
+		setEnabled(true);
 	}
 
 	/**
 	 * Disable this expansion.
 	 */
 	public final void disable() {
-		this.enabled = false;
+		setEnabled(false);
 	}
 
 	private final void checkClasses() {
@@ -520,8 +535,8 @@ public abstract class Expansion<S, O, V> {
 	}
 
 	private static final boolean verifySource(Class<?> param) {
-		return CommandSource.class.isAssignableFrom(param) || Locatable.class.isAssignableFrom(param)
-				|| User.class.isAssignableFrom(param);
+		return MessageReceiver.class.isAssignableFrom(param) || Locatable.class.isAssignableFrom(param)
+				|| Subject.class.isAssignableFrom(param) || DataHolder.class.isAssignableFrom(param);
 	}
 
 	/**

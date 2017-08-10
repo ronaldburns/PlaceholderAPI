@@ -55,6 +55,7 @@ import org.spongepowered.api.event.game.GameReloadEvent;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.event.game.state.GameStartingServerEvent;
+import org.spongepowered.api.event.game.state.GameStoppingEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.service.economy.EconomyService;
@@ -418,6 +419,11 @@ public class PlaceholderAPIPlugin {
 		// Send Messages to console and player
 		event.getCause().first(Player.class).ifPresent(p -> p.sendMessage(Messages.get().plugin.reloadSuccess.t()));
 		logger.info("Reloaded PlaceholderAPI");
+	}
+	
+	@Listener
+	public void onStop(GameStoppingEvent event) {
+		saveConfig();
 	}
 
 	public void reloadConfig() throws IOException, ObjectMappingException {

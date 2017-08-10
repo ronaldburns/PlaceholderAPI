@@ -36,9 +36,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.spongepowered.api.Sponge;
-import org.spongepowered.api.command.CommandSource;
-import org.spongepowered.api.entity.living.player.User;
+import org.spongepowered.api.data.DataHolder;
 import org.spongepowered.api.plugin.PluginContainer;
+import org.spongepowered.api.service.permission.Subject;
+import org.spongepowered.api.text.channel.MessageReceiver;
 import org.spongepowered.api.world.Locatable;
 
 import com.google.common.base.Preconditions;
@@ -125,8 +126,8 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 	}
 
 	private static boolean verifySource(Class<?> param) {
-		return CommandSource.class.isAssignableFrom(param) || Locatable.class.isAssignableFrom(param)
-				|| User.class.isAssignableFrom(param);
+		return MessageReceiver.class.isAssignableFrom(param) || Locatable.class.isAssignableFrom(param)
+				|| Subject.class.isAssignableFrom(param) || DataHolder.class.isAssignableFrom(param);
 	}
 
 	/**

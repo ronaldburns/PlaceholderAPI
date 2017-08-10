@@ -28,10 +28,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.spongepowered.api.command.CommandSource;
-import org.spongepowered.api.entity.living.player.User;
+import org.spongepowered.api.data.DataHolder;
+import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
+import org.spongepowered.api.text.channel.MessageReceiver;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.world.Locatable;
 
@@ -225,8 +226,8 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	 */
 	@Override
 	public boolean verifySource(Object source) {
-		return source != null
-				&& (source instanceof Locatable || source instanceof CommandSource || source instanceof User);
+		return source != null && (source instanceof Locatable || source instanceof MessageReceiver
+				|| source instanceof Subject || source instanceof DataHolder);
 	}
 
 	/*
@@ -274,8 +275,11 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 		return ExpansionBuilderImpl.loadAll(handle, plugin);
 	}
 
-	/* (non-Javadoc)
-	 * @see me.rojo8399.placeholderapi.PlaceholderService#load(java.lang.Object, java.lang.String, java.lang.Object)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see me.rojo8399.placeholderapi.PlaceholderService#load(java.lang.Object,
+	 * java.lang.String, java.lang.Object)
 	 */
 	@Override
 	public ExpansionBuilder<?, ?, ?, ?> load(Object handle, String id, Object plugin) {

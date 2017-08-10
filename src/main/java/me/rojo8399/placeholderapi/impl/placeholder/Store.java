@@ -36,8 +36,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.spongepowered.api.Sponge;
-import org.spongepowered.api.command.CommandSource;
-import org.spongepowered.api.entity.living.player.User;
+import org.spongepowered.api.data.DataHolder;
+import org.spongepowered.api.service.permission.Subject;
+import org.spongepowered.api.text.channel.MessageReceiver;
 import org.spongepowered.api.world.Locatable;
 
 import me.rojo8399.placeholderapi.Listening;
@@ -111,7 +112,7 @@ public class Store {
 	}
 
 	public boolean has(String id, boolean relational) {
-		if(id==null) {
+		if (id == null) {
 			return false;
 		}
 		return getMap(relational).containsKey(fix(id));
@@ -348,7 +349,8 @@ public class Store {
 	}
 
 	private static boolean verifySource(Parameter param) {
-		return CommandSource.class.isAssignableFrom(param.getType())
-				|| Locatable.class.isAssignableFrom(param.getType()) || User.class.isAssignableFrom(param.getType());
+		return MessageReceiver.class.isAssignableFrom(param.getType())
+				|| Locatable.class.isAssignableFrom(param.getType()) || Subject.class.isAssignableFrom(param.getType())
+				|| DataHolder.class.isAssignableFrom(param.getType());
 	}
 }

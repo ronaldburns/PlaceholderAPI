@@ -124,8 +124,7 @@ public class InfoCommand implements CommandExecutor {
 		Text reload = Text.of(Text.NEW_LINE, Messages.get().placeholder.clickReload.t(), " ", reload(e.id()));
 		Text support = supportedTokens.isEmpty() ? Text.EMPTY
 				: Text.of(Text.NEW_LINE, Messages.get().placeholder.supportedPlaceholders.t(),
-						seeall ? (seeall(t2, false)) : "", Text.NEW_LINE,
-						Text.joinWith(Text.of(", "), supportedTokens));
+						seeall ? (seeall(t2, rel)) : "", Text.NEW_LINE, Text.joinWith(Text.of(", "), supportedTokens));
 		return Text.of(TextColors.AQUA, (rel ? "rel_" : "") + name, TextColors.GREEN, " " + version, TextColors.GRAY,
 				" ", Messages.get().misc.by.t(), " ", TextColors.GOLD, author, TextColors.GRAY, ".", reload, desc, url,
 				support);
@@ -137,10 +136,12 @@ public class InfoCommand implements CommandExecutor {
 				: Messages.get().placeholder.allPlaceholdersHover.t();
 		Text a = relational ? Messages.get().placeholder.allSupportedPlaceholdersRelational.t()
 				: Messages.get().placeholder.allSupportedPlaceholders.t();
-		return Text.of("    ", TextActions.showText(Text.of(h)), TextActions.executeCallback(s -> {
+		Text m = Messages.get().placeholder.allPlaceholdersButton.t();
+		Text m2 = m.toBuilder().onClick(TextActions.executeCallback(s -> {
 			s.sendMessage(a);
 			s.sendMessage(t);
-		}), Messages.get().placeholder.allPlaceholdersButton.t());
+		})).onHover(TextActions.showText(Text.of(h))).build();
+		return Text.of("    ", m2);
 	}
 
 	private static Text reload(String token) {
