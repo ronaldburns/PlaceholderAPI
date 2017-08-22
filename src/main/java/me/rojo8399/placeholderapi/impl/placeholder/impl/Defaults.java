@@ -37,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
@@ -377,7 +378,7 @@ public class Defaults {
 
 	@Placeholder(id = "rank")
 	@Relational
-	public Boolean isAbove(@Token String token, @Source User underrank, @Observer User overrank) {
+	public Boolean isAbove(@Nullable @Token String token, @Source User underrank, @Observer User overrank) {
 		if (token == null || !(token.equalsIgnoreCase("greater_than") || token.equalsIgnoreCase("less_than"))) {
 			return null;
 		}
@@ -461,11 +462,8 @@ public class Defaults {
 	}
 
 	@Placeholder(id = "server")
-	public Object server(@Token Optional<String> identifier) {
-		if (!identifier.isPresent()) {
-			return null;
-		}
-		switch (identifier.get()) {
+	public Object server(@Token String identifier) {
+		switch (identifier) {
 		case "online":
 			return Sponge.getServer().getOnlinePlayers().stream()
 					.filter(p -> !p.getOrElse(Keys.VANISH_PREVENTS_TARGETING, false)).count();
@@ -545,12 +543,9 @@ public class Defaults {
 	}
 
 	@Placeholder(id = "sound")
-	public Text sound(@Source Player p, @Token Optional<String> identifier) {
-		if (!identifier.isPresent()) {
-			return null;
-		}
+	public Text sound(@Source Player p, @Token String identifier) {
 		Game game = PlaceholderAPIPlugin.getInstance().getGame();
-		String[] i = identifier.get().split("-");
+		String[] i = identifier.split("-");
 		Optional<SoundType> sound = game.getRegistry().getType(SoundType.class, i[0].replace("_", "."));
 		Vector3d position = p.getLocation().getPosition();
 		Double volume = Double.valueOf((i[1] == null) ? String.valueOf(1) : i[1]);
@@ -565,9 +560,6 @@ public class Defaults {
 
 	@Placeholder(id = "statistic")
 	public Long stat(@Source Player player, @Token String token) {
-		if (token == null) {
-			return null;
-		}
 		final String t = token.trim().toLowerCase();
 		return player.getOrNull(Keys.STATISTICS).entrySet().stream().filter(e -> {
 			String s = e.getKey().getId().replace("._", ".").toLowerCase();
@@ -583,11 +575,7 @@ public class Defaults {
 	private Server server;
 
 	@Placeholder(id = "javascript")
-	public Object js(@Source Player player, @Observer CommandSource observer, @Token Optional<String> token) {
-		if (!token.isPresent()) {
-			// No script
-			return null;
-		}
+	public Object js(@Nullable @Source Player player, @Nullable @Observer CommandSource observer, @Token String token) {
 		if (engine == null) {
 			// Lazily instantiate engine
 			engine = new ScriptEngineManager(null).getEngineByName("Nashorn");
@@ -604,7 +592,7 @@ public class Defaults {
 		Service service = new Service(s, player, observer);
 		engine.put("service", service);
 		// Evaluate the script
-		return manager.eval(engine, token.get());
+		return manager.eval(engine, token);
 	}
 
 	public static class Service {

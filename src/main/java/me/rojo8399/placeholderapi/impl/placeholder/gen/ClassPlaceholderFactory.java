@@ -28,12 +28,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.objectweb.asm.Opcodes.ACC_FINAL;
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static org.objectweb.asm.Opcodes.ACC_SUPER;
+import static org.objectweb.asm.Opcodes.ACONST_NULL;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ARETURN;
 import static org.objectweb.asm.Opcodes.ASTORE;
 import static org.objectweb.asm.Opcodes.CHECKCAST;
 import static org.objectweb.asm.Opcodes.GETFIELD;
 import static org.objectweb.asm.Opcodes.GOTO;
+import static org.objectweb.asm.Opcodes.IFNONNULL;
 import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.RETURN;
@@ -49,6 +51,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+
+import javax.annotation.Nullable;
 
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
@@ -152,6 +156,14 @@ public class ClassPlaceholderFactory {
 		final boolean token = pm.stream().anyMatch(p -> p.isAnnotationPresent(Token.class));
 		final boolean source = pm.stream().anyMatch(p -> p.isAnnotationPresent(Source.class));
 		final boolean observer = pm.stream().anyMatch(p -> p.isAnnotationPresent(Observer.class));
+		final boolean srcNullable = pm.stream().filter(p -> p.isAnnotationPresent(Source.class))
+				.anyMatch(p -> p.isAnnotationPresent(Nullable.class));
+		final boolean optionalTokenType = pm.stream()
+				.anyMatch(p -> p.getParameterizedType().getTypeName().equals("java.util.Optional<java.lang.String>"));
+		final boolean obsNullable = pm.stream().filter(p -> p.isAnnotationPresent(Observer.class))
+				.anyMatch(p -> p.isAnnotationPresent(Nullable.class));
+		final boolean tokNullable = pm.stream().filter(p -> p.isAnnotationPresent(Token.class))
+				.anyMatch(p -> !optionalTokenType && p.isAnnotationPresent(Nullable.class));
 		final Optional<Class<?>> sourceType = pm.stream().filter(p -> p.isAnnotationPresent(Source.class)).findFirst()
 				.map(p -> p.getType());
 		final Optional<Class<?>> observerType = pm.stream().filter(p -> p.isAnnotationPresent(Observer.class))
@@ -164,8 +176,6 @@ public class ClassPlaceholderFactory {
 				+ Type.getInternalName(observerType.orElse(Locatable.class)) + ";L" + OPT_NAME + ";)L"
 				+ Type.getInternalName(returnType) + ";";
 		String externalParseDescriptor = "(Ljava/lang/Object;Ljava/lang/Object;Ljava/util/Optional;)Ljava/lang/Object;";
-		final boolean optionalTokenType = pm.stream()
-				.anyMatch(p -> p.getParameterizedType().getTypeName().equals("java.util.Optional<java.lang.String>"));
 		String methodDescriptor = Type.getMethodDescriptor(method);
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
 		MethodVisitor mv;
@@ -203,6 +213,19 @@ public class ClassPlaceholderFactory {
 					x = 3;
 				}
 				mv.visitVarInsn(ALOAD, x + 1);
+				boolean nullable = false;
+				switch (x) {
+				case 0:
+					nullable = srcNullable;
+					break;
+				case 1:
+					nullable = obsNullable;
+					break;
+				case 3:
+					nullable = tokNullable;
+				}
+				final int y = x;
+				nullCheck(mv, nullable, mv2 -> mv2.visitVarInsn(ALOAD, y + 1));
 				mv.visitTypeInsn(CHECKCAST, Type.getInternalName(p.getType()));
 			}
 			mv.visitMethodInsn(INVOKEVIRTUAL, handleName, method.getName(), methodDescriptor, false);
@@ -238,6 +261,19 @@ public class ClassPlaceholderFactory {
 		}
 		cw.visitEnd();
 		return cw.toByteArray();
+	}
+
+	private static void nullCheck(MethodVisitor mv, boolean nullable, Consumer<MethodVisitor> success) {
+		if (nullable) {
+			return;
+		}
+		// assume null check obj already loaded to stack
+		Label no = new Label();
+		mv.visitJumpInsn(IFNONNULL, no);
+		mv.visitInsn(ACONST_NULL);
+		mv.visitInsn(ARETURN);
+		mv.visitLabel(no);
+		success.accept(mv);
 	}
 
 	private static void tryCatch(MethodVisitor mv, Consumer<MethodVisitor> t, Consumer<MethodVisitor> c) {
