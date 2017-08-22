@@ -513,7 +513,7 @@ public class Defaults {
 			t = a[0];
 			String c = a[1];
 			if (currencies.containsKey(c)) {
-				toUse = currencies.get(def);
+				toUse = currencies.get(c);
 			}
 		}
 		// Don't handle nonexistent accounts here, instead throw error
