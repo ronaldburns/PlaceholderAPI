@@ -139,9 +139,9 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 
 	private void validate(Object source, Object observer) {
 		Preconditions.checkNotNull(source, "source");
-		Preconditions.checkNotNull(source, "observer");
+		Preconditions.checkNotNull(observer, "observer");
 		Preconditions.checkArgument(verifySource(source), "Source is not the right type!");
-		Preconditions.checkArgument(verifySource(source), "Observer is not the right type!");
+		Preconditions.checkArgument(verifySource(observer), "Observer is not the right type!");
 	}
 
 	/*
