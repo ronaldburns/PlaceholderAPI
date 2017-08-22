@@ -87,6 +87,15 @@ public class Store {
 		if (!exp.isEnabled()) {
 			return null;
 		}
+		if (src == null || obs == null) {
+			if (src != null && exp.getSourceClass().isAssignableFrom(src.getClass())) {
+				return exp.parse(exp.convertSource(src), null, token);
+			} else if (obs != null && exp.getSourceClass().isAssignableFrom(obs.getClass())) {
+				return exp.parse(null, exp.convertObserver(obs), token);
+			} else {
+				return exp.parse(null, null, token);
+			}
+		}
 		if (exp.getSourceClass().isAssignableFrom(src.getClass())
 				&& exp.getObserverClass().isAssignableFrom(obs.getClass())) {
 			return exp.parse(exp.convertSource(src), exp.convertObserver(obs), token);
