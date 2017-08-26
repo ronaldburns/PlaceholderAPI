@@ -41,8 +41,8 @@ public interface PlaceholderService {
 	/**
 	 * Create a new ExpansionBuilder to build an expansion.
 	 * 
-	 * ExpansionBuilder is a fluent, resettable builder, which allows you to
-	 * chain method calls and then build.
+	 * ExpansionBuilder is a fluent, resettable builder, which allows you to chain
+	 * method calls and then build.
 	 * 
 	 * This is the recommended way of creating and registering expansions.
 	 * 
@@ -53,33 +53,34 @@ public interface PlaceholderService {
 	public <S, O, V> ExpansionBuilder<S, O, V, ?> builder();
 
 	/**
-	 * Create an expansion builder based off of the '@Placeholder' annotated
-	 * method with the provided id.
+	 * Create an expansion builder based off of the '@Placeholder' annotated method
+	 * with the provided id.
 	 * 
-	 * This method returns a builder that is ready to register. This means that
-	 * the builder has the id, plugin and function fields filled in, and can
-	 * therefor be built and registered immediately.
+	 * This method returns a builder that is ready to register. This means that the
+	 * builder has the id, plugin and function fields filled in, and can therefor be
+	 * built and registered immediately.
 	 * 
 	 * @return the expansion builder.
 	 */
 	public ExpansionBuilder<?, ?, ?, ?> load(Object handle, String id, Object plugin);
+
 	/**
-	 * Create new ExpansionBuilders for all methods annotated with
-	 * '@Placeholder' in an object.
+	 * Create new ExpansionBuilders for all methods annotated with '@Placeholder' in
+	 * an object.
 	 * 
-	 * This is equivalent to calling load(handle, id, plugin) on all methods in
-	 * an object, but much faster.
+	 * This is equivalent to calling load(handle, id, plugin) on all methods in an
+	 * object, but much faster.
 	 * 
 	 * Every builder is ready to register upon reception. This means that all
-	 * builders have the necessary id, function and plugin fields filled in, and
-	 * all that is left are the optional fields.
+	 * builders have the necessary id, function and plugin fields filled in, and all
+	 * that is left are the optional fields.
 	 * 
-	 * This method is likely to be the one primarily used by developers
-	 * registering placeholders. Since the annotated method system is more
-	 * powerful, this method allows quick use of that system and provides a
-	 * streamable list of builders. The only downside is that it takes a bit
-	 * more effort to link builders to their optional fields, but a simple
-	 * switch statement in a stream map works well.
+	 * This method is likely to be the one primarily used by developers registering
+	 * placeholders. Since the annotated method system is more powerful, this method
+	 * allows quick use of that system and provides a streamable list of builders.
+	 * The only downside is that it takes a bit more effort to link builders to
+	 * their optional fields, but a simple switch statement in a stream map works
+	 * well.
 	 * 
 	 * @param handle
 	 *            The object from which to draw parsing methods.
@@ -92,12 +93,11 @@ public interface PlaceholderService {
 	/**
 	 * Register an Expansion.
 	 * 
-	 * This method is not preferred as the builder allows standardization of
-	 * most features and, more importantly, both prevents many errors and
-	 * simplifies the creation process. The builder also allows you to register
-	 * your placeholder upon creation, which makes this not a very useful
-	 * method. It is included in case you want to create an expansion then
-	 * modify it heavily.
+	 * This method is not preferred as the builder allows standardization of most
+	 * features and, more importantly, both prevents many errors and simplifies the
+	 * creation process. The builder also allows you to register your placeholder
+	 * upon creation, which makes this not a very useful method. It is included in
+	 * case you want to create an expansion then modify it heavily.
 	 * 
 	 * @param expansion
 	 *            The expansion to attempt to register.
@@ -111,19 +111,19 @@ public interface PlaceholderService {
 	 * 
 	 * @param template
 	 *            The template to draw the values from. Any non-optional values
-	 *            which cannot be parsed will be should be filled with the
-	 *            string representation of the template argument.
+	 *            which cannot be parsed will be should be filled with the string
+	 *            representation of the template argument.
 	 * @param source
-	 *            The source to draw placeholders from. This object must be of
-	 *            the type CommandSource, Locatable, User, or any subtypes of
-	 *            those classes. Any other object type will throw an exception.
+	 *            The source to draw placeholders from. This object must be of the
+	 *            type CommandSource, Locatable, User, or any subtypes of those
+	 *            classes. Any other object type will throw an exception.
 	 * @param observer
 	 *            The observer of the placeholders drawn from the source. For
-	 *            example, "distance" would be the distance from the source to
-	 *            the observer, and "visible" would be if the observer can see
-	 *            the source. This object must be of the type CommandSource,
-	 *            Locatable, User, or any subtypes of those classes. Any other
-	 *            object type will throw an exception.
+	 *            example, "distance" would be the distance from the source to the
+	 *            observer, and "visible" would be if the observer can see the
+	 *            source. This object must be of the type CommandSource, Locatable,
+	 *            User, or any subtypes of those classes. Any other object type will
+	 *            throw an exception.
 	 * @return The filled map.
 	 */
 	public Map<String, Object> fillPlaceholders(TextTemplate template, Object source, Object observer);
@@ -134,16 +134,16 @@ public interface PlaceholderService {
 	 * @param placeholder
 	 *            The placeholder to parse.
 	 * @param source
-	 *            The source to draw placeholders from. This object must be of
-	 *            the type CommandSource, Locatable, User, or any subtypes of
-	 *            those classes. Any other object type will throw an exception.
+	 *            The source to draw placeholders from. This object must be of the
+	 *            type CommandSource, Locatable, User, or any subtypes of those
+	 *            classes. Any other object type will throw an exception.
 	 * @param observer
 	 *            The observer of the placeholders drawn from the source. For
-	 *            example, "distance" would be the distance from the source to
-	 *            the observer, and "visible" would be if the observer can see
-	 *            the source. This object must be of the type CommandSource,
-	 *            Locatable, User, or any subtypes of those classes. Any other
-	 *            object type will throw an exception.
+	 *            example, "distance" would be the distance from the source to the
+	 *            observer, and "visible" would be if the observer can see the
+	 *            source. This object must be of the type CommandSource, Locatable,
+	 *            User, or any subtypes of those classes. Any other object type will
+	 *            throw an exception.
 	 * @return The parsed object.
 	 */
 	public Object parse(String placeholder, Object source, Object observer);
@@ -154,16 +154,16 @@ public interface PlaceholderService {
 	 * @param placeholders
 	 *            The placeholders to parse.
 	 * @param source
-	 *            The source to draw placeholders from. This object must be of
-	 *            the type CommandSource, Locatable, User, or any subtypes of
-	 *            those classes. Any other object type will throw an exception.
+	 *            The source to draw placeholders from. This object must be of the
+	 *            type CommandSource, Locatable, User, or any subtypes of those
+	 *            classes. Any other object type will throw an exception.
 	 * @param observer
 	 *            The observer of the placeholders drawn from the source. For
-	 *            example, "distance" would be the distance from the source to
-	 *            the observer, and "visible" would be if the observer can see
-	 *            the source. This object must be of the type CommandSource,
-	 *            Locatable, User, or any subtypes of those classes. Any other
-	 *            object type will throw an exception.
+	 *            example, "distance" would be the distance from the source to the
+	 *            observer, and "visible" would be if the observer can see the
+	 *            source. This object must be of the type CommandSource, Locatable,
+	 *            User, or any subtypes of those classes. Any other object type will
+	 *            throw an exception.
 	 * @return The parsed placeholders mapped to their identifiers.
 	 */
 	public default Map<String, Object> fill(List<String> placeholders, Object source, Object observer) {
@@ -176,23 +176,22 @@ public interface PlaceholderService {
 	 * @param placeholder
 	 *            The placeholder to parse.
 	 * @param source
-	 *            The source to draw placeholders from. This object must be of
-	 *            the type CommandSource, Locatable, User, or any subtypes of
-	 *            those classes. Any other object type will throw an exception.
+	 *            The source to draw placeholders from. This object must be of the
+	 *            type CommandSource, Locatable, User, or any subtypes of those
+	 *            classes. Any other object type will throw an exception.
 	 * @param observer
 	 *            The observer of the placeholders drawn from the source. For
-	 *            example, "distance" would be the distance from the source to
-	 *            the observer, and "visible" would be if the observer can see
-	 *            the source. This object must be of the type CommandSource,
-	 *            Locatable, User, or any subtypes of those classes. Any other
-	 *            object type will throw an exception.
+	 *            example, "distance" would be the distance from the source to the
+	 *            observer, and "visible" would be if the observer can see the
+	 *            source. This object must be of the type CommandSource, Locatable,
+	 *            User, or any subtypes of those classes. Any other object type will
+	 *            throw an exception.
 	 * @param expected
 	 *            The expected class. If possible, this will try to cast the
-	 *            returned parsed object to the provided class. If said class is
-	 *            the Text class, it will parse the object into a text object
+	 *            returned parsed object to the provided class. If said class is the
+	 *            Text class, it will parse the object into a text object
 	 *            automatically. If it is the String class, it will return the
-	 *            object's toString method. Any other objects will just be
-	 *            casted.
+	 *            object's toString method. Any other objects will just be casted.
 	 * @return The parsed object, if available.
 	 */
 	public default <T> Optional<T> parse(String placeholder, Object source, Object observer, Class<T> expected) {
@@ -205,23 +204,22 @@ public interface PlaceholderService {
 	 * @param placeholder
 	 *            The placeholder to parse.
 	 * @param source
-	 *            The source to draw placeholders from. This object must be of
-	 *            the type CommandSource, Locatable, User, or any subtypes of
-	 *            those classes. Any other object type will throw an exception.
+	 *            The source to draw placeholders from. This object must be of the
+	 *            type CommandSource, Locatable, User, or any subtypes of those
+	 *            classes. Any other object type will throw an exception.
 	 * @param observer
 	 *            The observer of the placeholders drawn from the source. For
-	 *            example, "distance" would be the distance from the source to
-	 *            the observer, and "visible" would be if the observer can see
-	 *            the source. This object must be of the type CommandSource,
-	 *            Locatable, User, or any subtypes of those classes. Any other
-	 *            object type will throw an exception.
+	 *            example, "distance" would be the distance from the source to the
+	 *            observer, and "visible" would be if the observer can see the
+	 *            source. This object must be of the type CommandSource, Locatable,
+	 *            User, or any subtypes of those classes. Any other object type will
+	 *            throw an exception.
 	 * @param expected
 	 *            The expected class. If possible, this will try to cast the
-	 *            returned parsed object to the provided class. If said class is
-	 *            the Text class, it will parse the object into a text object
+	 *            returned parsed object to the provided class. If said class is the
+	 *            Text class, it will parse the object into a text object
 	 *            automatically. If it is the String class, it will return the
-	 *            object's toString method. Any other objects will just be
-	 *            casted.
+	 *            object's toString method. Any other objects will just be casted.
 	 * @return The parsed object.
 	 */
 	public default <T> T parseNullable(String placeholder, Object source, Object observer, Class<T> expected) {
@@ -233,19 +231,19 @@ public interface PlaceholderService {
 	 * 
 	 * @param template
 	 *            The template to draw the values from. Any non-optional values
-	 *            which cannot be parsed will be replaced with the string
-	 *            version of the template argument.
+	 *            which cannot be parsed will be replaced with the string version of
+	 *            the template argument.
 	 * @param source
-	 *            The source to draw placeholders from. This object must be of
-	 *            the type CommandSource, Locatable, User, or any subtypes of
-	 *            those classes. Any other object type will throw an exception.
+	 *            The source to draw placeholders from. This object must be of the
+	 *            type CommandSource, Locatable, User, or any subtypes of those
+	 *            classes. Any other object type will throw an exception.
 	 * @param observer
 	 *            The observer of the placeholders drawn from the source. For
-	 *            example, "distance" would be the distance from the source to
-	 *            the observer, and "visible" would be if the observer can see
-	 *            the source. This object must be of the type CommandSource,
-	 *            Locatable, User, or any subtypes of those classes. Any other
-	 *            object type will throw an exception.
+	 *            example, "distance" would be the distance from the source to the
+	 *            observer, and "visible" would be if the observer can see the
+	 *            source. This object must be of the type CommandSource, Locatable,
+	 *            User, or any subtypes of those classes. Any other object type will
+	 *            throw an exception.
 	 * @return The parsed text.
 	 */
 	public Text replacePlaceholders(TextTemplate template, Object source, Object observer);
@@ -254,23 +252,23 @@ public interface PlaceholderService {
 	 * Replace placeholders in a text with parsed values.
 	 * 
 	 * @param text
-	 *            The text to draw values from. This will replace any
-	 *            placeholders found by the pattern.
+	 *            The text to draw values from. This will replace any placeholders
+	 *            found by the pattern.
 	 * @param source
-	 *            The source to draw placeholders from. This object must be of
-	 *            the type CommandSource, Locatable, User, or any subtypes of
-	 *            those classes. Any other object type will throw an exception.
+	 *            The source to draw placeholders from. This object must be of the
+	 *            type CommandSource, Locatable, User, or any subtypes of those
+	 *            classes. Any other object type will throw an exception.
 	 * @param observer
 	 *            The observer of the placeholders drawn from the source. For
-	 *            example, "distance" would be the distance from the source to
-	 *            the observer, and "visible" would be if the observer can see
-	 *            the source. This object must be of the type CommandSource,
-	 *            Locatable, User, or any subtypes of those classes. Any other
-	 *            object type will throw an exception.
+	 *            example, "distance" would be the distance from the source to the
+	 *            observer, and "visible" would be if the observer can see the
+	 *            source. This object must be of the type CommandSource, Locatable,
+	 *            User, or any subtypes of those classes. Any other object type will
+	 *            throw an exception.
 	 * @param pattern
 	 *            The pattern to match placeholders with. Placeholders will be
-	 *            matched to group 1, so any other groups ahead of where you
-	 *            want the placeholders in the pattern should be non-capturing.
+	 *            matched to group 1, so any other groups ahead of where you want
+	 *            the placeholders in the pattern should be non-capturing.
 	 * @return The parsed text.
 	 */
 	public default Text replacePlaceholders(Text text, Object source, Object observer, Pattern pattern) {
@@ -281,23 +279,23 @@ public interface PlaceholderService {
 	 * Replace placeholders in a string with parsed values.
 	 * 
 	 * @param text
-	 *            The string to draw values from. This will replace any
-	 *            placeholders found by the pattern.
+	 *            The string to draw values from. This will replace any placeholders
+	 *            found by the pattern.
 	 * @param source
-	 *            The source to draw placeholders from. This object must be of
-	 *            the type CommandSource, Locatable, User, or any subtypes of
-	 *            those classes. Any other object type will throw an exception.
+	 *            The source to draw placeholders from. This object must be of the
+	 *            type CommandSource, Locatable, User, or any subtypes of those
+	 *            classes. Any other object type will throw an exception.
 	 * @param observer
 	 *            The observer of the placeholders drawn from the source. For
-	 *            example, "distance" would be the distance from the source to
-	 *            the observer, and "visible" would be if the observer can see
-	 *            the source. This object must be of the type CommandSource,
-	 *            Locatable, User, or any subtypes of those classes. Any other
-	 *            object type will throw an exception.
+	 *            example, "distance" would be the distance from the source to the
+	 *            observer, and "visible" would be if the observer can see the
+	 *            source. This object must be of the type CommandSource, Locatable,
+	 *            User, or any subtypes of those classes. Any other object type will
+	 *            throw an exception.
 	 * @param pattern
 	 *            The pattern to match placeholders with. Placeholders will be
-	 *            matched to group 1, so any other groups ahead of where you
-	 *            want the placeholders in the pattern should be non-capturing.
+	 *            matched to group 1, so any other groups ahead of where you want
+	 *            the placeholders in the pattern should be non-capturing.
 	 * @return The parsed text.
 	 */
 	public default Text replacePlaceholders(String text, Object source, Object observer, Pattern pattern) {
@@ -307,10 +305,9 @@ public interface PlaceholderService {
 	static final Pattern DEFAULT_PATTERN = Pattern.compile("[%\\{]([^ \\{\\}%]+)[\\}%]");
 
 	/**
-	 * Gets the default placeholder pattern for use with other parsers. Group 1
-	 * is the group that matches to placeholders. There are no other capturing
-	 * groups. This is the pattern used if no pattern is specified for the other
-	 * methods.
+	 * Gets the default placeholder pattern for use with other parsers. Group 1 is
+	 * the group that matches to placeholders. There are no other capturing groups.
+	 * This is the pattern used if no pattern is specified for the other methods.
 	 * 
 	 * @return The default pattern.
 	 */
@@ -322,19 +319,19 @@ public interface PlaceholderService {
 	 * Replace placeholders in a text with parsed values.
 	 * 
 	 * @param text
-	 *            The text to draw values from. This will replace any
-	 *            placeholders found by the pattern.
+	 *            The text to draw values from. This will replace any placeholders
+	 *            found by the pattern.
 	 * @param source
-	 *            The source to draw placeholders from. This object must be of
-	 *            the type CommandSource, Locatable, User, or any subtypes of
-	 *            those classes. Any other object type will throw an exception.
+	 *            The source to draw placeholders from. This object must be of the
+	 *            type CommandSource, Locatable, User, or any subtypes of those
+	 *            classes. Any other object type will throw an exception.
 	 * @param observer
 	 *            The observer of the placeholders drawn from the source. For
-	 *            example, "distance" would be the distance from the source to
-	 *            the observer, and "visible" would be if the observer can see
-	 *            the source. This object must be of the type CommandSource,
-	 *            Locatable, User, or any subtypes of those classes. Any other
-	 *            object type will throw an exception.
+	 *            example, "distance" would be the distance from the source to the
+	 *            observer, and "visible" would be if the observer can see the
+	 *            source. This object must be of the type CommandSource, Locatable,
+	 *            User, or any subtypes of those classes. Any other object type will
+	 *            throw an exception.
 	 * @return The parsed text.
 	 */
 	public default Text replacePlaceholders(Text text, Object source, Object observer) {
@@ -345,19 +342,19 @@ public interface PlaceholderService {
 	 * Replace placeholders in a text with parsed values.
 	 * 
 	 * @param text
-	 *            The string to draw values from. This will replace any
-	 *            placeholders found by the pattern.
+	 *            The string to draw values from. This will replace any placeholders
+	 *            found by the pattern.
 	 * @param source
-	 *            The source to draw placeholders from. This object must be of
-	 *            the type CommandSource, Locatable, User, or any subtypes of
-	 *            those classes. Any other object type will throw an exception.
+	 *            The source to draw placeholders from. This object must be of the
+	 *            type CommandSource, Locatable, User, or any subtypes of those
+	 *            classes. Any other object type will throw an exception.
 	 * @param observer
 	 *            The observer of the placeholders drawn from the source. For
-	 *            example, "distance" would be the distance from the source to
-	 *            the observer, and "visible" would be if the observer can see
-	 *            the source. This object must be of the type CommandSource,
-	 *            Locatable, User, or any subtypes of those classes. Any other
-	 *            object type will throw an exception.
+	 *            example, "distance" would be the distance from the source to the
+	 *            observer, and "visible" would be if the observer can see the
+	 *            source. This object must be of the type CommandSource, Locatable,
+	 *            User, or any subtypes of those classes. Any other object type will
+	 *            throw an exception.
 	 * @return The parsed text.
 	 */
 	public default Text replacePlaceholders(String text, Object source, Object observer) {
@@ -369,17 +366,17 @@ public interface PlaceholderService {
 	 * 
 	 * @param template
 	 *            The template to draw the values from. Any non-optional values
-	 *            which cannot be parsed will be replaced with the string
-	 *            version of the template argument.
+	 *            which cannot be parsed will be replaced with the string version of
+	 *            the template argument.
 	 * @param source
-	 *            The source to draw placeholders from. This object must be of
-	 *            the type CommandSource, Locatable, User, or any subtypes of
-	 *            those classes. Any other object type will throw an exception.
-	 *            If there are relational placeholders to be parsed, source will
-	 *            be used as both the source and the observer.
+	 *            The source to draw placeholders from. This object must be of the
+	 *            type CommandSource, Locatable, User, or any subtypes of those
+	 *            classes. Any other object type will throw an exception. If there
+	 *            are relational placeholders to be parsed, source will be used as
+	 *            both the source and the observer.
 	 * @return The parsed text.
 	 */
-	public default Text replacePlaceholders(TextTemplate template, Object source) {
+	public default Text replaceSourcePlaceholders(TextTemplate template, Object source) {
 		return replacePlaceholders(template, source, source);
 	}
 
@@ -387,21 +384,21 @@ public interface PlaceholderService {
 	 * Replace placeholders in a text with parsed values.
 	 * 
 	 * @param text
-	 *            The text to draw values from. This will replace any
-	 *            placeholders found by the pattern.
+	 *            The text to draw values from. This will replace any placeholders
+	 *            found by the pattern.
 	 * @param source
-	 *            The source to draw placeholders from. This object must be of
-	 *            the type CommandSource, Locatable, User, or any subtypes of
-	 *            those classes. Any other object type will throw an exception.
-	 *            If there are relational placeholders to be parsed, source will
-	 *            be used as both the source and the observer.
+	 *            The source to draw placeholders from. This object must be of the
+	 *            type CommandSource, Locatable, User, or any subtypes of those
+	 *            classes. Any other object type will throw an exception. If there
+	 *            are relational placeholders to be parsed, source will be used as
+	 *            both the source and the observer.
 	 * @param pattern
 	 *            The pattern to match placeholders with. Placeholders will be
-	 *            matched to group 1, so any other groups ahead of where you
-	 *            want the placeholders in the pattern should be non-capturing.
+	 *            matched to group 1, so any other groups ahead of where you want
+	 *            the placeholders in the pattern should be non-capturing.
 	 * @return The parsed text.
 	 */
-	public default Text replacePlaceholders(Text text, Object source, Pattern pattern) {
+	public default Text replaceSourcePlaceholders(Text text, Object source, Pattern pattern) {
 		return replacePlaceholders(text, source, source, pattern);
 	}
 
@@ -409,21 +406,21 @@ public interface PlaceholderService {
 	 * Replace placeholders in a text with parsed values.
 	 * 
 	 * @param text
-	 *            The string to draw values from. This will replace any
-	 *            placeholders found by the pattern.
+	 *            The string to draw values from. This will replace any placeholders
+	 *            found by the pattern.
 	 * @param source
-	 *            The source to draw placeholders from. This object must be of
-	 *            the type CommandSource, Locatable, User, or any subtypes of
-	 *            those classes. Any other object type will throw an exception.
-	 *            If there are relational placeholders to be parsed, source will
-	 *            be used as both the source and the observer.
+	 *            The source to draw placeholders from. This object must be of the
+	 *            type CommandSource, Locatable, User, or any subtypes of those
+	 *            classes. Any other object type will throw an exception. If there
+	 *            are relational placeholders to be parsed, source will be used as
+	 *            both the source and the observer.
 	 * @param pattern
 	 *            The pattern to match placeholders with. Placeholders will be
-	 *            matched to group 1, so any other groups ahead of where you
-	 *            want the placeholders in the pattern should be non-capturing.
+	 *            matched to group 1, so any other groups ahead of where you want
+	 *            the placeholders in the pattern should be non-capturing.
 	 * @return The parsed text.
 	 */
-	public default Text replacePlaceholders(String text, Object source, Pattern pattern) {
+	public default Text replaceSourcePlaceholders(String text, Object source, Pattern pattern) {
 		return replacePlaceholders(text, source, source, pattern);
 	}
 
@@ -431,36 +428,36 @@ public interface PlaceholderService {
 	 * Replace placeholders in a text with parsed values.
 	 * 
 	 * @param text
-	 *            The text to draw values from. This will replace any
-	 *            placeholders found by the pattern.
+	 *            The text to draw values from. This will replace any placeholders
+	 *            found by the pattern.
 	 * @param source
-	 *            The source to draw placeholders from. This object must be of
-	 *            the type CommandSource, Locatable, User, or any subtypes of
-	 *            those classes. Any other object type will throw an exception.
-	 *            If there are relational placeholders to be parsed, source will
-	 *            be used as both the source and the observer.
+	 *            The source to draw placeholders from. This object must be of the
+	 *            type CommandSource, Locatable, User, or any subtypes of those
+	 *            classes. Any other object type will throw an exception. If there
+	 *            are relational placeholders to be parsed, source will be used as
+	 *            both the source and the observer.
 	 * @return The parsed text.
 	 */
-	public default Text replacePlaceholders(Text text, Object source) {
-		return replacePlaceholders(text, source, DEFAULT_PATTERN);
+	public default Text replaceSourcePlaceholders(Text text, Object source) {
+		return replaceSourcePlaceholders(text, source, DEFAULT_PATTERN);
 	}
 
 	/**
 	 * Replace placeholders in a text with parsed values.
 	 * 
 	 * @param text
-	 *            The string to draw values from. This will replace any
-	 *            placeholders found by the pattern.
+	 *            The string to draw values from. This will replace any placeholders
+	 *            found by the pattern.
 	 * @param source
-	 *            The source to draw placeholders from. This object must be of
-	 *            the type CommandSource, Locatable, User, or any subtypes of
-	 *            those classes. Any other object type will throw an exception.
-	 *            If there are relational placeholders to be parsed, source will
-	 *            be used as both the source and the observer.
+	 *            The source to draw placeholders from. This object must be of the
+	 *            type CommandSource, Locatable, User, or any subtypes of those
+	 *            classes. Any other object type will throw an exception. If there
+	 *            are relational placeholders to be parsed, source will be used as
+	 *            both the source and the observer.
 	 * @return The parsed text.
 	 */
-	public default Text replacePlaceholders(String text, Object source) {
-		return replacePlaceholders(text, source, DEFAULT_PATTERN);
+	public default Text replaceSourcePlaceholders(String text, Object source) {
+		return replaceSourcePlaceholders(text, source, DEFAULT_PATTERN);
 	}
 
 	/**
@@ -474,9 +471,9 @@ public interface PlaceholderService {
 
 	/**
 	 * Verify that the object provided matches the valid types of CommandSource,
-	 * Locatable or User. In the future these types may change, so using this
-	 * method is preferred if you do not know the type or if the type you are
-	 * going to provide is correct.
+	 * Locatable or User. In the future these types may change, so using this method
+	 * is preferred if you do not know the type or if the type you are going to
+	 * provide is correct.
 	 * 
 	 * @param source
 	 *            The object to verify.
@@ -486,11 +483,10 @@ public interface PlaceholderService {
 
 	/**
 	 * Verify that the object provided matches the valid types of CommandSource,
-	 * Locatable or User. In the future these types may change, so using this
-	 * method is preferred if you do not know the type or if the type you are
-	 * going to provide is correct. This method is identical to verifySource,
-	 * but is provided for the sake of differentiation and potential change in
-	 * the future.
+	 * Locatable or User. In the future these types may change, so using this method
+	 * is preferred if you do not know the type or if the type you are going to
+	 * provide is correct. This method is identical to verifySource, but is provided
+	 * for the sake of differentiation and potential change in the future.
 	 * 
 	 * @param source
 	 *            The object to verify.

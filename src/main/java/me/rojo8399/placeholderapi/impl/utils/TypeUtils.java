@@ -26,9 +26,15 @@ package me.rojo8399.placeholderapi.impl.utils;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.serializer.TextSerializers;
@@ -66,7 +72,7 @@ public class TypeUtils {
 		throw new IllegalArgumentException("Class is not primitive or a wrapper!");
 	}
 
-	public static <T> Optional<T> tryCast(Object val, Class<T> expected) {
+	public static <T> Optional<T> tryCast(Object val, final Class<T> expected) {
 		if (val == null) {
 			return Optional.empty();
 		}
@@ -89,11 +95,36 @@ public class TypeUtils {
 					return TypeUtils.tryOptional(() -> expected.cast(TextSerializers.FORMATTING_CODE
 							.deserialize(PlaceholderAPIPlugin.getInstance().formatter().format((LocalDateTime) val))));
 				}
+				if (val instanceof CommandSource) {
+					return TypeUtils.tryOptional(() -> expected.cast(TextSerializers.FORMATTING_CODE
+							.deserialize(String.valueOf(((CommandSource) val).getName()))));
+				}
+				if (val instanceof Supplier) {
+					Supplier<?> fun = (Supplier<?>) val;
+					return tryCast(fun.get(), expected);
+				}
+				if (val instanceof Iterable) {
+					Iterable<?> l = (Iterable<?>) val;
+					@SuppressWarnings("unchecked") // should be safe cause we already checked assignability
+					final List<Text> l2 = new ArrayList<Object>() {
+						{
+							for (Object o : l) {
+								add(o);
+							}
+						}
+					}.stream().map(o -> tryCast(o, (Class<? extends Text>) expected)).flatMap(unmapOptional())
+							.collect(Collectors.toList());
+					return TypeUtils.tryOptional(() -> expected.cast(Text.joinWith(Text.of(", "), l2)));
+				}
 				return TypeUtils.tryOptional(
 						() -> expected.cast(TextSerializers.FORMATTING_CODE.deserialize(String.valueOf(val))));
 			}
 		}
 		return TypeUtils.tryOptional(() -> expected.cast(val));
+	}
+
+	public static <T> Function<Optional<T>, Stream<? extends T>> unmapOptional() {
+		return (opt) -> Stream.of(opt).filter(Optional::isPresent).map(Optional::get);
 	}
 
 	public static boolean and(boolean one, boolean two) {

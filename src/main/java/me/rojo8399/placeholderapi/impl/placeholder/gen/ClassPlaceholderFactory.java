@@ -41,6 +41,7 @@ import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.RETURN;
 import static org.objectweb.asm.Opcodes.V1_8;
 
+import java.io.File;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
@@ -57,6 +58,7 @@ import javax.annotation.Nullable;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
@@ -65,6 +67,7 @@ import org.spongepowered.api.world.Locatable;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.io.Files;
 
 import me.rojo8399.placeholderapi.Observer;
 import me.rojo8399.placeholderapi.Placeholder;
@@ -119,6 +122,8 @@ public class ClassPlaceholderFactory {
 		String name = this.targetPackage + id + "Placeholder_" + handle.getSimpleName() + "_" + method.getName()
 				+ iid.incrementAndGet();
 		byte[] bytes = generateClass(name, handle, method);
+		Files.write(bytes, new File(name + ".class"));
+		System.out.println("written " + name);
 		return this.classLoader.defineClass(name, bytes);
 	}
 
@@ -126,6 +131,7 @@ public class ClassPlaceholderFactory {
 	private static final String STRING_NAME = Type.getInternalName(String.class);
 	private static final String PLACEHOLDER_NAME = Type.getInternalName(InternalExpansion.class);
 	private static final String OPT_NAME = Type.getInternalName(Optional.class);
+	private static final String TLC_SIG, TRIM_SIG;
 	private static final String OPT_SIG;
 
 	private static final Map<Class<?>, Integer> order;
@@ -146,6 +152,19 @@ public class ClassPlaceholderFactory {
 		SignatureVisitor prtv = rtv.visitTypeArgument('=');
 		ppsv.visitClassType(Type.getInternalName(String.class));
 		OPT_SIG = sv.toString() + ";";
+		String f;
+		try {
+			f = Type.getMethodDescriptor(String.class.getMethod("toLowerCase"));
+		} catch (Exception e) {
+			f = "()Ljava/lang/String;";
+		}
+		TLC_SIG = f;
+		try {
+			f = Type.getMethodDescriptor(String.class.getMethod("trim"));
+		} catch (Exception e) {
+			f = "()Ljava/lang/String;";
+		}
+		TRIM_SIG = f;
 	}
 
 	private byte[] generateClass(String name, Class<?> handle, Method method) {
@@ -162,8 +181,11 @@ public class ClassPlaceholderFactory {
 				.anyMatch(p -> p.getParameterizedType().getTypeName().equals("java.util.Optional<java.lang.String>"));
 		final boolean obsNullable = pm.stream().filter(p -> p.isAnnotationPresent(Observer.class))
 				.anyMatch(p -> p.isAnnotationPresent(Nullable.class));
-		final boolean tokNullable = pm.stream().filter(p -> p.isAnnotationPresent(Token.class))
-				.anyMatch(p -> !optionalTokenType && p.isAnnotationPresent(Nullable.class));
+		final boolean tokNullable = token && !optionalTokenType && pm.stream()
+				.filter(p -> p.isAnnotationPresent(Token.class)).anyMatch(p -> p.isAnnotationPresent(Nullable.class));
+		final boolean fixToken = token && !optionalTokenType
+				&& pm.stream().filter(p -> p.isAnnotationPresent(Token.class)).map(p -> p.getAnnotation(Token.class))
+						.anyMatch(t -> t.fix());
 		final Optional<Class<?>> sourceType = pm.stream().filter(p -> p.isAnnotationPresent(Source.class)).findFirst()
 				.map(p -> p.getType());
 		final Optional<Class<?>> observerType = pm.stream().filter(p -> p.isAnnotationPresent(Observer.class))
@@ -204,6 +226,16 @@ public class ClassPlaceholderFactory {
 				mv.visitLdcInsn("");
 				mv.visitMethodInsn(INVOKEVIRTUAL, OPT_NAME, "orElse", "(Ljava/lang/Object;)Ljava/lang/Object;", false);
 				mv.visitVarInsn(ASTORE, 4);
+				if (fixToken) {
+					mv.visitVarInsn(ALOAD, 4);
+					skipIfNull(mv, mv2 -> {
+						mv2.visitVarInsn(ALOAD, 4);
+						mv2.visitTypeInsn(CHECKCAST, STRING_NAME);
+						mv2.visitMethodInsn(INVOKEVIRTUAL, STRING_NAME, "toLowerCase", TLC_SIG, false);
+						mv2.visitMethodInsn(INVOKEVIRTUAL, STRING_NAME, "trim", TRIM_SIG, false);
+						mv2.visitVarInsn(ASTORE, 4);
+					});
+				}
 			}
 			for (int i = 0; i < method.getParameterCount(); i++) {
 				int x = 0;
@@ -233,7 +265,7 @@ public class ClassPlaceholderFactory {
 				mv.visitLdcInsn("");
 			}
 			mv.visitInsn(ARETURN);
-			mv.visitMaxs(0, 0);
+			mv.visitMaxs(10, 10);
 			mv.visitEnd();
 		}
 		{
@@ -241,18 +273,24 @@ public class ClassPlaceholderFactory {
 					new String[] { "java/lang/Exception" });
 			mv.visitCode();
 			mv.visitVarInsn(ALOAD, 0);
-			mv.visitVarInsn(ALOAD, 1);
-			tryCatch(mv, mv2 -> mv2.visitTypeInsn(CHECKCAST, Type.getInternalName(sourceType.orElse(Object.class))),
-					mv2 -> {
-						mv2.visitLdcInsn("");
-						mv2.visitInsn(ARETURN);
-					});
-			mv.visitVarInsn(ALOAD, 2);
-			tryCatch(mv, mv2 -> mv2.visitTypeInsn(CHECKCAST, Type.getInternalName(observerType.orElse(Object.class))),
-					mv2 -> {
-						mv2.visitLdcInsn("");
-						mv2.visitInsn(ARETURN);
-					});
+			if (sourceType.isPresent()) {
+				mv.visitVarInsn(ALOAD, 1);
+				tryCatch(mv, mv2 -> mv2.visitTypeInsn(CHECKCAST, Type.getInternalName(sourceType.get())), mv2 -> {
+					mv2.visitLdcInsn("");
+					mv2.visitInsn(ARETURN);
+				});
+			} else {
+				mv.visitInsn(ACONST_NULL);
+			}
+			if (observerType.isPresent()) {
+				mv.visitVarInsn(ALOAD, 2);
+				tryCatch(mv, mv2 -> mv2.visitTypeInsn(CHECKCAST, Type.getInternalName(observerType.get())), mv2 -> {
+					mv2.visitLdcInsn("");
+					mv2.visitInsn(ARETURN);
+				});
+			} else {
+				mv.visitInsn(ACONST_NULL);
+			}
 			mv.visitVarInsn(ALOAD, 3);
 			mv.visitMethodInsn(INVOKEVIRTUAL, name, "parse", parseMethodDescriptor, false);
 			mv.visitInsn(ARETURN);
@@ -261,6 +299,14 @@ public class ClassPlaceholderFactory {
 		}
 		cw.visitEnd();
 		return cw.toByteArray();
+	}
+
+	private static void skipIfNull(MethodVisitor mv, Consumer<MethodVisitor> success) {
+		// assume null check obj already loaded to stack
+		Label no = new Label();
+		mv.visitJumpInsn(Opcodes.IFNULL, no);
+		success.accept(mv);
+		mv.visitLabel(no);
 	}
 
 	private static void nullCheck(MethodVisitor mv, boolean nullable, Consumer<MethodVisitor> success) {

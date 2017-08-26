@@ -90,7 +90,7 @@ public class Messages {
 		@Setting
 		public Message by = of("by");
 		@Setting
-		public Message version = of("version");
+		public Message version = of("&7version");
 		@Setting
 		public Direction directions = new Direction();
 
@@ -160,6 +160,9 @@ public class Messages {
 		public Message allPlaceholdersHoverRelational = of("&bClick to see all relational placeholders!");
 		@Setting("supported-relational-placeholders")
 		public Message supportedPlaceholdersRelational = of("&6Supported relational placeholders:");
+		@Setting("improper-registration")
+		public Message improperRegistration = of(
+				"&cPlaceholder was not registered correctly! Please check the logs for details.");
 		@Setting("parse-button-hover")
 		public Message parseButtonHover = of("&bClick to parse this placeholder for you!");
 		@Setting("info-button-hover")

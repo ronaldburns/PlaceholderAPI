@@ -87,7 +87,7 @@ public class PlaceholderAPIPlugin {
 
 	public static final String PLUGIN_ID = "placeholderapi";
 	public static final String PLUGIN_NAME = "PlaceholderAPI";
-	public static final String PLUGIN_VERSION = "4.1";
+	public static final String PLUGIN_VERSION = "4.2";
 	private static PlaceholderAPIPlugin instance;
 
 	@Inject
@@ -284,7 +284,7 @@ public class PlaceholderAPIPlugin {
 			@Override
 			public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
 				src.sendMessage(Text.of(TextColors.GREEN, PLUGIN_NAME, TextColors.GRAY, " ",
-						Messages.get().misc.version, " ", TextColors.AQUA, PLUGIN_VERSION, TextColors.GRAY, "."));
+						Messages.get().misc.version.t(), " ", TextColors.AQUA, PLUGIN_VERSION, TextColors.GRAY, "."));
 				return CommandResult.success();
 			}
 		}).child(parseCmd, "parse", "p").child(listCmd, "list", "l").child(infoCmd, "info", "i")
@@ -420,7 +420,7 @@ public class PlaceholderAPIPlugin {
 		event.getCause().first(Player.class).ifPresent(p -> p.sendMessage(Messages.get().plugin.reloadSuccess.t()));
 		logger.info("Reloaded PlaceholderAPI");
 	}
-	
+
 	@Listener
 	public void onStop(GameStoppingEvent event) {
 		saveConfig();

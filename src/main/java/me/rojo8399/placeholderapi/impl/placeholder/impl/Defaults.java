@@ -25,7 +25,9 @@ package me.rojo8399.placeholderapi.impl.placeholder.impl;
 
 import java.math.BigDecimal;
 import java.text.NumberFormat;
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -34,8 +36,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.script.ScriptEngine;
@@ -112,7 +116,7 @@ public class Defaults {
 	private boolean js = true;
 
 	private void putCur(Currency c) {
-		currencies.put(c.getName(), c);
+		currencies.put(c.getName().toLowerCase().replace(" ", ""), c);
 	}
 
 	@Placeholder(id = "player")
@@ -495,7 +499,7 @@ public class Defaults {
 	private Currency def;
 
 	@Placeholder(id = "economy")
-	public Object economy(@Token Optional<String> token, @Source User player) {
+	public Object economy(@Token Optional<String> token, @Nullable @Source User player) {
 		if (service == null || !eco) {
 			return null;
 		}
@@ -504,15 +508,65 @@ public class Defaults {
 			Text v = Text.of(def.getName() + " (" + def.getId() + ") - ");
 			return v.concat(amt);
 		}
-		String t = token.get();
+		String t = token.get().toLowerCase().trim();
 		Currency toUse = def;
 		if (t.contains("_")) {
 			String[] a = t.split("_");
 			t = a[0];
-			String c = a[1];
+			for (int i = 1; i < a.length - 1; i++) {
+				t += "_" + a[i];
+			}
+			String c = a[a.length - 1];
 			if (currencies.containsKey(c)) {
 				toUse = currencies.get(c);
 			}
+		}
+		final Currency toUseFinal = toUse;
+		if (player == null) {
+			// fix t for baltop
+			int baltop = 0;
+			if (t.startsWith("baltop")) {
+				if (t.contains("_")) {
+					String aft = t.substring(t.indexOf("_") + 1);
+					t = t.substring(0, t.indexOf("_"));
+					try {
+						baltop = Integer.parseInt(aft);
+					} catch (Exception e) {
+						baltop = 5;
+					}
+				} else {
+					baltop = 5;
+				}
+				if (baltop <= 0) {
+					baltop = 1;
+				}
+				calculateBalTop(toUse);
+				List<UniqueAccount> baltop2 = balTop.get(toUse).subList(0, baltop);
+				if (t.startsWith("baltopf")) {
+					return Text.joinWith(Text.of(", "), baltop2.stream()
+							.map(a -> Text.of(a.getDisplayName(), ": " + toUseFinal.format(a.getBalance(toUseFinal))))
+							.collect(Collectors.toList()));
+				}
+				return Text.joinWith(Text.of(", "),
+						baltop2.stream()
+								.map(a -> Text.of(a.getDisplayName(), ": " + a.getBalance(toUseFinal).toPlainString()))
+								.collect(Collectors.toList()));
+			}
+			switch (t) {
+			case "display":
+				return toUse.getDisplayName();
+			case "plural_display":
+				return toUse.getPluralDisplayName();
+			case "symbol":
+				return toUse.getSymbol();
+			}
+			if (currencies.containsKey(t)) {
+				toUse = currencies.get(t);
+				Text amt = toUse.format(BigDecimal.valueOf(1234.56));
+				Text v = Text.of(toUse.getName() + " (" + toUse.getId() + ") - ");
+				return v.concat(amt);
+			}
+			return null;
 		}
 		// Don't handle nonexistent accounts here, instead throw error
 		UniqueAccount acc = service.getOrCreateAccount(player.getUniqueId()).get();
@@ -537,21 +591,91 @@ public class Defaults {
 		return null;
 	}
 
+	/* ordered */
+	private Map<Currency, List<UniqueAccount>> balTop = new HashMap<>();
+	private Map<Currency, Long> lastUpdate = new HashMap<>();
+
+	private void calculateBalTop(Currency cur) {
+		if (lastUpdate.containsKey(cur) && lastUpdate.get(cur) != null) {
+			long last = lastUpdate.get(cur);
+			if (Duration.ofMillis(System.currentTimeMillis() - last).toMinutes() <= 3) {
+				return;
+			}
+		}
+		List<UniqueAccount> baltop = new ArrayList<>();
+		baltop = this.users.stream().map(u -> u.getUniqueId()).filter(service::hasAccount)
+				.map(service::getOrCreateAccount).filter(Optional::isPresent).map(Optional::get)
+				.sorted((a, b) -> a.getBalance(cur).compareTo(b.getBalance(cur))).collect(Collectors.toList());
+		balTop.put(cur, baltop);
+		lastUpdate.put(cur, System.currentTimeMillis());
+	}
+
 	@Placeholder(id = "time")
 	public LocalDateTime time() {
 		return LocalDateTime.now();
 	}
 
+	private static final Pattern PERM = Pattern.compile("perm(?:ission)?\\_([A-Za-z0-9*\\-]+(?:\\.[A-Za-z0-9*\\-]+)+)",
+			Pattern.CASE_INSENSITIVE),
+			WORLD = Pattern.compile("world\\_([A-Za-z0-9\\_\\-]+)", Pattern.CASE_INSENSITIVE);
+
+	@Placeholder(id = "playerlist")
+	public List<Player> list(@Nullable @Token(fix = true) String token) {
+		if (token == null) {
+			return Sponge.getServer().getOnlinePlayers().stream()
+					.filter(p -> !p.getOrElse(Keys.VANISH_PREVENTS_TARGETING, false)).collect(Collectors.toList());
+		}
+		Stream<Player> out = Sponge.getServer().getOnlinePlayers().stream()
+				.filter(p -> !p.getOrElse(Keys.VANISH_PREVENTS_TARGETING, false));
+		if (PERM.matcher(token).find()) {
+			Matcher m = PERM.matcher(token);
+			while (m.find()) {
+				String permission = m.group(1);
+				out = out.filter(p -> p.hasPermission(permission));
+			}
+		}
+		if (WORLD.matcher(token).find()) {
+			Matcher m = WORLD.matcher(token);
+			while (m.find()) {
+				String world = m.group(1);
+				out = out.filter(p -> p.getWorld().getName().toLowerCase().startsWith(world));
+			}
+		}
+		// TODO:
+		/*
+		 * better token matching
+		 * data key boolean filter -> load key from t
+		 *  - IS_FLYING, for example
+		 * data key numeric filter -> load key again, but also load comparator (>, >=, <, <=, =) and number
+		 *  - Health > 10, for example
+		 *  - sort greatest value for key???
+		 * better idea??:
+		 *  placeholder value filter -> load placeholder from key, load value from key, load comparator
+		 *  sanity checks (no > for boolean, no value present = true/0/max int, depending, no comp present: =)
+		 *  sort by highest comparison
+		 * limiter, top X players if available -> sort by highest comp then alphabetically
+		 */
+		return out.collect(Collectors.toList());
+	}
+
 	@Placeholder(id = "sound")
-	public Text sound(@Source Player p, @Token String identifier) {
+	public Text sound(@Nullable @Source Player p, @Token String identifier) {
 		Game game = PlaceholderAPIPlugin.getInstance().getGame();
 		String[] i = identifier.split("-");
 		Optional<SoundType> sound = game.getRegistry().getType(SoundType.class, i[0].replace("_", "."));
-		Vector3d position = p.getLocation().getPosition();
 		Double volume = Double.valueOf((i[1] == null) ? String.valueOf(1) : i[1]);
 		Double pitch = Double.valueOf((i[2] == null) ? String.valueOf(1) : i[2]);
 		if (sound.isPresent()) {
-			p.playSound(sound.get(), position, volume, pitch);
+			if (p != null) {
+				Vector3d position = p.getLocation().getPosition();
+				p.playSound(sound.get(), position, volume, pitch);
+			} else {
+				Vector3d position;
+				for (Player pl : Sponge.getServer().getOnlinePlayers()) {
+					position = pl.getLocation().getPosition();
+					pl.playSound(sound.get(), position, volume, pitch);
+				}
+			}
 			return Text.EMPTY;// Remove text from replacement
 		} else {
 			return null;// Leave text in replacement

@@ -59,17 +59,17 @@ public interface ExpansionBuilder<S, O, V, B extends ExpansionBuilder<S, O, V, B
 	B reset();
 
 	/**
-	 * Utility method for getting the current state of the builder. Mainly just
-	 * for the methods in this interface.
+	 * Utility method for getting the current state of the builder. Mainly just for
+	 * the methods in this interface.
 	 * 
 	 * @return This builder, unchanged.
 	 */
 	B current();
 
 	/**
-	 * Copy settings from the expansion provided in order to modify it. This
-	 * method ignores the types of the provided expansion and attempts to cast
-	 * them to its own.
+	 * Copy settings from the expansion provided in order to modify it. This method
+	 * ignores the types of the provided expansion and attempts to cast them to its
+	 * own.
 	 * 
 	 * @param exp
 	 *            The expansion from which to draw values.
@@ -84,17 +84,17 @@ public interface ExpansionBuilder<S, O, V, B extends ExpansionBuilder<S, O, V, B
 	/**
 	 * Create a builder for a method in the object.
 	 *
-	 * This will attempt to find a method which has the "@Placeholder"
-	 * annotation linked to the provided id. If it exists, it will create the
-	 * builder. This will attempt to use the relational field to determine if it
-	 * can parse that method, which will by default be the normal method. If it
-	 * does not find that method, it will check for one which is not relational.
+	 * This will attempt to find a method which has the "@Placeholder" annotation
+	 * linked to the provided id. If it exists, it will create the builder. This
+	 * will attempt to use the relational field to determine if it can parse that
+	 * method, which will by default be the normal method. If it does not find that
+	 * method, it will check for one which is not relational.
 	 * 
 	 * This method alters the function, the plugin, the id and the relational
 	 * fields. Any other previously existing fields will be conserved.
 	 * 
-	 * The provided id must exist on at least one method. Any repeated ids will
-	 * be ignored unless they are of different relational status.
+	 * The provided id must exist on at least one method. Any repeated ids will be
+	 * ignored unless they are of different relational status.
 	 * 
 	 * @param obj
 	 *            The object containing the placeholder method.
@@ -107,12 +107,15 @@ public interface ExpansionBuilder<S, O, V, B extends ExpansionBuilder<S, O, V, B
 	B from(Object handle, String id, Object plugin);
 
 	/**
-	 * This method will build the expansion. This is not a terminating operation
-	 * on the builder, so if you wish to reuse the builder under a new id, you
-	 * could do so.
+	 * This method will build the expansion. This is not a terminating operation on
+	 * the builder, so if you wish to reuse the builder under a new id, you could do
+	 * so.
 	 * 
-	 * This method will throw an exception if the id, plugin or function have
-	 * not been specified.
+	 * This method will throw an exception if the id, plugin or function have not
+	 * been specified.
+	 * 
+	 * It is recommended NOT to use this method and instead use
+	 * {@link ExpansionBuilder#buildAndRegister()}.
 	 * 
 	 * @return The expansion, if successfully built.
 	 * @throws Exception
@@ -122,10 +125,11 @@ public interface ExpansionBuilder<S, O, V, B extends ExpansionBuilder<S, O, V, B
 
 	/**
 	 * This method will build the expansion and then attemp to register the
-	 * expansion.
+	 * expansion. This is not a terminating operation on the builder, so if you wish
+	 * to reuse the builder under a new id, you could do so.
 	 * 
-	 * This method will throw an exception if the id, plugin or function have
-	 * not been specified.
+	 * This method will throw an exception if the id, plugin or function have not
+	 * been specified.
 	 * 
 	 * @return Whether the registration was successful.
 	 * @throws Exception
@@ -134,8 +138,8 @@ public interface ExpansionBuilder<S, O, V, B extends ExpansionBuilder<S, O, V, B
 	boolean buildAndRegister() throws Exception;
 
 	/**
-	 * Register listeners via the placeholder. This will attempt to use the
-	 * provided plugin object for registration.
+	 * Register listeners via the placeholder. This will attempt to use the provided
+	 * plugin object for registration.
 	 * 
 	 * This listener will be unregistered and then registered again on reload.
 	 */
@@ -172,8 +176,8 @@ public interface ExpansionBuilder<S, O, V, B extends ExpansionBuilder<S, O, V, B
 
 	/**
 	 * Sets the url of the expansion. This links to a website or source for
-	 * information or downloads on the internet, if the author so chooses to
-	 * include one.
+	 * information or downloads on the internet, if the author so chooses to include
+	 * one.
 	 * 
 	 * @param url
 	 *            The url of the expansion.
@@ -185,8 +189,8 @@ public interface ExpansionBuilder<S, O, V, B extends ExpansionBuilder<S, O, V, B
 
 	/**
 	 * Sets the url of the expansion. This links to a website or source for
-	 * information or downloads on the internet, if the author so chooses to
-	 * include one.
+	 * information or downloads on the internet, if the author so chooses to include
+	 * one.
 	 * 
 	 * @param url
 	 *            The url of the expansion.
@@ -250,17 +254,16 @@ public interface ExpansionBuilder<S, O, V, B extends ExpansionBuilder<S, O, V, B
 
 	/**
 	 * Set whether this expansion is relational. `Relational` means that this
-	 * expansion's parse will be called when the id "rel_[id]" is passed into
-	 * the service. It also means that, if this expansion's parsing returns null
-	 * AND the server's configuration allows it, it will try to return the value
-	 * of the placeholder of id "[id]" if it exists for the observer.
+	 * expansion's parse will be called when the id "rel_[id]" is passed into the
+	 * service. It also means that, if this expansion's parsing returns null AND the
+	 * server's configuration allows it, it will try to return the value of the
+	 * placeholder of id "[id]" if it exists for the observer.
 	 * 
-	 * Setting this to true in no way guarantees that it will use the observer,
-	 * that the observer will not be null, or that it requires the observer at
-	 * all.
+	 * Setting this to true in no way guarantees that it will use the observer, that
+	 * the observer will not be null, or that it requires the observer at all.
 	 * 
-	 * Conversely, if this is false, that in no way guarantees that it will not
-	 * use the observer.
+	 * Conversely, if this is false, that in no way guarantees that it will not use
+	 * the observer.
 	 * 
 	 * @param relational
 	 *            Whether this expansion is relational.
@@ -269,8 +272,8 @@ public interface ExpansionBuilder<S, O, V, B extends ExpansionBuilder<S, O, V, B
 	B relational(boolean relational);
 
 	/**
-	 * Add an object which holds config values. This object will be populated
-	 * with configuration options when the expansion is loaded and reloaded.
+	 * Add an object which holds config values. This object will be populated with
+	 * configuration options when the expansion is loaded and reloaded.
 	 * 
 	 * @param config
 	 *            The object to populate.
@@ -291,8 +294,8 @@ public interface ExpansionBuilder<S, O, V, B extends ExpansionBuilder<S, O, V, B
 	B reloadFunction(Predicate<Expansion<S, O, V>> reload);
 
 	/**
-	 * Execute a function for the parsing of this expansion. ExpansionFunction
-	 * is a functional interface, meaning the method code may use lambdas.
+	 * Execute a function for the parsing of this expansion. ExpansionFunction is a
+	 * functional interface, meaning the method code may use lambdas.
 	 * 
 	 * @param exec
 	 *            The function to execute.

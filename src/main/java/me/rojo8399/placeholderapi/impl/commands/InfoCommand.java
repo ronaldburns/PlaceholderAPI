@@ -26,7 +26,6 @@ package me.rojo8399.placeholderapi.impl.commands;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -46,6 +45,7 @@ import me.rojo8399.placeholderapi.impl.configs.Messages;
 import me.rojo8399.placeholderapi.impl.placeholder.Expansion;
 import me.rojo8399.placeholderapi.impl.placeholder.Store;
 import me.rojo8399.placeholderapi.impl.utils.TextUtils;
+import me.rojo8399.placeholderapi.impl.utils.TypeUtils;
 
 public class InfoCommand implements CommandExecutor {
 
@@ -70,13 +70,12 @@ public class InfoCommand implements CommandExecutor {
 
 	private static Text formatExpansion(String e, CommandSource src) {
 		List<Expansion<?, ?, ?>> conts = Arrays.asList(Store.get().get(e, true), Store.get().get(e, false)).stream()
-				.filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+				.flatMap(TypeUtils.unmapOptional()).collect(Collectors.toList());
 		Expansion<?, ?, ?> norm;
 		try {
 			norm = conts.get(0);
 		} catch (Exception ex) {
-			return Text.of(
-					TextColors.RED + "Placeholder was not registered correctly! Please check the logs for details.");
+			return Messages.get().placeholder.improperRegistration.t();
 		}
 		Expansion<?, ?, ?> rel = null;
 		if (conts.size() > 1) {

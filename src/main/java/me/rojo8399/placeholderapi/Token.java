@@ -34,8 +34,16 @@ import java.lang.annotation.Target;
 @Retention(RUNTIME)
 @Target(PARAMETER)
 /**
- * This annotation denotes the token which will hold more intricate details about the placeholders needed.
- * Supported types: Optional<String>, String.
+ * This annotation denotes the token which will hold more intricate details
+ * about the placeholders needed. Supported types: Optional<String>, String.
  */
 public @interface Token {
+
+	/**
+	 * 'Fix' the input token to be more useful. This will call toLowerCase and trim
+	 * on the string value of the token. This does nothing if the token is optional.
+	 * 
+	 * @return whether or not to fix the token
+	 */
+	boolean fix() default false;
 }
