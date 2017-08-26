@@ -41,7 +41,6 @@ import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.RETURN;
 import static org.objectweb.asm.Opcodes.V1_8;
 
-import java.io.File;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
@@ -67,7 +66,6 @@ import org.spongepowered.api.world.Locatable;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.io.Files;
 
 import me.rojo8399.placeholderapi.Observer;
 import me.rojo8399.placeholderapi.Placeholder;
@@ -122,8 +120,10 @@ public class ClassPlaceholderFactory {
 		String name = this.targetPackage + id + "Placeholder_" + handle.getSimpleName() + "_" + method.getName()
 				+ iid.incrementAndGet();
 		byte[] bytes = generateClass(name, handle, method);
+		/*
 		Files.write(bytes, new File(name + ".class"));
 		System.out.println("written " + name);
+		*/
 		return this.classLoader.defineClass(name, bytes);
 	}
 
