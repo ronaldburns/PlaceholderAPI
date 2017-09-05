@@ -33,6 +33,7 @@ import org.spongepowered.api.data.DataHolder;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
+import org.spongepowered.api.text.action.TextActions;
 import org.spongepowered.api.text.channel.MessageReceiver;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.world.Locatable;
@@ -120,7 +121,14 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			try {
 				value = store.parse(id, rel, s, o, Optional.ofNullable(token), Text.class).orElse(null);
 			} catch (Exception e) {
-				value = Text.of(TextColors.RED, "ERROR: " + e.getMessage());
+				String cl = "";
+				try {
+					cl = e.getCause().getMessage() + " ";
+				} catch (Exception xe) {
+				}
+				value = Text.of(TextColors.RED,
+						TextActions.showText(Text.of(TextColors.RED, "Check the console for details!")),
+						"ERROR: " + cl + e.getMessage());
 				e.printStackTrace();
 			}
 
@@ -128,7 +136,14 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 				try {
 					value = store.parse(id, false, o, s, Optional.ofNullable(token), Text.class).orElse(null);
 				} catch (Exception e) {
-					value = Text.of(TextColors.RED, "ERROR: " + e.getMessage());
+					String cl = "";
+					try {
+						cl = e.getCause().getMessage() + " ";
+					} catch (Exception xe) {
+					}
+					value = Text.of(TextColors.RED,
+							TextActions.showText(Text.of(TextColors.RED, "Check the console for details!")),
+							"ERROR: " + cl + e.getMessage());
 					e.printStackTrace();
 				}
 			}

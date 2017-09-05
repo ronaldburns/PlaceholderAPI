@@ -163,8 +163,51 @@ public class TypeUtils {
 			}
 		}
 		if (val instanceof String) {
+			if (String.class.isAssignableFrom(expected)) {
+				return tryOptional(() -> expected.cast((String) val));
+			}
 			if (expected.isArray() && String.class.isAssignableFrom(expected.getComponentType())) {
-				return tryOptional(() -> expected.cast(((String) val).split("_")));
+				String v = (String) val;
+				if (v.isEmpty()) {
+					return Optional.empty();
+				}
+				if (!v.contains("_")) {
+					return tryOptional(() -> expected.cast(new String[] { v }));
+				}
+				String[] x = v.split("_");
+				if (x.length == 0) {
+					return Optional.empty();
+				}
+				boolean ne = false;
+				for (String s : x) {
+					ne = ne || !s.isEmpty();
+				}
+				if (!ne) {
+					return Optional.empty();
+				}
+				return tryOptional(() -> expected.cast(x));
+			}
+			if (List.class.isAssignableFrom(expected)
+					&& String.class.isAssignableFrom(expected.getTypeParameters()[0].getGenericDeclaration())) {
+				String v = (String) val;
+				if (v.isEmpty()) {
+					return Optional.empty();
+				}
+				if (!v.contains("_")) {
+					return tryOptional(() -> expected.cast(Arrays.asList(v)));
+				}
+				String[] x = v.split("_");
+				if (x.length == 0) {
+					return Optional.empty();
+				}
+				boolean ne = false;
+				for (String s : x) {
+					ne = ne || !s.isEmpty();
+				}
+				if (!ne) {
+					return Optional.empty();
+				}
+				return tryOptional(() -> expected.cast(Arrays.asList(x)));
 			}
 			Optional<T> opt = tryOptional(() -> convertPrimitive((String) val, expected));
 			if (opt.isPresent()) {

@@ -258,9 +258,6 @@ public class Store {
 	}
 
 	private int verify(Object object, Method m) {
-		if (m.getReturnType().equals(Void.TYPE)) {
-			return 2;
-		}
 		Placeholder p;
 		if ((p = m.getAnnotation(Placeholder.class)) != null) {
 			String id = fix(p.id());
@@ -307,13 +304,13 @@ public class Store {
 		boolean l = c.isAnnotationPresent(Listening.class), co = c.isAnnotationPresent(ConfigSerializable.class);
 		int code = verify(o, m);
 		if (code > 0) {
+			PlaceholderAPIPlugin.getInstance().getLogger()
+					.warn("Method " + m.getName() + " in " + o.getClass().getName() + " cannot be loaded!");
 			switch (code) {
 			case 1:
 				PlaceholderAPIPlugin.getInstance().getLogger()
 						.warn("This should not happen! Please report this bug on GitHub!");
 				break;
-			case 2:
-				PlaceholderAPIPlugin.getInstance().getLogger().warn("Method cannot return void!");
 			case 5:
 			case 6:
 				PlaceholderAPIPlugin.getInstance().getLogger().warn("Placeholder already registered!");

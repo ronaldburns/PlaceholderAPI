@@ -338,7 +338,7 @@ public class PlaceholderAPIPlugin {
 
 	public void registerPlaceholders() {
 		EconomyService ex = game.getServiceManager().provide(EconomyService.class).orElse(null);
-		Defaults handle = new Defaults(ex, this.jsm);
+		Defaults handle = new Defaults(ex, this.jsm, s);
 		s.loadAll(handle, this).stream().map(builder -> {
 			switch (builder.getId()) {
 			case "player": {

@@ -91,7 +91,7 @@ import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 @ConfigSerializable
 public class Defaults {
 
-	public Defaults(EconomyService service, JavascriptManager manager) {
+	public Defaults(EconomyService service, JavascriptManager manager, PlaceholderService s) {
 		if (service != null) {
 			eco = true;
 			this.service = service;
@@ -108,7 +108,7 @@ public class Defaults {
 			js = false;
 		}
 		server = PlaceholderAPIPlugin.getInstance().getGame().getServer();
-		s = Sponge.getServiceManager().provideUnchecked(PlaceholderService.class);
+		this.s = s;
 		Optional<UserStorageService> o = Sponge.getServiceManager().provide(UserStorageService.class);
 		if (o.isPresent()) {
 			this.storage = o.get();

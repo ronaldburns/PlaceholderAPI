@@ -191,10 +191,7 @@ public class ClassPlaceholderFactory {
 		final String handleName = Type.getInternalName(handle);
 		final String handleDescriptor = Type.getDescriptor(handle);
 		List<Parameter> pm = Arrays.asList(method.getParameters());
-		boolean token = pm.stream().anyMatch(p -> p.isAnnotationPresent(Token.class) && (!(p
-				.getParameterizedType() instanceof ParameterizedType)
-				|| (p.getType().equals(Optional.class) || (p.getParameterizedType() instanceof ParameterizedType
-						&& ((ParameterizedType) p.getParameterizedType()).getActualTypeArguments().length == 0))));
+		boolean token = pm.stream().anyMatch(p -> p.isAnnotationPresent(Token.class));
 		final boolean source = pm.stream().anyMatch(p -> p.isAnnotationPresent(Source.class));
 		final boolean observer = pm.stream().anyMatch(p -> p.isAnnotationPresent(Observer.class));
 		final boolean srcNullable = pm.stream().filter(p -> p.isAnnotationPresent(Source.class))
@@ -202,9 +199,6 @@ public class ClassPlaceholderFactory {
 		final boolean optionalTokenType = token && pm.stream().anyMatch(p -> p.getType().equals(Optional.class));
 		final Optional<Class<?>> tokenClass = token
 				? pm.stream().filter(p -> p.isAnnotationPresent(Token.class)).findAny().map(pr -> {
-					if (pr.getType().isArray()) {
-						return null;
-					}
 					if (optionalTokenType) {
 						return (Class<?>) ((ParameterizedType) pr.getParameterizedType()).getActualTypeArguments()[0];
 					} else {
@@ -227,10 +221,7 @@ public class ClassPlaceholderFactory {
 		if (returnType.equals(Void.TYPE)) {
 			returnType = Object.class;
 		}
-		String retString = getInternalNamePrim(returnType);
-		if (!returnType.isPrimitive() && (!isPrimNDArray(returnType))) {
-			retString = "L" + retString + ";";
-		}
+		String retString = Type.getDescriptor(returnType);
 		String parseMethodDescriptor = "(L" + Type.getInternalName(sourceType.orElse(Locatable.class)) + ";L"
 				+ Type.getInternalName(observerType.orElse(Locatable.class)) + ";L" + OPT_NAME + ";)" + retString;
 		String externalParseDescriptor = "(Ljava/lang/Object;Ljava/lang/Object;Ljava/util/Optional;)Ljava/lang/Object;";
@@ -258,7 +249,8 @@ public class ClassPlaceholderFactory {
 			mv.visitFieldInsn(GETFIELD, name, "handle", "L" + OBJECT_NAME + ";");
 			mv.visitTypeInsn(CHECKCAST, handleName);
 			if (token) {
-				if (!String.class.isAssignableFrom(tokenClass.get())) {
+				if (!String.class.isAssignableFrom(tokenClass.get()) || (tokenClass.get().isArray()
+						&& String.class.isAssignableFrom(tokenClass.get().getComponentType()))) {
 					mv.visitVarInsn(ALOAD, 3);
 					mv.visitInsn(ACONST_NULL);
 					mv.visitMethodInsn(INVOKEVIRTUAL, OPT_NAME, "orElse", "(Ljava/lang/Object;)Ljava/lang/Object;",
@@ -468,14 +460,6 @@ public class ClassPlaceholderFactory {
 			}
 		}
 		return primClass;
-	}
-
-	private static String getInternalNamePrim(Class<?> clazz) {
-		if (clazz.isPrimitive()) {
-			return Type.getType(clazz).getDescriptor();
-		} else {
-			return Type.getInternalName(clazz);
-		}
 	}
 
 	private static void boxToPrim(MethodVisitor mv, Class<?> p, int varloc) {
