@@ -103,6 +103,10 @@ public class Store {
 		return null;
 	}
 
+	public void saveAll() {
+		Stream.concat(getMap(true).values().stream(), getMap(false).values().stream()).forEach(Expansion::saveConfig);
+	}
+
 	public <T> Optional<T> parse(String id, boolean relational, Object src, Object obs, Optional<String> token,
 			Class<T> expected) throws Exception {
 		Object o = parse(id, relational, src, obs, token);
@@ -273,7 +277,7 @@ public class Store {
 			}
 			if (!params.stream().map(px -> {
 				if (px.getAnnotation(Token.class) != null) {
-					return verifyToken(px);
+					return true;
 				}
 				if (px.getAnnotation(Source.class) != null || px.getAnnotation(Observer.class) != null) {
 					return verifySource(px);
@@ -281,6 +285,17 @@ public class Store {
 				return false;
 			}).reduce(true, TypeUtils::and)) {
 				return 7;
+			}
+			if (params.stream().map(px -> {
+				if (px.getAnnotation(Token.class) != null) {
+					return true;
+				}
+				if (px.getAnnotation(Source.class) != null || px.getAnnotation(Observer.class) != null) {
+					return verifySource(px);
+				}
+				return false;
+			}).filter(px -> px).count() != params.size()) {
+				return 4;
 			}
 			return 0;
 		}
@@ -351,10 +366,6 @@ public class Store {
 		pl.setId(p.id());
 		pl.setRelational(r);
 		return pl;
-	}
-
-	private static boolean verifyToken(Parameter param) {
-		return Optional.class.isAssignableFrom(param.getType()) || String.class.isAssignableFrom(param.getType());
 	}
 
 	private static boolean verifySource(Parameter param) {

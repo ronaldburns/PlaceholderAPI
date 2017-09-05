@@ -26,11 +26,14 @@ package me.rojo8399.placeholderapi;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
+
+import com.google.common.reflect.TypeToken;
 
 import me.rojo8399.placeholderapi.impl.placeholder.Expansion;
 import me.rojo8399.placeholderapi.impl.utils.TextUtils;
@@ -111,7 +114,7 @@ public interface PlaceholderService {
 	 * 
 	 * @param template
 	 *            The template to draw the values from. Any non-optional values
-	 *            which cannot be parsed will be should be filled with the string
+	 *            which cannot be parsed will be filled with the string
 	 *            representation of the template argument.
 	 * @param source
 	 *            The source to draw placeholders from. This object must be of the
@@ -166,7 +169,7 @@ public interface PlaceholderService {
 	 *            throw an exception.
 	 * @return The parsed placeholders mapped to their identifiers.
 	 */
-	public default Map<String, Object> fill(List<String> placeholders, Object source, Object observer) {
+	public default Map<String, Object> parseAll(List<String> placeholders, Object source, Object observer) {
 		return placeholders.stream().collect(Collectors.toMap(s -> s, s -> parse(s, source, observer)));
 	}
 
@@ -495,5 +498,18 @@ public interface PlaceholderService {
 	public default boolean verifyObserver(Object target) {
 		return verifySource(target);
 	}
+
+	/**
+	 * Register a deserializer for type T to the plugin.
+	 * 
+	 * This will, on parsing a token, attempt to deserialize the token into the
+	 * type. If this throws an exception or returns null, the plugin will move on to
+	 * the next deserializer.
+	 * 
+	 * NOTE: There is no reason to provide a Text deserializer or a primitive type
+	 * (basic numbers + char and boolean) deserializer as those are handled by the
+	 * plugin by default.
+	 */
+	public <T> void registerTypeDeserializer(TypeToken<T> token, Function<String, T> deserializer);
 
 }

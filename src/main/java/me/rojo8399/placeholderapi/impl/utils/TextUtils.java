@@ -37,6 +37,7 @@ import javax.annotation.Nullable;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
+import org.spongepowered.api.text.LiteralText;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
 import org.spongepowered.api.text.action.TextActions;
@@ -91,6 +92,19 @@ public class TextUtils {
 		return out;
 	}
 
+	public static Text replace(Text original, String o, String n) {
+		List<Text> texts = flatten(original);
+		return texts.stream().map(text -> replace(text, o, n, true)).reduce(Text.of(), Text::concat);
+	}
+
+	private static Text replace(Text or, String o, String n, boolean priv) {
+		if (!(or instanceof LiteralText)) {
+			return or;
+		}
+		LiteralText lt = (LiteralText) or;
+		return lt.toBuilder().content(lt.getContent().replace(o, n)).build();
+	}
+
 	public static Text ofItem(@Nullable ItemStack item) {
 		if (item == null) {
 			return Text.EMPTY;
@@ -99,9 +113,9 @@ public class TextUtils {
 		return Text.of(TextActions.showItem(item.createSnapshot()), item.getOrElse(Keys.DISPLAY_NAME, Text.of(item)),
 				q);
 	}
-	
+
 	public static Text ofItem(@Nullable ItemStackSnapshot item) {
-		if(item==null) {
+		if (item == null) {
 			return Text.EMPTY;
 		}
 		return Text.of(TextActions.showItem(item), item.getOrElse(Keys.DISPLAY_NAME, Text.of(item)));

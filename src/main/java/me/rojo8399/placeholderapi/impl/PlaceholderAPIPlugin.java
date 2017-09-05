@@ -207,8 +207,10 @@ public class PlaceholderAPIPlugin {
 		}
 		Messages.init(msgs);
 		this.formatter = DateTimeFormatter.ofPattern(config.dateFormat);
+		s = PlaceholderServiceImpl.get();
+		registerPlaceholders();
 		// Provide default implementation
-		game.getServiceManager().setProvider(this, PlaceholderService.class, s = PlaceholderServiceImpl.get());
+		game.getServiceManager().setProvider(this, PlaceholderService.class, s);
 	}
 
 	@Listener
@@ -316,7 +318,6 @@ public class PlaceholderAPIPlugin {
 
 	@Listener
 	public void onGameStartingServerEvent(GameStartingServerEvent event) {
-		registerPlaceholders();
 		metrics.addCustomChart(new Metrics.SimpleBarChart("placeholders") {
 			@Override
 			public HashMap<String, Integer> getValues(HashMap<String, Integer> valueMap) {
@@ -424,6 +425,7 @@ public class PlaceholderAPIPlugin {
 	@Listener
 	public void onStop(GameStoppingEvent event) {
 		saveConfig();
+		Store.get().saveAll();
 	}
 
 	public void reloadConfig() throws IOException, ObjectMappingException {

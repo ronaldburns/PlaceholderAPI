@@ -146,8 +146,8 @@ public abstract class Expansion<S, O, V> {
 	}
 
 	/**
-	 * Set the valid tokens for this expansion. Useful for reloading a dynamic
-	 * token expansion.
+	 * Set the valid tokens for this expansion. Useful for reloading a dynamic token
+	 * expansion.
 	 * 
 	 * @param tokens
 	 *            The new tokens to use.
@@ -157,8 +157,8 @@ public abstract class Expansion<S, O, V> {
 	}
 
 	/**
-	 * Set the valid tokens for this expansion. Useful for reloading a dynamic
-	 * token expansion.
+	 * Set the valid tokens for this expansion. Useful for reloading a dynamic token
+	 * expansion.
 	 * 
 	 * @param tokens
 	 *            The new tokens to use.
@@ -168,8 +168,8 @@ public abstract class Expansion<S, O, V> {
 	}
 
 	/**
-	 * Reload the placeholder. By default it does nothing, but it can be
-	 * overridden to do whatever the implementer needs to do on reload.
+	 * Reload the placeholder. By default it does nothing, but it can be overridden
+	 * to do whatever the implementer needs to do on reload.
 	 * 
 	 * @return Whether the reload was succesful.
 	 */
@@ -257,8 +257,8 @@ public abstract class Expansion<S, O, V> {
 	}
 
 	/**
-	 * Null constructor. Used by method wrapper generator. DO NOT USE THIS
-	 * UNLESS YOU KNOW WHAT YOU ARE DOING.
+	 * Null constructor. Used by method wrapper generator. DO NOT USE THIS UNLESS
+	 * YOU KNOW WHAT YOU ARE DOING.
 	 * 
 	 * @param id
 	 *            The id of the expansion.
@@ -342,8 +342,8 @@ public abstract class Expansion<S, O, V> {
 	}
 
 	/**
-	 * Get the configuration object. Will attempt to cast to requested type,
-	 * returns null if failed.
+	 * Get the configuration object. Will attempt to cast to requested type, returns
+	 * null if failed.
 	 * 
 	 * @return The configuration object.
 	 */
@@ -390,8 +390,8 @@ public abstract class Expansion<S, O, V> {
 	}
 
 	/**
-	 * Populate the configuration of this expansion. Will update the values
-	 * received when calling getConfiguration().
+	 * Populate the configuration of this expansion. Will update the values received
+	 * when calling getConfiguration().
 	 */
 	public void populateConfig() {
 		populateConfigObject();
@@ -404,6 +404,29 @@ public abstract class Expansion<S, O, V> {
 			this.enabled = node.getNode("enabled").getBoolean(true);
 			node.getNode("enabled").setValue(enabled);
 		}
+	}
+
+	protected void saveConfigObject() {
+		if (configObject == null || PlaceholderAPIPlugin.getInstance() == null
+				|| PlaceholderAPIPlugin.getInstance().getRootConfig() == null) {
+			return;
+		}
+		ConfigurationNode node = PlaceholderAPIPlugin.getInstance().getRootConfig().getNode("expansions",
+				Sponge.getPluginManager().fromInstance(plugin).get().getId(),
+				(relational ? "rel_" : "") + id().toLowerCase().trim(), "data");
+		try {
+			ObjectMapper.forObject(configObject).serialize(node);
+			PlaceholderAPIPlugin.getInstance().saveConfig();
+		} catch (Exception e2) {
+		}
+	}
+
+	public void saveConfig() {
+		saveConfigObject();
+		ConfigurationNode node = PlaceholderAPIPlugin.getInstance().getRootConfig().getNode("expansions",
+				Sponge.getPluginManager().fromInstance(plugin).get().getId(),
+				(relational ? "rel_" : "") + id().toLowerCase().trim());
+		node.getNode("enabled").setValue(enabled);
 	}
 
 	final void setId(String id) {
@@ -561,8 +584,8 @@ public abstract class Expansion<S, O, V> {
 	}
 
 	/**
-	 * @return The tokens this expansion supports. A null/empty token means %id%
-	 *         is supported.
+	 * @return The tokens this expansion supports. A null/empty token means %id% is
+	 *         supported.
 	 */
 	public final List<String> tokens() {
 		return tokens;

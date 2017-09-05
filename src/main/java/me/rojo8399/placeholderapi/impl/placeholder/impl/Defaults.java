@@ -24,6 +24,7 @@
 package me.rojo8399.placeholderapi.impl.placeholder.impl;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -36,10 +37,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.script.ScriptEngine;
@@ -57,7 +56,9 @@ import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.filter.Getter;
+import org.spongepowered.api.event.game.state.GameStoppingEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
+import org.spongepowered.api.event.service.ChangeServiceProviderEvent;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.service.economy.Currency;
 import org.spongepowered.api.service.economy.EconomyService;
@@ -81,8 +82,13 @@ import me.rojo8399.placeholderapi.Token;
 import me.rojo8399.placeholderapi.impl.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.impl.configs.JavascriptManager;
 import me.rojo8399.placeholderapi.impl.configs.Messages;
+import me.rojo8399.placeholderapi.impl.placeholder.Expansion;
+import me.rojo8399.placeholderapi.impl.placeholder.Store;
+import ninja.leaping.configurate.objectmapping.Setting;
+import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 
 @Listening
+@ConfigSerializable
 public class Defaults {
 
 	public Defaults(EconomyService service, JavascriptManager manager) {
@@ -109,6 +115,8 @@ public class Defaults {
 			changed = true;
 			sync();
 		}
+		current = new Uptime();
+		current.start();
 	}
 
 	private boolean eco = true;
@@ -120,11 +128,10 @@ public class Defaults {
 	}
 
 	@Placeholder(id = "player")
-	public Object normalPlayer(@Source Player p, @Token Optional<String> identifier) {
-		if (!identifier.isPresent()) {
+	public Object normalPlayer(@Source Player p, @Token(fix = true) @Nullable String token) {
+		if (token == null) {
 			return p.getName();
 		}
-		String token = identifier.get().toLowerCase().trim();
 		if (token.startsWith("option_")) {
 			String op = token.substring("option_".length());
 			return p.getOption(op).orElse("");
@@ -253,6 +260,40 @@ public class Defaults {
 		}
 	}
 
+	private static double getTime(long time, TimeUnit unit) {
+		boolean ticks = unit == null;
+		if (ticks) {
+			return time;
+		} else {
+			double time2 = ((double) time) / 20;
+			if (unit == TimeUnit.SECONDS) {
+				return time2;
+			}
+			double value = time2 / TimeUnit.SECONDS.convert(1, unit);
+			return value;
+		}
+	}
+
+	private static long getTime(long time, TimeUnit unit, boolean round) {
+		boolean ticks = unit == null;
+		if (ticks) {
+			return time;
+		} else {
+			double time2 = ((double) time) / 20;
+			if (unit == TimeUnit.SECONDS) {
+				if (!round) {
+					return (long) time2;
+				}
+				return Math.round(time2);
+			}
+			double value = time2 / TimeUnit.SECONDS.convert(1, unit);
+			if (!round) {
+				return (long) value;
+			}
+			return Math.round(value);
+		}
+	}
+
 	private static long getTime(Player player, TimeUnit unit, boolean round) {
 		boolean ticks = unit == null;
 		long time = Optional.ofNullable(
@@ -275,6 +316,53 @@ public class Defaults {
 			}
 			return Math.round(value);
 		}
+	}
+
+	@Setting
+	private List<Uptime> uptimes = new ArrayList<>();
+
+	private long getDowntimeMillis() {
+		long lastFinTime = 0;
+		long out = 0;
+		for (Uptime u : uptimes) {
+			if (lastFinTime == 0) {
+				lastFinTime = u.finishTimeMillis;
+				continue;
+			}
+			out += u.startTimeMillis - lastFinTime;
+			lastFinTime = u.finishTimeMillis;
+		}
+		return out;
+	}
+
+	private long getUptimeMillis() {
+		return uptimes.stream().map(u -> u.finishTimeMillis - u.startTimeMillis).reduce(0l, (a, b) -> a + b);
+	}
+
+	private Uptime current;
+
+	@ConfigSerializable
+	private static class Uptime {
+
+		@Setting("start-time")
+		public long startTimeMillis;
+		@Setting("end-time")
+		public long finishTimeMillis;
+
+		public void start() {
+			startTimeMillis = System.currentTimeMillis();
+		}
+
+		public void finish() {
+			finishTimeMillis = System.currentTimeMillis();
+		}
+	}
+
+	@Listener
+	public void onStopping(GameStoppingEvent event) {
+		current.finish();
+		uptimes.add(current);
+		Store.get().get("server", false).ifPresent(Expansion::saveConfig);
 	}
 
 	private static String getCardinal(Player player) {
@@ -313,12 +401,13 @@ public class Defaults {
 
 	@Placeholder(id = "player")
 	@Relational
-	public Object relPlayer(@Source Player one, @Observer CommandSource two, @Token Optional<String> token) {
+	public Object relPlayer(@Source Player one, @Observer CommandSource two,
+			@Token(fix = true) @Nullable String token) {
 		if (!(two instanceof Player)) {
-			if (!token.isPresent()) {
+			if (token == null) {
 				return two.getName();
 			}
-			String t = token.get().toLowerCase().trim();
+			String t = token;
 			if (t.startsWith("option_")) {
 				String op = t.substring("option_".length());
 				return two.getOption(op).orElse("");
@@ -331,10 +420,10 @@ public class Defaults {
 				return two.getOption(t).orElse("");
 			}
 		}
-		if (!token.isPresent()) {
+		if (token == null) {
 			return null;
 		}
-		String t = token.get().toLowerCase().trim();
+		String t = token;
 		switch (t) {
 		case "distance":
 			if (!(two instanceof Locatable)) {
@@ -345,7 +434,7 @@ public class Defaults {
 			if (!(two instanceof Entity)) {
 				return false;
 			}
-			return one.canSee((Entity) two) && !((Entity) two).get(Keys.VANISH).orElse(false);
+			return ((Entity) two).canSee((Entity) one) && !((Entity) one).get(Keys.VANISH).orElse(false);
 		case "audible":
 			return one.getMessageChannel().getMembers().contains(two);
 		case "distance_x":
@@ -382,8 +471,8 @@ public class Defaults {
 
 	@Placeholder(id = "rank")
 	@Relational
-	public Boolean isAbove(@Nullable @Token String token, @Source User underrank, @Observer User overrank) {
-		if (token == null || !(token.equalsIgnoreCase("greater_than") || token.equalsIgnoreCase("less_than"))) {
+	public Boolean isAbove(@Token String token, @Source User underrank, @Observer User overrank) {
+		if (!(token.equalsIgnoreCase("greater_than") || token.equalsIgnoreCase("less_than"))) {
 			return null;
 		}
 		if (token.equalsIgnoreCase("greater_than")) {
@@ -400,12 +489,12 @@ public class Defaults {
 	}
 
 	@Placeholder(id = "rank")
-	public Object rank(@Source User player, @Token Optional<String> token) {
-		if (!token.isPresent()) {
+	public Object rank(@Source User player, @Token(fix = true) @Nullable String token) {
+		if (token == null) {
 			return getParentGroup(player).getIdentifier();
 		}
 		Subject rank = getParentGroup(player);
-		String t = token.get().toLowerCase().trim();
+		String t = token;
 		switch (t) {
 		case "prefix":
 		case "suffix":
@@ -446,6 +535,22 @@ public class Defaults {
 		changed = users.add(player) || changed;
 	}
 
+	@Listener
+	public void newEco(ChangeServiceProviderEvent event) {
+		if (event.getService().equals(EconomyService.class)) {
+			EconomyService s = (EconomyService) event.getNewProvider();
+			if (s != null) {
+				eco = true;
+				this.service = s;
+				this.def = service.getDefaultCurrency();
+				this.currencies.clear();
+				service.getCurrencies().forEach(this::putCur);
+			} else {
+				eco = false;
+			}
+		}
+	}
+
 	private boolean contains(Player p) {
 		return users.stream().map(u -> u.getUniqueId()).anyMatch(p.getUniqueId()::equals);
 	}
@@ -466,7 +571,7 @@ public class Defaults {
 	}
 
 	@Placeholder(id = "server")
-	public Object server(@Token String identifier) {
+	public Object server(@Token(fix = true) String identifier) {
 		switch (identifier) {
 		case "online":
 			return Sponge.getServer().getOnlinePlayers().stream()
@@ -477,6 +582,14 @@ public class Defaults {
 			return unique();
 		case "motd":
 			return Sponge.getServer().getMotd();
+		case "uptime":
+		case "uptime_percent":
+			long um = this.getUptimeMillis();
+			long dm = this.getDowntimeMillis();
+			return DecimalFormat.getPercentInstance()
+					.format(100D * (double) ((double) um / ((double) dm + (double) um))) + "%";
+		case "uptime_total":
+			return Duration.ofMillis(this.getUptimeMillis());
 		case "ram_used":
 			return ((runtime.totalMemory() - runtime.freeMemory()) / MB);
 		case "ram_free":
@@ -499,16 +612,16 @@ public class Defaults {
 	private Currency def;
 
 	@Placeholder(id = "economy")
-	public Object economy(@Token Optional<String> token, @Nullable @Source User player) {
+	public Object economy(@Token(fix = true) @Nullable String token, @Nullable @Source User player) {
 		if (service == null || !eco) {
 			return null;
 		}
-		if (!token.isPresent()) {
+		if (token == null) {
 			Text amt = def.format(BigDecimal.valueOf(1234.56));
 			Text v = Text.of(def.getName() + " (" + def.getId() + ") - ");
 			return v.concat(amt);
 		}
-		String t = token.get().toLowerCase().trim();
+		String t = token;
 		Currency toUse = def;
 		if (t.contains("_")) {
 			String[] a = t.split("_");
@@ -614,11 +727,12 @@ public class Defaults {
 	public LocalDateTime time() {
 		return LocalDateTime.now();
 	}
+	/*
+		private static final Pattern PERM = Pattern.compile("perm(?:ission)?\\_([A-Za-z0-9*\\-]+(?:\\.[A-Za-z0-9*\\-]+)+)",
+				Pattern.CASE_INSENSITIVE),
+				WORLD = Pattern.compile("world\\_([A-Za-z0-9\\_\\-]+)", Pattern.CASE_INSENSITIVE);*/
 
-	private static final Pattern PERM = Pattern.compile("perm(?:ission)?\\_([A-Za-z0-9*\\-]+(?:\\.[A-Za-z0-9*\\-]+)+)",
-			Pattern.CASE_INSENSITIVE),
-			WORLD = Pattern.compile("world\\_([A-Za-z0-9\\_\\-]+)", Pattern.CASE_INSENSITIVE);
-
+	/*
 	@Placeholder(id = "playerlist")
 	public List<Player> list(@Nullable @Token(fix = true) String token) {
 		if (token == null) {
@@ -654,19 +768,25 @@ public class Defaults {
 		 *  sanity checks (no > for boolean, no value present = true/0/max int, depending, no comp present: =)
 		 *  sort by highest comparison
 		 * limiter, top X players if available -> sort by highest comp then alphabetically
-		 */
-		return out.collect(Collectors.toList());
-	}
+		 *//*
+			return out.collect(Collectors.toList());
+			}*/
+
+	private static final Pattern ALLSOUND_PATTERN = Pattern.compile("([_]?all[_]?)", Pattern.CASE_INSENSITIVE);
 
 	@Placeholder(id = "sound")
-	public Text sound(@Nullable @Source Player p, @Token String identifier) {
+	public Text sound(@Nullable @Source Player p, @Token(fix = true) String identifier) {
+		boolean all = identifier.contains("all");
+		if (all) {
+			identifier = ALLSOUND_PATTERN.matcher(identifier).replaceAll("");
+		}
 		Game game = PlaceholderAPIPlugin.getInstance().getGame();
 		String[] i = identifier.split("-");
 		Optional<SoundType> sound = game.getRegistry().getType(SoundType.class, i[0].replace("_", "."));
 		Double volume = Double.valueOf((i[1] == null) ? String.valueOf(1) : i[1]);
 		Double pitch = Double.valueOf((i[2] == null) ? String.valueOf(1) : i[2]);
 		if (sound.isPresent()) {
-			if (p != null) {
+			if (p != null && !all) {
 				Vector3d position = p.getLocation().getPosition();
 				p.playSound(sound.get(), position, volume, pitch);
 			} else {
@@ -683,8 +803,7 @@ public class Defaults {
 	}
 
 	@Placeholder(id = "statistic")
-	public Long stat(@Source Player player, @Token String token) {
-		final String t = token.trim().toLowerCase();
+	public Long stat(@Source Player player, @Token(fix = true) String t) {
 		return player.getOrNull(Keys.STATISTICS).entrySet().stream().filter(e -> {
 			String s = e.getKey().getId().replace("._", ".").toLowerCase();
 			String x = s.replace("_", "");

@@ -33,17 +33,36 @@ import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ARETURN;
 import static org.objectweb.asm.Opcodes.ASTORE;
 import static org.objectweb.asm.Opcodes.CHECKCAST;
+import static org.objectweb.asm.Opcodes.DLOAD;
+import static org.objectweb.asm.Opcodes.DRETURN;
+import static org.objectweb.asm.Opcodes.DSTORE;
+import static org.objectweb.asm.Opcodes.FLOAD;
+import static org.objectweb.asm.Opcodes.FRETURN;
+import static org.objectweb.asm.Opcodes.FSTORE;
 import static org.objectweb.asm.Opcodes.GETFIELD;
+import static org.objectweb.asm.Opcodes.GETSTATIC;
 import static org.objectweb.asm.Opcodes.GOTO;
+import static org.objectweb.asm.Opcodes.I2B;
+import static org.objectweb.asm.Opcodes.I2C;
+import static org.objectweb.asm.Opcodes.I2S;
 import static org.objectweb.asm.Opcodes.IFNONNULL;
+import static org.objectweb.asm.Opcodes.IFNULL;
+import static org.objectweb.asm.Opcodes.ILOAD;
 import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static org.objectweb.asm.Opcodes.IRETURN;
+import static org.objectweb.asm.Opcodes.ISTORE;
+import static org.objectweb.asm.Opcodes.LLOAD;
+import static org.objectweb.asm.Opcodes.LRETURN;
+import static org.objectweb.asm.Opcodes.LSTORE;
 import static org.objectweb.asm.Opcodes.RETURN;
 import static org.objectweb.asm.Opcodes.V1_8;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.ParameterizedType;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -57,7 +76,6 @@ import javax.annotation.Nullable;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
@@ -72,6 +90,7 @@ import me.rojo8399.placeholderapi.Placeholder;
 import me.rojo8399.placeholderapi.Source;
 import me.rojo8399.placeholderapi.Token;
 import me.rojo8399.placeholderapi.impl.placeholder.Expansion;
+import me.rojo8399.placeholderapi.impl.utils.TypeUtils;
 
 /**
  * @author Wundero
@@ -121,7 +140,7 @@ public class ClassPlaceholderFactory {
 				+ iid.incrementAndGet();
 		byte[] bytes = generateClass(name, handle, method);
 		/*
-		Files.write(bytes, new File(name + ".class"));
+		Files.write(new File(name + ".class").toPath(), bytes);
 		System.out.println("written " + name);
 		*/
 		return this.classLoader.defineClass(name, bytes);
@@ -172,31 +191,48 @@ public class ClassPlaceholderFactory {
 		final String handleName = Type.getInternalName(handle);
 		final String handleDescriptor = Type.getDescriptor(handle);
 		List<Parameter> pm = Arrays.asList(method.getParameters());
-		final boolean token = pm.stream().anyMatch(p -> p.isAnnotationPresent(Token.class));
+		boolean token = pm.stream().anyMatch(p -> p.isAnnotationPresent(Token.class) && (!(p
+				.getParameterizedType() instanceof ParameterizedType)
+				|| (p.getType().equals(Optional.class) || (p.getParameterizedType() instanceof ParameterizedType
+						&& ((ParameterizedType) p.getParameterizedType()).getActualTypeArguments().length == 0))));
 		final boolean source = pm.stream().anyMatch(p -> p.isAnnotationPresent(Source.class));
 		final boolean observer = pm.stream().anyMatch(p -> p.isAnnotationPresent(Observer.class));
 		final boolean srcNullable = pm.stream().filter(p -> p.isAnnotationPresent(Source.class))
 				.anyMatch(p -> p.isAnnotationPresent(Nullable.class));
-		final boolean optionalTokenType = pm.stream()
-				.anyMatch(p -> p.getParameterizedType().getTypeName().equals("java.util.Optional<java.lang.String>"));
+		final boolean optionalTokenType = token && pm.stream().anyMatch(p -> p.getType().equals(Optional.class));
+		final Optional<Class<?>> tokenClass = token
+				? pm.stream().filter(p -> p.isAnnotationPresent(Token.class)).findAny().map(pr -> {
+					if (pr.getType().isArray()) {
+						return null;
+					}
+					if (optionalTokenType) {
+						return (Class<?>) ((ParameterizedType) pr.getParameterizedType()).getActualTypeArguments()[0];
+					} else {
+						return pr.getType();
+					}
+				})
+				: Optional.empty();
+		token = token && tokenClass.isPresent();
 		final boolean obsNullable = pm.stream().filter(p -> p.isAnnotationPresent(Observer.class))
 				.anyMatch(p -> p.isAnnotationPresent(Nullable.class));
 		final boolean tokNullable = token && !optionalTokenType && pm.stream()
 				.filter(p -> p.isAnnotationPresent(Token.class)).anyMatch(p -> p.isAnnotationPresent(Nullable.class));
-		final boolean fixToken = token && !optionalTokenType
-				&& pm.stream().filter(p -> p.isAnnotationPresent(Token.class)).map(p -> p.getAnnotation(Token.class))
-						.anyMatch(t -> t.fix());
+		final boolean fixToken = token && pm.stream().filter(p -> p.isAnnotationPresent(Token.class))
+				.map(p -> p.getAnnotation(Token.class)).anyMatch(t -> t.fix());
 		final Optional<Class<?>> sourceType = pm.stream().filter(p -> p.isAnnotationPresent(Source.class)).findFirst()
-				.map(p -> p.getType());
+				.map(Parameter::getType);
 		final Optional<Class<?>> observerType = pm.stream().filter(p -> p.isAnnotationPresent(Observer.class))
-				.findFirst().map(p -> p.getType());
+				.findFirst().map(Parameter::getType);
 		Class<?> returnType = method.getReturnType();
 		if (returnType.equals(Void.TYPE)) {
 			returnType = Object.class;
 		}
+		String retString = getInternalNamePrim(returnType);
+		if (!returnType.isPrimitive() && (!isPrimNDArray(returnType))) {
+			retString = "L" + retString + ";";
+		}
 		String parseMethodDescriptor = "(L" + Type.getInternalName(sourceType.orElse(Locatable.class)) + ";L"
-				+ Type.getInternalName(observerType.orElse(Locatable.class)) + ";L" + OPT_NAME + ";)L"
-				+ Type.getInternalName(returnType) + ";";
+				+ Type.getInternalName(observerType.orElse(Locatable.class)) + ";L" + OPT_NAME + ";)" + retString;
 		String externalParseDescriptor = "(Ljava/lang/Object;Ljava/lang/Object;Ljava/util/Optional;)Ljava/lang/Object;";
 		String methodDescriptor = Type.getMethodDescriptor(method);
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
@@ -221,20 +257,42 @@ public class ClassPlaceholderFactory {
 			mv.visitVarInsn(ALOAD, 0);
 			mv.visitFieldInsn(GETFIELD, name, "handle", "L" + OBJECT_NAME + ";");
 			mv.visitTypeInsn(CHECKCAST, handleName);
-			if (!optionalTokenType && token) {
-				mv.visitVarInsn(ALOAD, 3);
-				mv.visitLdcInsn("");
-				mv.visitMethodInsn(INVOKEVIRTUAL, OPT_NAME, "orElse", "(Ljava/lang/Object;)Ljava/lang/Object;", false);
-				mv.visitVarInsn(ASTORE, 4);
-				if (fixToken) {
-					mv.visitVarInsn(ALOAD, 4);
-					skipIfNull(mv, mv2 -> {
-						mv2.visitVarInsn(ALOAD, 4);
-						mv2.visitTypeInsn(CHECKCAST, STRING_NAME);
-						mv2.visitMethodInsn(INVOKEVIRTUAL, STRING_NAME, "toLowerCase", TLC_SIG, false);
-						mv2.visitMethodInsn(INVOKEVIRTUAL, STRING_NAME, "trim", TRIM_SIG, false);
-						mv2.visitVarInsn(ASTORE, 4);
-					});
+			if (token) {
+				if (!String.class.isAssignableFrom(tokenClass.get())) {
+					mv.visitVarInsn(ALOAD, 3);
+					mv.visitInsn(ACONST_NULL);
+					mv.visitMethodInsn(INVOKEVIRTUAL, OPT_NAME, "orElse", "(Ljava/lang/Object;)Ljava/lang/Object;",
+							false);
+					if (optionalTokenType) {
+						utilsTryCast(mv, boxedPrim(tokenClass.get()), false);
+						mv.visitVarInsn(ASTORE, 3);
+					} else {
+						mv.visitVarInsn(ASTORE, 4);
+						mv.visitVarInsn(ALOAD, 4);
+						skipIfNull(mv, mv2 -> {
+							mv2.visitVarInsn(ALOAD, 4);
+							utilsTryCast(mv2, boxedPrim(tokenClass.get()), true);
+							mv2.visitVarInsn(ASTORE, 4);
+						});
+					}
+				} else {
+					if (!optionalTokenType) {
+						mv.visitVarInsn(ALOAD, 3);
+						mv.visitInsn(ACONST_NULL);
+						mv.visitMethodInsn(INVOKEVIRTUAL, OPT_NAME, "orElse", "(Ljava/lang/Object;)Ljava/lang/Object;",
+								false);
+						mv.visitVarInsn(ASTORE, 4);
+						if (fixToken) {
+							mv.visitVarInsn(ALOAD, 4);
+							skipIfNull(mv, mv2 -> {
+								mv2.visitVarInsn(ALOAD, 4);
+								mv2.visitTypeInsn(CHECKCAST, STRING_NAME);
+								mv2.visitMethodInsn(INVOKEVIRTUAL, STRING_NAME, "toLowerCase", TLC_SIG, false);
+								mv2.visitMethodInsn(INVOKEVIRTUAL, STRING_NAME, "trim", TRIM_SIG, false);
+								mv2.visitVarInsn(ASTORE, 4);
+							});
+						}
+					}
 				}
 			}
 			for (int i = 0; i < method.getParameterCount(); i++) {
@@ -255,16 +313,22 @@ public class ClassPlaceholderFactory {
 					break;
 				case 3:
 					nullable = tokNullable;
+					break;
 				}
 				final int y = x;
 				nullCheck(mv, nullable, mv2 -> mv2.visitVarInsn(ALOAD, y + 1));
-				mv.visitTypeInsn(CHECKCAST, Type.getInternalName(p.getType()));
+				mv.visitTypeInsn(CHECKCAST, Type.getInternalName(boxedPrim(p.getType())));
+				boxToPrim(mv, p.getType(), y + 1);
 			}
 			mv.visitMethodInsn(INVOKEVIRTUAL, handleName, method.getName(), methodDescriptor, false);
 			if (method.getReturnType().equals(Void.TYPE)) {
 				mv.visitLdcInsn("");
 			}
-			mv.visitInsn(ARETURN);
+			if (!retString.startsWith("L")) {
+				returnInsn(mv, returnType);
+			} else {
+				mv.visitInsn(ARETURN);
+			}
 			mv.visitMaxs(10, 10);
 			mv.visitEnd();
 		}
@@ -293,6 +357,7 @@ public class ClassPlaceholderFactory {
 			}
 			mv.visitVarInsn(ALOAD, 3);
 			mv.visitMethodInsn(INVOKEVIRTUAL, name, "parse", parseMethodDescriptor, false);
+			unboxFromPrim(mv, returnType);
 			mv.visitInsn(ARETURN);
 			mv.visitMaxs(0, 0);
 			mv.visitEnd();
@@ -301,10 +366,193 @@ public class ClassPlaceholderFactory {
 		return cw.toByteArray();
 	}
 
+	private static boolean isPrimNDArray(Class<?> clazz) {
+		if (!clazz.isArray()) {
+			return false;
+		}
+		if (clazz.getComponentType().isPrimitive()) {
+			return true;
+		}
+		return isPrimNDArray(clazz.getComponentType());
+	}
+
+	private static void unboxFromPrim(MethodVisitor mv, Class<?> p) {
+		if (!p.isPrimitive()) {
+			return;
+		}
+		String boxName = null, typeName = null;
+		if (p.equals(int.class)) {
+			boxName = "Integer";
+			typeName = "I";
+		}
+		if (p.equals(char.class)) {
+			boxName = "Character";
+			typeName = "C";
+		}
+		if (p.equals(byte.class)) {
+			boxName = "Byte";
+			typeName = "B";
+		}
+		if (p.equals(boolean.class)) {
+			boxName = "Boolean";
+			typeName = "Z";
+		}
+		if (p.equals(long.class)) {
+			boxName = "Long";
+			typeName = "J";
+		}
+		if (p.equals(short.class)) {
+			boxName = "Short";
+			typeName = "S";
+		}
+		if (p.equals(float.class)) {
+			boxName = "Float";
+			typeName = "F";
+		}
+		if (p.equals(double.class)) {
+			boxName = "Double";
+			typeName = "D";
+		}
+		if (typeName == null || boxName == null) {
+			return;
+		}
+		mv.visitMethodInsn(INVOKESTATIC, "java/lang/" + boxName, "valueOf",
+				"(" + typeName + ")Ljava/lang/" + boxName + ";", false);
+	}
+
+	private static void returnInsn(MethodVisitor mv, Class<?> clazz) {
+		if (clazz.isPrimitive()) {
+			if (clazz.equals(float.class)) {
+				mv.visitInsn(FRETURN);
+				return;
+			}
+			if (clazz.equals(long.class)) {
+				mv.visitInsn(LRETURN);
+				return;
+			}
+			if (clazz.equals(double.class)) {
+				mv.visitInsn(DRETURN);
+				return;
+			}
+			mv.visitInsn(IRETURN);
+			return;
+		}
+		mv.visitInsn(ARETURN);
+	}
+
+	private static Class<?> boxedPrim(Class<?> primClass) {
+		if (primClass.isPrimitive()) {
+			if (primClass.equals(int.class)) {
+				return Integer.class;
+			}
+			if (primClass.equals(char.class)) {
+				return Character.class;
+			}
+			if (primClass.equals(byte.class)) {
+				return Byte.class;
+			}
+			if (primClass.equals(boolean.class)) {
+				return Boolean.class;
+			}
+			if (primClass.equals(long.class)) {
+				return Long.class;
+			}
+			if (primClass.equals(short.class)) {
+				return Short.class;
+			}
+			if (primClass.equals(float.class)) {
+				return Float.class;
+			}
+			if (primClass.equals(double.class)) {
+				return Double.class;
+			}
+		}
+		return primClass;
+	}
+
+	private static String getInternalNamePrim(Class<?> clazz) {
+		if (clazz.isPrimitive()) {
+			return Type.getType(clazz).getDescriptor();
+		} else {
+			return Type.getInternalName(clazz);
+		}
+	}
+
+	private static void boxToPrim(MethodVisitor mv, Class<?> p, int varloc) {
+		if (!p.isPrimitive()) {
+			return;
+		}
+		String boxName = null, typeName = null, value = Type.getInternalName(p);
+		int store = ISTORE, load = ILOAD;
+		Consumer<MethodVisitor> converter = (mv2) -> {
+		};
+		if (p.equals(int.class)) {
+			boxName = "Integer";
+			typeName = "I";
+		}
+		if (p.equals(char.class)) {
+			boxName = "Character";
+			typeName = "C";
+			converter = mv2 -> mv2.visitInsn(I2C);
+		}
+		if (p.equals(byte.class)) {
+			boxName = "Byte";
+			typeName = "B";
+			converter = mv2 -> mv2.visitInsn(I2B);
+		}
+		if (p.equals(boolean.class)) {
+			boxName = "Boolean";
+			typeName = "Z";
+			converter = mv2 -> mv2.visitInsn(I2B);
+		}
+		if (p.equals(long.class)) {
+			boxName = "Long";
+			typeName = "J";
+			load = LLOAD;
+			store = LSTORE;
+		}
+		if (p.equals(short.class)) {
+			boxName = "Short";
+			typeName = "S";
+			converter = mv2 -> mv2.visitInsn(I2S);
+		}
+		if (p.equals(float.class)) {
+			boxName = "Float";
+			typeName = "F";
+			load = FLOAD;
+			store = FSTORE;
+		}
+		if (p.equals(double.class)) {
+			boxName = "Double";
+			typeName = "D";
+			load = DLOAD;
+			store = DSTORE;
+		}
+		if (typeName == null || boxName == null) {
+			return;
+		}
+		mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/" + boxName, value + "Value", "()" + typeName, false);
+		mv.visitVarInsn(store, varloc);
+		mv.visitVarInsn(load, varloc);
+		converter.accept(mv);
+	}
+
+	private static void utilsTryCast(MethodVisitor mv, Class<?> expected, boolean orNull) {
+		// assume obj to cast is already on stack and only that obj is on stack
+		mv.visitLdcInsn(Type.getType(expected));
+		mv.visitFieldInsn(GETSTATIC, "java/lang/Boolean", "TRUE", "Ljava/lang/Boolean;");
+		mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(TypeUtils.class), "tryCast",
+				"(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/Boolean;)Ljava/util/Optional;", false);
+		if (orNull) {
+			mv.visitInsn(ACONST_NULL);
+			mv.visitMethodInsn(INVOKEVIRTUAL, OPT_NAME, "orElse", "(Ljava/lang/Object;)Ljava/lang/Object;", false);
+		}
+	}
+
 	private static void skipIfNull(MethodVisitor mv, Consumer<MethodVisitor> success) {
 		// assume null check obj already loaded to stack
 		Label no = new Label();
-		mv.visitJumpInsn(Opcodes.IFNULL, no);
+		mv.visitJumpInsn(IFNULL, no);
 		success.accept(mv);
 		mv.visitLabel(no);
 	}

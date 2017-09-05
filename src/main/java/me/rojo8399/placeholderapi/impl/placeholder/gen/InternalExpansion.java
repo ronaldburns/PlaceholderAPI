@@ -59,7 +59,26 @@ public abstract class InternalExpansion<S, O, V> extends Expansion<S, O, V> {
 	}
 
 	@Override
+	protected void saveConfigObject() {
+		if (handle == null || PlaceholderAPIPlugin.getInstance() == null
+				|| PlaceholderAPIPlugin.getInstance().getRootConfig() == null) {
+			return;
+		}
+		ConfigurationNode node = PlaceholderAPIPlugin.getInstance().getRootConfig().getNode("expansions",
+				(relational() ? "rel_" : "") + Sponge.getPluginManager().fromInstance(getPlugin()).get().getId(),
+				id().toLowerCase().trim());
+		try {
+			ObjectMapper.forObject(handle).serialize(node);
+			PlaceholderAPIPlugin.getInstance().saveConfig();
+		} catch (Exception e2) {
+		}
+	}
+
+	@Override
 	protected void populateConfigObject() {
+		if (PlaceholderAPIPlugin.getInstance() == null || PlaceholderAPIPlugin.getInstance().getRootConfig() == null) {
+			return;
+		}
 		ConfigurationNode node = PlaceholderAPIPlugin.getInstance().getRootConfig().getNode("expansions",
 				(relational() ? "rel_" : "") + Sponge.getPluginManager().fromInstance(getPlugin()).get().getId(),
 				id().toLowerCase().trim());

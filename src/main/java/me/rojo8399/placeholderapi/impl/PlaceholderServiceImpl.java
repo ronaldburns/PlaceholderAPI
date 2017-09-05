@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.spongepowered.api.data.DataHolder;
 import org.spongepowered.api.service.permission.Subject;
@@ -37,12 +38,14 @@ import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.world.Locatable;
 
 import com.google.common.base.Preconditions;
+import com.google.common.reflect.TypeToken;
 
 import me.rojo8399.placeholderapi.ExpansionBuilder;
 import me.rojo8399.placeholderapi.PlaceholderService;
 import me.rojo8399.placeholderapi.impl.placeholder.Expansion;
 import me.rojo8399.placeholderapi.impl.placeholder.ExpansionBuilderImpl;
 import me.rojo8399.placeholderapi.impl.placeholder.Store;
+import me.rojo8399.placeholderapi.impl.utils.TypeUtils;
 
 /**
  * Implement placeholder service - should not need to be replaced but is a
@@ -282,6 +285,14 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	@Override
 	public ExpansionBuilder<?, ?, ?, ?> load(Object handle, String id, Object plugin) {
 		return ExpansionBuilderImpl.unverified().from(handle, id, plugin);
+	}
+
+	/* (non-Javadoc)
+	 * @see me.rojo8399.placeholderapi.PlaceholderService#registerTypeDeserializer(java.util.function.Function)
+	 */
+	@Override
+	public <T> void registerTypeDeserializer(TypeToken<T> token, Function<String, T> deserializer) {
+		TypeUtils.registerDeserializer(token, deserializer);
 	}
 
 }

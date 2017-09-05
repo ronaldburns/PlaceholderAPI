@@ -23,28 +23,48 @@
  */
 package me.rojo8399.placeholderapi.impl.utils;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.spongepowered.api.command.CommandSource;
+import org.spongepowered.api.data.value.BaseValue;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.serializer.TextSerializers;
+
+import com.google.common.base.Preconditions;
+import com.google.common.reflect.TypeToken;
 
 import me.rojo8399.placeholderapi.impl.PlaceholderAPIPlugin;
 
 public class TypeUtils {
 
+	private static Map<TypeToken<?>, Function<String, ?>> deserializers = new HashMap<>();
+
+	public static void registerDeserializer(TypeToken<?> token, Function<String, ?> fun) {
+		Preconditions.checkNotNull(fun, "deserializer");
+		Preconditions.checkNotNull(token, "token");
+		deserializers.put(token, fun);
+	}
+
 	@SuppressWarnings("unchecked")
-	public static <T> T convertPrimitive(String val, Class<T> primitiveClass) throws Exception {
+	public static <T> T convertPrimitive(String val, Class<T> primitiveClass) {
+		val = val.toLowerCase().trim();
 		if (primitiveClass.equals(char.class) || primitiveClass.equals(Character.class)) {
 			return (T) (Character) val.charAt(0);
 		}
@@ -72,12 +92,28 @@ public class TypeUtils {
 		throw new IllegalArgumentException("Class is not primitive or a wrapper!");
 	}
 
+	public static <T> Optional<T> tryCast(Object val, final Class<T> expected, Boolean fixStrings) {
+		if (val instanceof String && fixStrings) {
+			return tryCast(((String) val).toLowerCase().trim(), expected);
+		} else {
+			return tryCast(val, expected);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
 	public static <T> Optional<T> tryCast(Object val, final Class<T> expected) {
 		if (val == null) {
 			return Optional.empty();
 		}
 		if (expected == null) {
 			throw new IllegalArgumentException("Must provide an expected class!");
+		}
+		if (val instanceof BaseValue<?> && !BaseValue.class.isAssignableFrom(expected)) {
+			return tryCast(((BaseValue<?>) val).get(), expected);
+		}
+		if (val instanceof Supplier) {
+			Supplier<?> fun = (Supplier<?>) val;
+			return tryCast(fun.get(), expected);
 		}
 		if (Text.class.isAssignableFrom(expected)) {
 			if (val instanceof Text) {
@@ -91,6 +127,10 @@ public class TypeUtils {
 							TextSerializers.FORMATTING_CODE.deserialize(PlaceholderAPIPlugin.getInstance().formatter()
 									.format(LocalDateTime.ofInstant((Instant) val, ZoneOffset.systemDefault())))));
 				}
+				if (val instanceof Duration) {
+					return TypeUtils.tryOptional(() -> expected
+							.cast(TextSerializers.FORMATTING_CODE.deserialize(formatDuration((Duration) val))));
+				}
 				if (val instanceof LocalDateTime) {
 					return TypeUtils.tryOptional(() -> expected.cast(TextSerializers.FORMATTING_CODE
 							.deserialize(PlaceholderAPIPlugin.getInstance().formatter().format((LocalDateTime) val))));
@@ -99,13 +139,15 @@ public class TypeUtils {
 					return TypeUtils.tryOptional(() -> expected.cast(TextSerializers.FORMATTING_CODE
 							.deserialize(String.valueOf(((CommandSource) val).getName()))));
 				}
-				if (val instanceof Supplier) {
-					Supplier<?> fun = (Supplier<?>) val;
-					return tryCast(fun.get(), expected);
+				if (val.getClass().isArray()) {
+					List<Text> l2 = unboxPrimitiveArray(val).stream()
+							.map(o -> tryCast(o, (Class<? extends Text>) expected)).flatMap(unmapOptional())
+							.collect(Collectors.toList());
+					return TypeUtils.tryOptional(() -> expected.cast(Text.joinWith(Text.of(", "), l2)));
 				}
 				if (val instanceof Iterable) {
 					Iterable<?> l = (Iterable<?>) val;
-					@SuppressWarnings("unchecked") // should be safe cause we already checked assignability
+					// should be safe cause we already checked assignability
 					final List<Text> l2 = new ArrayList<Object>() {
 						{
 							for (Object o : l) {
@@ -120,15 +162,177 @@ public class TypeUtils {
 						() -> expected.cast(TextSerializers.FORMATTING_CODE.deserialize(String.valueOf(val))));
 			}
 		}
+		if (val instanceof String) {
+			if (expected.isArray() && String.class.isAssignableFrom(expected.getComponentType())) {
+				return tryOptional(() -> expected.cast(((String) val).split("_")));
+			}
+			Optional<T> opt = tryOptional(() -> convertPrimitive((String) val, expected));
+			if (opt.isPresent()) {
+				return opt;
+			}
+			opt = deserializers.entrySet().stream().filter(e -> e.getKey().isAssignableFrom(expected))
+					.map(e -> e.getValue()).map(f -> tryOptional(() -> f.apply((String) val))).flatMap(unmapOptional())
+					.findAny().flatMap(o -> tryOptional(() -> expected.cast(o)));
+			if (opt.isPresent()) {
+				return opt;
+			}
+			try {
+				// should theoretically match any string -> object conversions, such as deser
+
+				// for now im filtering against method names as well just to avoid issues where
+				// expected result is not obtained due to weird methods, might change in future
+				Method method = Arrays.asList(expected.getDeclaredMethods()).stream()
+						.filter(m -> Modifier.isStatic(m.getModifiers()) && Modifier.isPublic(m.getModifiers()))
+						.filter(m -> Arrays.asList(m.getParameterTypes()).stream().filter(c -> c.equals(String.class))
+								.findAny().isPresent())
+						.filter(m -> m.getReturnType().equals(expected) || m.getReturnType().equals(Optional.class))
+						.filter(m -> STRING_TO_VAL_PATTERN.matcher(m.getName()).find()).findAny().get(); // error if no
+				Object valout = method.invoke(null, (String) val);
+				if (valout == null) {
+					return Optional.empty();
+				}
+				if (expected.isInstance(valout)) {
+					return tryOptional(() -> expected.cast(valout));
+				}
+				if (valout instanceof Optional) {
+					Optional<?> valopt = (Optional<?>) valout;
+					if (!valopt.isPresent()) {
+						return Optional.empty();
+					}
+					Object v = valopt.get();
+					if (expected.isInstance(v)) {
+						return tryOptional(() -> expected.cast(v));
+					} else {
+						return Optional.empty();
+					}
+				}
+				return Optional.empty();
+			} catch (Exception e) {
+				// fires if no method found, if invoke throws, if something else goes wrong
+				return Optional.empty();
+			}
+		}
 		return TypeUtils.tryOptional(() -> expected.cast(val));
 	}
 
-	public static <T> Function<Optional<T>, Stream<? extends T>> unmapOptional() {
+	public static List<?> unboxPrimitiveArray(Object primArr) {
+		if (primArr.getClass().isArray()) {
+			if (primArr.getClass().getComponentType().isPrimitive()) {
+				Class<?> primClazz = primArr.getClass().getComponentType();
+				if (primClazz.equals(int.class)) {
+					int[] a = (int[]) primArr;
+					List<Integer> out = new ArrayList<>();
+					for (int i : a) {
+						out.add(i);
+					}
+					return out;
+				}
+				if (primClazz.equals(long.class)) {
+					long[] a = (long[]) primArr;
+					List<Long> out = new ArrayList<>();
+					for (long i : a) {
+						out.add(i);
+					}
+					return out;
+				}
+				if (primClazz.equals(short.class)) {
+					short[] a = (short[]) primArr;
+					List<Short> out = new ArrayList<>();
+					for (short i : a) {
+						out.add(i);
+					}
+					return out;
+				}
+				if (primClazz.equals(byte.class)) {
+					byte[] a = (byte[]) primArr;
+					List<Byte> out = new ArrayList<>();
+					for (byte i : a) {
+						out.add(i);
+					}
+					return out;
+				}
+				if (primClazz.equals(char.class)) {
+					char[] a = (char[]) primArr;
+					List<Character> out = new ArrayList<>();
+					for (char i : a) {
+						out.add(i);
+					}
+					return out;
+				}
+				if (primClazz.equals(boolean.class)) {
+					boolean[] a = (boolean[]) primArr;
+					List<Boolean> out = new ArrayList<>();
+					for (boolean i : a) {
+						out.add(i);
+					}
+					return out;
+				}
+				if (primClazz.equals(float.class)) {
+					float[] a = (float[]) primArr;
+					List<Float> out = new ArrayList<>();
+					for (float i : a) {
+						out.add(i);
+					}
+					return out;
+				}
+				if (primClazz.equals(double.class)) {
+					double[] a = (double[]) primArr;
+					List<Double> out = new ArrayList<>();
+					for (double i : a) {
+						out.add(i);
+					}
+					return out;
+				}
+			}
+			return Arrays.asList((Object[]) primArr);
+		} else {
+			return Arrays.asList(primArr);
+		}
+	}
+
+	private static final Pattern STRING_TO_VAL_PATTERN = Pattern
+			.compile("(parse.*)|(valueOf)|(deserialize)|(fromString)|(from)", Pattern.CASE_INSENSITIVE);
+
+	public static <T> Function<Optional<? extends T>, Stream<? extends T>> unmapOptional() {
 		return (opt) -> Stream.of(opt).filter(Optional::isPresent).map(Optional::get);
 	}
 
+	public static <T> Stream<? extends T> unmapOptional(Stream<Optional<? extends T>> stream) {
+		return stream.flatMap(unmapOptional());
+	}
+
+	public static String formatDuration(Duration duration) {
+		long seconds = duration.getSeconds();
+		long absSeconds = Math.abs(seconds);
+		String positive = String.format("%d h %02d m %02 s", absSeconds / 3600, (absSeconds % 3600) / 60,
+				absSeconds % 60);
+		return seconds < 0 ? "-" + positive : positive;
+	}
+
+	// reduction operator shorthands
+
 	public static boolean and(boolean one, boolean two) {
 		return one && two;
+	}
+
+	public static boolean or(boolean one, boolean two) {
+		return one || two;
+	}
+
+	public static boolean nand(boolean one, boolean two) {
+		return !and(one, two);
+	}
+
+	public static boolean nor(boolean one, boolean two) {
+		return !or(one, two);
+	}
+
+	public static int sub(int one, int two) {
+		return one - two;
+	}
+
+	public static int mult(int one, int two) {
+		return one * two;
 	}
 
 	public static int add(int one, int two) {
@@ -143,6 +347,9 @@ public class TypeUtils {
 		return (o && t) || (!o && !t);
 	}
 
+	/**
+	 * Will only work on unchecked but catchable exceptions.
+	 */
 	public static <T> Optional<T> tryOptional(Supplier<T> fun) {
 		try {
 			return Optional.ofNullable(fun.get());
