@@ -44,8 +44,7 @@ public class ListCommand implements CommandExecutor {
 
 	@Override
 	public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
-		PlaceholderService service = PlaceholderAPIPlugin.getInstance().getGame().getServiceManager()
-				.provide(PlaceholderService.class)
+		PlaceholderAPIPlugin.getInstance().getGame().getServiceManager().provide(PlaceholderService.class)
 				.orElseThrow(() -> new CommandException(Messages.get().plugin.serviceUnavailable.t()));
 		List<Text> l = Store.get().allIds().stream()
 				.map(e -> Text.of(TextColors.GOLD, TextActions.runCommand("/papi i " + e),
