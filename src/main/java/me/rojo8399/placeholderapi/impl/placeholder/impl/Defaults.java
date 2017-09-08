@@ -101,11 +101,9 @@ public class Defaults {
 			eco = false;
 		}
 		this.manager = manager;
-		js = true;
 		try {
 			manager.reloadScripts();
 		} catch (Exception e) {
-			js = false;
 		}
 		server = PlaceholderAPIPlugin.getInstance().getGame().getServer();
 		this.s = s;
@@ -120,8 +118,6 @@ public class Defaults {
 	}
 
 	private boolean eco = true;
-
-	private boolean js = true;
 
 	private void putCur(Currency c) {
 		currencies.put(c.getName().toLowerCase().replace(" ", ""), c);
@@ -257,40 +253,6 @@ public class Defaults {
 			}
 			double value = time2 / TimeUnit.SECONDS.convert(1, unit);
 			return value;
-		}
-	}
-
-	private static double getTime(long time, TimeUnit unit) {
-		boolean ticks = unit == null;
-		if (ticks) {
-			return time;
-		} else {
-			double time2 = ((double) time) / 20;
-			if (unit == TimeUnit.SECONDS) {
-				return time2;
-			}
-			double value = time2 / TimeUnit.SECONDS.convert(1, unit);
-			return value;
-		}
-	}
-
-	private static long getTime(long time, TimeUnit unit, boolean round) {
-		boolean ticks = unit == null;
-		if (ticks) {
-			return time;
-		} else {
-			double time2 = ((double) time) / 20;
-			if (unit == TimeUnit.SECONDS) {
-				if (!round) {
-					return (long) time2;
-				}
-				return Math.round(time2);
-			}
-			double value = time2 / TimeUnit.SECONDS.convert(1, unit);
-			if (!round) {
-				return (long) value;
-			}
-			return Math.round(value);
 		}
 	}
 
@@ -728,49 +690,36 @@ public class Defaults {
 		return LocalDateTime.now();
 	}
 	/*
-		private static final Pattern PERM = Pattern.compile("perm(?:ission)?\\_([A-Za-z0-9*\\-]+(?:\\.[A-Za-z0-9*\\-]+)+)",
-				Pattern.CASE_INSENSITIVE),
-				WORLD = Pattern.compile("world\\_([A-Za-z0-9\\_\\-]+)", Pattern.CASE_INSENSITIVE);*/
+	 * private static final Pattern PERM = Pattern.compile(
+	 * "perm(?:ission)?\\_([A-Za-z0-9*\\-]+(?:\\.[A-Za-z0-9*\\-]+)+)",
+	 * Pattern.CASE_INSENSITIVE), WORLD =
+	 * Pattern.compile("world\\_([A-Za-z0-9\\_\\-]+)", Pattern.CASE_INSENSITIVE);
+	 */
 
 	/*
-	@Placeholder(id = "playerlist")
-	public List<Player> list(@Nullable @Token(fix = true) String token) {
-		if (token == null) {
-			return Sponge.getServer().getOnlinePlayers().stream()
-					.filter(p -> !p.getOrElse(Keys.VANISH_PREVENTS_TARGETING, false)).collect(Collectors.toList());
-		}
-		Stream<Player> out = Sponge.getServer().getOnlinePlayers().stream()
-				.filter(p -> !p.getOrElse(Keys.VANISH_PREVENTS_TARGETING, false));
-		if (PERM.matcher(token).find()) {
-			Matcher m = PERM.matcher(token);
-			while (m.find()) {
-				String permission = m.group(1);
-				out = out.filter(p -> p.hasPermission(permission));
-			}
-		}
-		if (WORLD.matcher(token).find()) {
-			Matcher m = WORLD.matcher(token);
-			while (m.find()) {
-				String world = m.group(1);
-				out = out.filter(p -> p.getWorld().getName().toLowerCase().startsWith(world));
-			}
-		}
-		// TODO:
-		/*
-		 * better token matching
-		 * data key boolean filter -> load key from t
-		 *  - IS_FLYING, for example
-		 * data key numeric filter -> load key again, but also load comparator (>, >=, <, <=, =) and number
-		 *  - Health > 10, for example
-		 *  - sort greatest value for key???
-		 * better idea??:
-		 *  placeholder value filter -> load placeholder from key, load value from key, load comparator
-		 *  sanity checks (no > for boolean, no value present = true/0/max int, depending, no comp present: =)
-		 *  sort by highest comparison
-		 * limiter, top X players if available -> sort by highest comp then alphabetically
-		 *//*
-			return out.collect(Collectors.toList());
-			}*/
+	 * @Placeholder(id = "playerlist") public List<Player> list(@Nullable @Token(fix
+	 * = true) String token) { if (token == null) { return
+	 * Sponge.getServer().getOnlinePlayers().stream() .filter(p ->
+	 * !p.getOrElse(Keys.VANISH_PREVENTS_TARGETING,
+	 * false)).collect(Collectors.toList()); } Stream<Player> out =
+	 * Sponge.getServer().getOnlinePlayers().stream() .filter(p ->
+	 * !p.getOrElse(Keys.VANISH_PREVENTS_TARGETING, false)); if
+	 * (PERM.matcher(token).find()) { Matcher m = PERM.matcher(token); while
+	 * (m.find()) { String permission = m.group(1); out = out.filter(p ->
+	 * p.hasPermission(permission)); } } if (WORLD.matcher(token).find()) { Matcher
+	 * m = WORLD.matcher(token); while (m.find()) { String world = m.group(1); out =
+	 * out.filter(p -> p.getWorld().getName().toLowerCase().startsWith(world)); } }
+	 * // TODO: /* better token matching data key boolean filter -> load key from t
+	 * - IS_FLYING, for example data key numeric filter -> load key again, but also
+	 * load comparator (>, >=, <, <=, =) and number - Health > 10, for example -
+	 * sort greatest value for key??? better idea??: placeholder value filter ->
+	 * load placeholder from key, load value from key, load comparator sanity checks
+	 * (no > for boolean, no value present = true/0/max int, depending, no comp
+	 * present: =) sort by highest comparison limiter, top X players if available ->
+	 * sort by highest comp then alphabetically
+	 *//*
+		 * return out.collect(Collectors.toList()); }
+		 */
 
 	private static final Pattern ALLSOUND_PATTERN = Pattern.compile("([_]?all[_]?)", Pattern.CASE_INSENSITIVE);
 

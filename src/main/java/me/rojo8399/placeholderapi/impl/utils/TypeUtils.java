@@ -148,6 +148,7 @@ public class TypeUtils {
 				if (val instanceof Iterable) {
 					Iterable<?> l = (Iterable<?>) val;
 					// should be safe cause we already checked assignability
+					@SuppressWarnings("serial")
 					final List<Text> l2 = new ArrayList<Object>() {
 						{
 							for (Object o : l) {

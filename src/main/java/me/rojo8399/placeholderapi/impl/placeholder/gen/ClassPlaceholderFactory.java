@@ -77,8 +77,6 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.signature.SignatureVisitor;
-import org.objectweb.asm.signature.SignatureWriter;
 import org.spongepowered.api.world.Locatable;
 
 import com.google.common.cache.CacheBuilder;
@@ -140,9 +138,9 @@ public class ClassPlaceholderFactory {
 				+ iid.incrementAndGet();
 		byte[] bytes = generateClass(name, handle, method);
 		/*
-		Files.write(new File(name + ".class").toPath(), bytes);
-		System.out.println("written " + name);
-		*/
+		 * Files.write(new File(name + ".class").toPath(), bytes);
+		 * System.out.println("written " + name);
+		 */
 		return this.classLoader.defineClass(name, bytes);
 	}
 
@@ -151,7 +149,6 @@ public class ClassPlaceholderFactory {
 	private static final String PLACEHOLDER_NAME = Type.getInternalName(InternalExpansion.class);
 	private static final String OPT_NAME = Type.getInternalName(Optional.class);
 	private static final String TLC_SIG, TRIM_SIG;
-	private static final String OPT_SIG;
 
 	private static final Map<Class<?>, Integer> order;
 
@@ -160,17 +157,6 @@ public class ClassPlaceholderFactory {
 		order.put(Source.class, 0);
 		order.put(Observer.class, 1);
 		order.put(Token.class, 2);
-		SignatureVisitor sv = new SignatureWriter();
-		SignatureVisitor psv = sv.visitParameterType();
-		psv.visitClassType(Type.getInternalName(Optional.class));
-		SignatureVisitor ppsv = psv.visitTypeArgument('=');
-		ppsv.visitClassType(Type.getInternalName(String.class));
-		psv.visitEnd();
-		SignatureVisitor rtv = sv.visitReturnType();
-		psv.visitClassType(Type.getInternalName(Optional.class));
-		SignatureVisitor prtv = rtv.visitTypeArgument('=');
-		ppsv.visitClassType(Type.getInternalName(String.class));
-		OPT_SIG = sv.toString() + ";";
 		String f;
 		try {
 			f = Type.getMethodDescriptor(String.class.getMethod("toLowerCase"));
@@ -329,7 +315,7 @@ public class ClassPlaceholderFactory {
 					new String[] { "java/lang/Exception" });
 			mv.visitCode();
 			mv.visitVarInsn(ALOAD, 0);
-			if (sourceType.isPresent()) {
+			if (sourceType.isPresent() && source) {
 				mv.visitVarInsn(ALOAD, 1);
 				tryCatch(mv, mv2 -> mv2.visitTypeInsn(CHECKCAST, Type.getInternalName(sourceType.get())), mv2 -> {
 					mv2.visitLdcInsn("");
@@ -338,7 +324,7 @@ public class ClassPlaceholderFactory {
 			} else {
 				mv.visitInsn(ACONST_NULL);
 			}
-			if (observerType.isPresent()) {
+			if (observerType.isPresent() && observer) {
 				mv.visitVarInsn(ALOAD, 2);
 				tryCatch(mv, mv2 -> mv2.visitTypeInsn(CHECKCAST, Type.getInternalName(observerType.get())), mv2 -> {
 					mv2.visitLdcInsn("");
@@ -356,16 +342,6 @@ public class ClassPlaceholderFactory {
 		}
 		cw.visitEnd();
 		return cw.toByteArray();
-	}
-
-	private static boolean isPrimNDArray(Class<?> clazz) {
-		if (!clazz.isArray()) {
-			return false;
-		}
-		if (clazz.getComponentType().isPrimitive()) {
-			return true;
-		}
-		return isPrimNDArray(clazz.getComponentType());
 	}
 
 	private static void unboxFromPrim(MethodVisitor mv, Class<?> p) {
