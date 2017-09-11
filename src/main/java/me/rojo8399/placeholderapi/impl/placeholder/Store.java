@@ -23,6 +23,7 @@
  */
 package me.rojo8399.placeholderapi.impl.placeholder;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
@@ -73,6 +74,26 @@ public class Store {
 	}
 
 	private Store() {
+	}
+
+	public Optional<Class<?>> getSourceType(Method m) {
+		return getType(m, Source.class);
+	}
+
+	public Optional<Class<?>> getObserverType(Method m) {
+		return getType(m, Observer.class);
+	}
+
+	public Optional<Class<?>> getTokenType(Method m) {
+		return getType(m, Token.class);
+	}
+
+	private Optional<Class<?>> getType(Method m, Class<? extends Annotation> annotation) {
+		List<Parameter> params = Arrays.asList(m.getParameters());
+		if (!params.stream().anyMatch(p -> p.isAnnotationPresent(annotation))) {
+			return Optional.empty();
+		}
+		return Optional.of(params.stream().filter(p -> p.isAnnotationPresent(annotation)).findAny().get().getType());
 	}
 
 	private Map<String, Expansion<?, ?, ?>> normal = new ConcurrentHashMap<>(), rel = new ConcurrentHashMap<>();
@@ -198,7 +219,8 @@ public class Store {
 			Object handle = ((InternalExpansion<?, ?, ?>) e).getHandle();
 			getMap(rel).remove(id);
 			try {
-				out = ExpansionBuilderImpl.builder().fromUnknown(e).from(handle, id, e.getPlugin()).buildAndRegister();
+				out = ExpansionBuilderImpl.builder(e.getSourceClass(), e.getObserverClass(), e.getValueClass())
+						.fromUnknown(e).from(handle, id, e.getPlugin()).buildAndRegister();
 			} catch (Exception e1) {
 				return false;
 			}

@@ -24,16 +24,13 @@
 package me.rojo8399.placeholderapi.impl.placeholder;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.DataHolder;
@@ -54,64 +51,50 @@ import me.rojo8399.placeholderapi.impl.PlaceholderAPIPlugin;
  */
 public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, ExpansionBuilderImpl<S, O, V>> {
 
-	private ExpansionBuilderImpl(boolean verify) {
-		Preconditions.checkArgument(!verify || verify());
+	private ExpansionBuilderImpl(boolean verify, Class<? extends S> s, Class<? extends O> o, Class<? extends V> v) {
+		this.verify = verify;
+		this.sourceClass = s;
+		this.returnClass = v;
+		this.observerClass = o;
 	}
 
 	/**
-	 * Verify that the source and observer types are valid extensions of
-	 * supported classes.
+	 * Verify that the source and observer types are valid extensions of supported
+	 * classes.
 	 * 
 	 * @return Whether the class is verified.
 	 */
 	public boolean verify() {
-		Class<?> clazz = this.getClass();
-		List<Class<?>> params = Arrays.asList(clazz.getDeclaredMethods()).stream()
-				.filter(m -> m.getName().equalsIgnoreCase("parse") && Arrays.asList(m.getGenericParameterTypes())
-						.stream().map(Type::getTypeName).anyMatch(s -> s.contains("java.util.Optional")))
-				.map(m -> Arrays.asList(m.getParameterTypes())).map(List::stream).reduce(Stream.empty(), Stream::concat)
-				.collect(Collectors.toList());
+		boolean out = false;
 		try {
-			return verifySource(params.get(0)) && verifySource(params.get(1)) && verifyToken(params.get(2));
+			out = verifySource(sourceClass) && verifySource(observerClass);
 		} catch (Exception e) {
-			return false;
 		}
+		if (out) {
+			verify = false;
+		}
+		return out;
 	}
 
 	/**
 	 * @return The class that represents the returned value on parsing.
 	 */
-	@SuppressWarnings("unchecked")
 	public final Class<? extends V> getValueClass() {
-		Method m = getParseMethod();
-		return (Class<? extends V>) m.getReturnType();
-	}
-
-	private final Method getParseMethod() {
-		Class<?> clazz = this.getClass();
-		return Arrays.asList(clazz.getDeclaredMethods()).stream()
-				.filter(m -> m.getName().toLowerCase().contains("parse"))
-				.filter(m -> Arrays.asList(m.getGenericParameterTypes()).stream().map(Type::getTypeName)
-						.anyMatch(s -> s.contains("java.util.Optional")))
-				.findAny().get(); // we know it exists ;)
+		return returnClass;
 	}
 
 	/**
 	 * @return The class that represents the source object on parsing.
 	 */
-	@SuppressWarnings("unchecked")
 	public final Class<? extends S> getSourceClass() {
-		Method m = getParseMethod();
-		return (Class<? extends S>) m.getParameterTypes()[0];
+		return sourceClass;
 	}
 
 	/**
 	 * @return The class that represents the observer object on parsing.
 	 */
-	@SuppressWarnings("unchecked")
 	public final Class<? extends O> getObserverClass() {
-		Method m = getParseMethod();
-		return (Class<? extends O>) m.getParameterTypes()[1];
+		return observerClass;
 	}
 
 	/*
@@ -126,25 +109,26 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 	}
 
 	private static boolean verifySource(Class<?> param) {
-		return MessageReceiver.class.isAssignableFrom(param) || Locatable.class.isAssignableFrom(param)
+		return param == null || MessageReceiver.class.isAssignableFrom(param) || Locatable.class.isAssignableFrom(param)
 				|| Subject.class.isAssignableFrom(param) || DataHolder.class.isAssignableFrom(param);
 	}
 
 	/**
-	 * Create a new ExpansionBuilder based on the source, observer and value
-	 * types.
+	 * Create a new ExpansionBuilder based on the source, observer and value types.
 	 * 
 	 * Source and observer types must both be an instance or subinstance of
 	 * CommandSource, User or Locatable. The value type can be anything.
 	 * 
 	 * @return The newly created builder.
 	 */
-	public static <S, O, V> ExpansionBuilderImpl<S, O, V> builder() {
-		return new ExpansionBuilderImpl<S, O, V>(true);
+	public static <S, O, V> ExpansionBuilderImpl<S, O, V> builder(Class<? extends S> s, Class<? extends O> o,
+			Class<? extends V> v) {
+		return new ExpansionBuilderImpl<S, O, V>(true, s, o, v);
 	}
 
-	public static <S, O, V> ExpansionBuilderImpl<S, O, V> unverified() {
-		return new ExpansionBuilderImpl<S, O, V>(false);
+	public static <S, O, V> ExpansionBuilderImpl<S, O, V> unverified(Class<? extends S> s, Class<? extends O> o,
+			Class<? extends V> v) {
+		return new ExpansionBuilderImpl<S, O, V>(false, s, o, v);
 	}
 
 	private String id, auth, ver = "1.0", desc, url;
@@ -153,6 +137,10 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 	private Predicate<Expansion<S, O, V>> reload = (func) -> true;
 	private boolean relational = false;
 	private Object plugin, config, listeners;
+	private boolean verify = true;
+	private Class<? extends S> sourceClass;
+	private Class<? extends O> observerClass;
+	private Class<? extends V> returnClass;
 
 	/**
 	 * @return The description of the expansion.
@@ -263,8 +251,8 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 	}
 
 	/**
-	 * Add an object which holds config values. This object will be populated
-	 * with configuration options when the expansion is loaded and reloaded.
+	 * Add an object which holds config values. This object will be populated with
+	 * configuration options when the expansion is loaded and reloaded.
 	 * 
 	 * @param config
 	 *            The object to populate.
@@ -278,17 +266,16 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 
 	/**
 	 * Set whether this expansion is relational. `Relational` means that this
-	 * expansion's parse will be called when the id "rel_[id]" is passed into
-	 * the service. It also means that, if this expansion's parsing returns null
-	 * AND the server's configuration allows it, it will try to return the value
-	 * of the placeholder of id "[id]" if it exists for the observer.
+	 * expansion's parse will be called when the id "rel_[id]" is passed into the
+	 * service. It also means that, if this expansion's parsing returns null AND the
+	 * server's configuration allows it, it will try to return the value of the
+	 * placeholder of id "[id]" if it exists for the observer.
 	 * 
-	 * Setting this to true in no way guarantees that it will use the observer,
-	 * that the observer will not be null, or that it requires the observer at
-	 * all.
+	 * Setting this to true in no way guarantees that it will use the observer, that
+	 * the observer will not be null, or that it requires the observer at all.
 	 * 
-	 * Conversely, if this is false, that in no way guarantees that it will not
-	 * use the observer.
+	 * Conversely, if this is false, that in no way guarantees that it will not use
+	 * the observer.
 	 * 
 	 * @param relational
 	 *            Whether this expansion is relational.
@@ -376,8 +363,8 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 
 	/**
 	 * Sets the url of the expansion. This links to a website or source for
-	 * information or downloads on the internet, if the author so chooses to
-	 * include one.
+	 * information or downloads on the internet, if the author so chooses to include
+	 * one.
 	 * 
 	 * @param url
 	 *            The url of the expansion.
@@ -424,8 +411,8 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 	 * This method will build the expansion and then attemp to register the
 	 * expansion.
 	 * 
-	 * This method will throw an exception if the id, plugin or function have
-	 * not been specified.
+	 * This method will throw an exception if the id, plugin or function have not
+	 * been specified.
 	 * 
 	 * @return Whether the registration was successful.
 	 * @throws Exception
@@ -438,12 +425,12 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 	}
 
 	/**
-	 * This method will build the expansion. This is not a terminating operation
-	 * on the builder, so if you wish to reuse the builder under a new id, you
-	 * could do so.
+	 * This method will build the expansion. This is not a terminating operation on
+	 * the builder, so if you wish to reuse the builder under a new id, you could do
+	 * so.
 	 * 
-	 * This method will throw an exception if the id, plugin or function have
-	 * not been specified.
+	 * This method will throw an exception if the id, plugin or function have not
+	 * been specified.
 	 * 
 	 * @return Whether the registration was successful.
 	 * @throws Exception
@@ -459,6 +446,9 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 		}
 		if (plugin == null) {
 			throw new IllegalStateException("Plugin cannot be null!");
+		}
+		if (verify) {
+			Preconditions.checkArgument(verify());
 		}
 		Expansion<S, O, V> exp = new Expansion<S, O, V>(id, plugin, auth, desc, ver, url, relational, tokens) {
 			@Override
@@ -485,10 +475,10 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 
 	/**
 	 * Attempt to create expansion builders for every "@Placeholder" annotated
-	 * method in the provided object. Every expansion builder returned will have
-	 * the id, plugin, function and relational fields filled out already, so all
-	 * that remains are optional fields, and any builder in this list can be
-	 * built immediately.
+	 * method in the provided object. Every expansion builder returned will have the
+	 * id, plugin, function and relational fields filled out already, so all that
+	 * remains are optional fields, and any builder in this list can be built
+	 * immediately.
 	 * 
 	 * @param object
 	 *            The object in which the methods reside. This object cannot be
@@ -498,14 +488,31 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 	 * @return A list of builders for each method in the object.
 	 */
 	public static List<ExpansionBuilderImpl<?, ?, ?>> loadAll(Object object, Object plugin) {
-		Class<?> clazz = object.getClass();
 		Map<Method, Boolean> methods = Store.findAll(object);
+		Store store = Store.get();
 		@SuppressWarnings("rawtypes")
-		List<ExpansionBuilder> l = methods.entrySet()
-				.stream().map(e -> unverified().relational(e.getValue())
-						.id(e.getKey().getAnnotation(Placeholder.class).id()).frommethod(object, e.getKey(), plugin))
+		List<ExpansionBuilder> l = methods.entrySet().stream().map(e -> lfm(object, e.getKey(), plugin, e.getValue()))
 				.collect(Collectors.toList());
 		return l.stream().map(e -> (ExpansionBuilderImpl<?, ?, ?>) e).collect(Collectors.toList());
+	}
+
+	private static ExpansionBuilderImpl<?, ?, ?> lfm(Object o, Method m, Object p, boolean rel) {
+		Store s = Store.get();
+		return unverified(s.getSourceType(m).orElse(Locatable.class), s.getObserverType(m).orElse(Locatable.class),
+				m.getReturnType()).relational(rel).id(m.getAnnotation(Placeholder.class).id()).frommethod(o, m, p);
+	}
+
+	public static ExpansionBuilderImpl<?, ?, ?> load(Object src, String id, Object plugin) {
+		Method m = Store.find(src, id, false);
+		boolean relational = false;
+		if (m == null) {
+			m = Store.find(src, id, true);
+			relational = true;
+			if (m == null) {
+				throw new IllegalArgumentException("No placeholder exists with that id!");
+			}
+		}
+		return lfm(src, m, plugin, relational);
 	}
 
 	@SuppressWarnings({ "rawtypes" })
@@ -520,8 +527,8 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 		if (!exp.verify()) {
 			return (ExpansionBuilderImpl<S, O, V>) builder;
 		}
-		ExpansionBuilderImpl<?, ?, ?> b = (ExpansionBuilderImpl<?, ?, ?>) builder;
-		ExpansionBuilderImpl<S, O, V> n = unverified();
+		ExpansionBuilderImpl<?, ?, ?> b = builder;
+		ExpansionBuilderImpl<S, O, V> n = unverified(exp.getSourceClass(), exp.getObserverClass(), exp.getValueClass());
 		n.relational(b.relational).id(b.id).author(b.auth).description(b.desc).config(b.config).tokens(b.tokens)
 				.version(b.ver);
 		try {
@@ -543,17 +550,17 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 	/**
 	 * Create a builder for a method in the object.
 	 *
-	 * This will attempt to find a method which has the "@Placeholder"
-	 * annotation linked to the provided id. If it exists, it will create the
-	 * builder. This will attempt to use the relational field to determine if it
-	 * can parse that method, which will by default be the normal method. If it
-	 * does not find that method, it will check for one which is not relational.
+	 * This will attempt to find a method which has the "@Placeholder" annotation
+	 * linked to the provided id. If it exists, it will create the builder. This
+	 * will attempt to use the relational field to determine if it can parse that
+	 * method, which will by default be the normal method. If it does not find that
+	 * method, it will check for one which is not relational.
 	 * 
 	 * This method alters the function, the plugin, the id and the relational
 	 * fields. Any other previously existing fields will be conserved.
 	 * 
-	 * The provided id must exist on at least one method. Any repeated ids will
-	 * be ignored unless they are of different relational status.
+	 * The provided id must exist on at least one method. Any repeated ids will be
+	 * ignored unless they are of different relational status.
 	 * 
 	 * @param obj
 	 *            The object containing the placeholder method.
@@ -599,13 +606,16 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 		this.config = exp.getConfiguration();
 		this.relational = exp.relational();
 		this.func = exp::parse;
+		this.sourceClass = exp.getSourceClass();
+		this.observerClass = exp.getObserverClass();
+		this.returnClass = exp.getValueClass();
 		return this;
 	}
 
 	/**
-	 * Copy settings from the expansion provided in order to modify it. This
-	 * method ignores the types of the provided expansion and attempts to cast
-	 * them to its own.
+	 * Copy settings from the expansion provided in order to modify it. This method
+	 * ignores the types of the provided expansion and attempts to cast them to its
+	 * own.
 	 * 
 	 * @param exp
 	 *            The expansion from which to draw values.
@@ -630,7 +640,7 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 	 */
 	@Override
 	public ExpansionBuilderImpl<S, O, V> reset() {
-		return unverified();
+		return unverified(getSourceClass(), getObserverClass(), getValueClass());
 	}
 
 	/*

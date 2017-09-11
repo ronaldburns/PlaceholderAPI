@@ -378,14 +378,15 @@ public class PlaceholderAPIPlugin {
 								exc.printStackTrace();
 								return false;
 							}
-							((Expansion<?, ?, ?>) e).setTokens(jsm.getScriptNames());
+							e.setTokens(jsm.getScriptNames());
 							return true;
 						}).version("2.0");
 			case "economy":
 				return builder.description(Messages.get().placeholder.curdesc.value)
 						.tokens("", "[currency]", "balance", "balance_[currency]", "bal_format_[currency]",
 								"bal_format", "display", "display_[currency]", "plural_display_[currency]",
-								"symbol_[currency]", "plural_display", "symbol")
+								"symbol_[currency]", "plural_display", "symbol", "baltop_<number>",
+								"baltop_<number>_[currency]")
 						.version("2.0");
 			case "server":
 				return builder
@@ -394,7 +395,7 @@ public class PlaceholderAPIPlugin {
 						.version("2.0");
 			case "sound":
 				return builder.description(Messages.get().placeholder.sounddesc.value)
-						.tokens("[sound]-[volume]-[pitch]").version("2.0");
+						.tokens("[sound]-[volume]-[pitch]", "[sound]-[volume]-[pitch]_all").version("2.0");
 			case "statistic":
 				return builder.description(Messages.get().placeholder.statdesc.value).version("2.0");
 			case "time":

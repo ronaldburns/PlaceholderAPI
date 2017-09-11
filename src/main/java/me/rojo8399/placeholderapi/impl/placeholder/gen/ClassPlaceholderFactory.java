@@ -76,6 +76,7 @@ import javax.annotation.Nullable;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.spongepowered.api.world.Locatable;
 
@@ -83,6 +84,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
+import me.rojo8399.placeholderapi.NoValueException;
 import me.rojo8399.placeholderapi.Observer;
 import me.rojo8399.placeholderapi.Placeholder;
 import me.rojo8399.placeholderapi.Source;
@@ -138,9 +140,9 @@ public class ClassPlaceholderFactory {
 				+ iid.incrementAndGet();
 		byte[] bytes = generateClass(name, handle, method);
 		/*
-		 * Files.write(new File(name + ".class").toPath(), bytes);
-		 * System.out.println("written " + name);
-		 */
+		Files.write(new File(name + ".class").toPath(), bytes);
+		System.out.println("written " + name);
+		*/
 		return this.classLoader.defineClass(name, bytes);
 	}
 
@@ -294,7 +296,7 @@ public class ClassPlaceholderFactory {
 					break;
 				}
 				final int y = x;
-				nullCheck(mv, nullable, mv2 -> mv2.visitVarInsn(ALOAD, y + 1));
+				nullCheck(mv, nullable, mv2 -> mv2.visitVarInsn(ALOAD, y + 1), x == 3 && token);
 				mv.visitTypeInsn(CHECKCAST, Type.getInternalName(boxedPrim(p.getType())));
 				boxToPrim(mv, p.getType(), y + 1);
 			}
@@ -517,15 +519,26 @@ public class ClassPlaceholderFactory {
 		mv.visitLabel(no);
 	}
 
-	private static void nullCheck(MethodVisitor mv, boolean nullable, Consumer<MethodVisitor> success) {
+	private static void nullCheck(MethodVisitor mv, boolean nullable, Consumer<MethodVisitor> success,
+			boolean throwError) {
 		if (nullable) {
 			return;
 		}
 		// assume null check obj already loaded to stack
 		Label no = new Label();
 		mv.visitJumpInsn(IFNONNULL, no);
-		mv.visitInsn(ACONST_NULL);
-		mv.visitInsn(ARETURN);
+		if (throwError) {
+			mv.visitTypeInsn(Opcodes.NEW, Type.getInternalName(NoValueException.class));
+			mv.visitVarInsn(ASTORE, 7);
+			mv.visitVarInsn(ALOAD, 7);
+			mv.visitMethodInsn(Opcodes.INVOKESPECIAL, Type.getInternalName(NoValueException.class), "<init>", "()V",
+					false);
+			mv.visitVarInsn(ALOAD, 7);
+			mv.visitInsn(Opcodes.ATHROW);
+		} else {
+			mv.visitInsn(ACONST_NULL);
+			mv.visitInsn(ARETURN);
+		}
 		mv.visitLabel(no);
 		success.accept(mv);
 	}

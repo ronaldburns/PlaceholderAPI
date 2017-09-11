@@ -42,6 +42,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
 
 import me.rojo8399.placeholderapi.ExpansionBuilder;
+import me.rojo8399.placeholderapi.NoValueException;
 import me.rojo8399.placeholderapi.PlaceholderService;
 import me.rojo8399.placeholderapi.impl.placeholder.Expansion;
 import me.rojo8399.placeholderapi.impl.placeholder.ExpansionBuilderImpl;
@@ -112,30 +113,21 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			if (!store.has(id)) {
 				// Again, filler string.
 				if (!template.getArguments().get(a).isOptional()) {
-					args.put(a, template.getOpenArgString() + a + template.getCloseArgString());
+					args.put(a, Text.of(TextColors.WHITE, template.getOpenArgString(), TextColors.RED, a,
+							TextColors.WHITE, template.getCloseArgString()));
 				}
 				continue;
 			}
 			String token = noToken ? null : format.substring(index + 1);
 			Text value = null;
+			boolean empty = true;
 			try {
 				value = store.parse(id, rel, s, o, Optional.ofNullable(token), Text.class).orElse(null);
 			} catch (Exception e) {
-				String cl = "";
-				try {
-					cl = e.getCause().getMessage() + " ";
-				} catch (Exception xe) {
-				}
-				value = Text.of(TextColors.RED,
-						TextActions.showText(Text.of(TextColors.RED, "Check the console for details!")),
-						"ERROR: " + cl + e.getMessage());
-				e.printStackTrace();
-			}
-
-			if (value == null && PlaceholderAPIPlugin.getInstance().getConfig().relationaltoregular && rel) {
-				try {
-					value = store.parse(id, false, o, s, Optional.ofNullable(token), Text.class).orElse(null);
-				} catch (Exception e) {
+				if (e instanceof NoValueException) {
+					value = null;
+					empty = false;
+				} else {
 					String cl = "";
 					try {
 						cl = e.getCause().getMessage() + " ";
@@ -147,8 +139,39 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 					e.printStackTrace();
 				}
 			}
-			if (value == null) {
-				value = Text.of(template.getOpenArgString() + a + template.getCloseArgString());
+
+			if (value == null && PlaceholderAPIPlugin.getInstance().getConfig().relationaltoregular && rel) {
+				empty = true;
+				try {
+					value = store.parse(id, false, o, s, Optional.ofNullable(token), Text.class).orElse(null);
+				} catch (Exception e) {
+					if (e instanceof NoValueException) {
+						value = null;
+						empty = false;
+					} else {
+						String cl = "";
+						try {
+							cl = e.getCause().getMessage() + " ";
+						} catch (Exception xe) {
+						}
+						value = Text.of(TextColors.RED,
+								TextActions.showText(Text.of(TextColors.RED, "Check the console for details!")),
+								"ERROR: " + cl + e.getMessage());
+						e.printStackTrace();
+					}
+				}
+			}
+			if (value == null && !empty) {
+				Text arg;
+				if (noToken) {
+					arg = Text.of(TextColors.RED, a);
+				} else {
+					arg = Text.of(TextColors.WHITE, id, TextColors.RED, "_" + token);
+				}
+				value = Text.of(TextColors.WHITE, template.getOpenArgString(), arg, TextColors.WHITE,
+						template.getCloseArgString());
+			} else if (value == null) {
+				value = Text.EMPTY;
 			}
 			args.put(a, value);
 		}
@@ -275,8 +298,9 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	 * @see me.rojo8399.placeholderapi.PlaceholderService#builder()
 	 */
 	@Override
-	public <S, O, V> ExpansionBuilder<S, O, V, ?> builder() {
-		return ExpansionBuilderImpl.builder();
+	public <S, O, V> ExpansionBuilder<S, O, V, ?> builder(Class<? extends S> s, Class<? extends O> o,
+			Class<? extends V> v) {
+		return ExpansionBuilderImpl.builder(s, o, v);
 	}
 
 	/*
@@ -299,7 +323,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	 */
 	@Override
 	public ExpansionBuilder<?, ?, ?, ?> load(Object handle, String id, Object plugin) {
-		return ExpansionBuilderImpl.unverified().from(handle, id, plugin);
+		return ExpansionBuilderImpl.load(handle, id, plugin);
 	}
 
 	/* (non-Javadoc)

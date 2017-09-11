@@ -73,6 +73,7 @@ import org.spongepowered.api.world.Locatable;
 import com.flowpowered.math.vector.Vector3d;
 
 import me.rojo8399.placeholderapi.Listening;
+import me.rojo8399.placeholderapi.NoValueException;
 import me.rojo8399.placeholderapi.Observer;
 import me.rojo8399.placeholderapi.Placeholder;
 import me.rojo8399.placeholderapi.PlaceholderService;
@@ -124,7 +125,7 @@ public class Defaults {
 	}
 
 	@Placeholder(id = "player")
-	public Object normalPlayer(@Source Player p, @Token(fix = true) @Nullable String token) {
+	public Object normalPlayer(@Source Player p, @Token(fix = true) @Nullable String token) throws NoValueException {
 		if (token == null) {
 			return p.getName();
 		}
@@ -234,7 +235,7 @@ public class Defaults {
 			}
 			return out.trim();
 		default:
-			return null;
+			throw new NoValueException();
 		}
 	}
 
@@ -363,8 +364,8 @@ public class Defaults {
 
 	@Placeholder(id = "player")
 	@Relational
-	public Object relPlayer(@Source Player one, @Observer CommandSource two,
-			@Token(fix = true) @Nullable String token) {
+	public Object relPlayer(@Source Player one, @Observer CommandSource two, @Token(fix = true) @Nullable String token)
+			throws NoValueException {
 		if (!(two instanceof Player)) {
 			if (token == null) {
 				return two.getName();
@@ -383,7 +384,7 @@ public class Defaults {
 			}
 		}
 		if (token == null) {
-			return null;
+			throw new NoValueException();
 		}
 		String t = token;
 		switch (t) {
@@ -396,7 +397,7 @@ public class Defaults {
 			if (!(two instanceof Entity)) {
 				return false;
 			}
-			return ((Entity) two).canSee((Entity) one) && !((Entity) one).get(Keys.VANISH).orElse(false);
+			return ((Entity) two).canSee(one) && !((Entity) one).get(Keys.VANISH).orElse(false);
 		case "audible":
 			return one.getMessageChannel().getMembers().contains(two);
 		case "distance_x":
@@ -415,7 +416,7 @@ public class Defaults {
 			}
 			return Math.abs(one.getLocation().getBlockZ() - ((Locatable) two).getLocation().getBlockZ());
 		}
-		return null;
+		throw new NoValueException();
 	}
 
 	private static Subject getParentGroup(Subject subject) {
@@ -433,9 +434,10 @@ public class Defaults {
 
 	@Placeholder(id = "rank")
 	@Relational
-	public Boolean isAbove(@Token String token, @Source User underrank, @Observer User overrank) {
+	public Boolean isAbove(@Token String token, @Source User underrank, @Observer User overrank)
+			throws NoValueException {
 		if (!(token.equalsIgnoreCase("greater_than") || token.equalsIgnoreCase("less_than"))) {
-			return null;
+			throw new NoValueException();
 		}
 		if (token.equalsIgnoreCase("greater_than")) {
 			if (underrank.isChildOf(overrank)) {
@@ -451,7 +453,7 @@ public class Defaults {
 	}
 
 	@Placeholder(id = "rank")
-	public Object rank(@Source User player, @Token(fix = true) @Nullable String token) {
+	public Object rank(@Source User player, @Token(fix = true) @Nullable String token) throws NoValueException {
 		if (token == null) {
 			return getParentGroup(player).getIdentifier();
 		}
@@ -476,7 +478,7 @@ public class Defaults {
 				return rank.getPermissionValue(rank.getActiveContexts(), perm).toString();
 			}
 		}
-		return null;
+		throw new NoValueException();
 	}
 
 	private static Runtime runtime = Runtime.getRuntime();
@@ -533,7 +535,7 @@ public class Defaults {
 	}
 
 	@Placeholder(id = "server")
-	public Object server(@Token(fix = true) String identifier) {
+	public Object server(@Token(fix = true) String identifier) throws NoValueException {
 		switch (identifier) {
 		case "online":
 			return Sponge.getServer().getOnlinePlayers().stream()
@@ -548,8 +550,7 @@ public class Defaults {
 		case "uptime_percent":
 			long um = this.getUptimeMillis();
 			long dm = this.getDowntimeMillis();
-			return DecimalFormat.getPercentInstance()
-					.format(100D * (double) ((double) um / ((double) dm + (double) um))) + "%";
+			return DecimalFormat.getPercentInstance().format(100D * (um / ((double) dm + (double) um))) + "%";
 		case "uptime_total":
 			return Duration.ofMillis(this.getUptimeMillis());
 		case "ram_used":
@@ -565,7 +566,7 @@ public class Defaults {
 		case "tps":
 			return Sponge.getServer().getTicksPerSecond();
 		default:
-			return null;
+			throw new NoValueException();
 		}
 	}
 
@@ -574,9 +575,10 @@ public class Defaults {
 	private Currency def;
 
 	@Placeholder(id = "economy")
-	public Object economy(@Token(fix = true) @Nullable String token, @Nullable @Source User player) {
+	public Object economy(@Token(fix = true) @Nullable String token, @Nullable @Source User player)
+			throws NoValueException {
 		if (service == null || !eco) {
-			return null;
+			throw new NoValueException();
 		}
 		if (token == null) {
 			Text amt = def.format(BigDecimal.valueOf(1234.56));
@@ -641,7 +643,7 @@ public class Defaults {
 				Text v = Text.of(toUse.getName() + " (" + toUse.getId() + ") - ");
 				return v.concat(amt);
 			}
-			return null;
+			throw new NoValueException();
 		}
 		// Don't handle nonexistent accounts here, instead throw error
 		UniqueAccount acc = service.getOrCreateAccount(player.getUniqueId()).get();
@@ -663,7 +665,7 @@ public class Defaults {
 			Text v = Text.of(toUse.getName() + " (" + toUse.getId() + ") - ");
 			return v.concat(amt);
 		}
-		return null;
+		throw new NoValueException();
 	}
 
 	/* ordered */
@@ -745,10 +747,8 @@ public class Defaults {
 					pl.playSound(sound.get(), position, volume, pitch);
 				}
 			}
-			return Text.EMPTY;// Remove text from replacement
-		} else {
-			return null;// Leave text in replacement
 		}
+		return null;
 	}
 
 	@Placeholder(id = "statistic")

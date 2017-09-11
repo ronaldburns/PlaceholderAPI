@@ -53,7 +53,8 @@ public interface PlaceholderService {
 	 * 
 	 * @return the expansion builder.
 	 */
-	public <S, O, V> ExpansionBuilder<S, O, V, ?> builder();
+	public <S, O, V> ExpansionBuilder<S, O, V, ?> builder(Class<? extends S> source, Class<? extends O> observer,
+			Class<? extends V> value);
 
 	/**
 	 * Create an expansion builder based off of the '@Placeholder' annotated method
