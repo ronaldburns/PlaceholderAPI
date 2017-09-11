@@ -32,6 +32,11 @@ package me.rojo8399.placeholderapi;
 public class NoValueException extends Exception {
 
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 4162128874653399415L;
+
+	/**
 	 * Create a new NoValueException.
 	 */
 	public NoValueException() {

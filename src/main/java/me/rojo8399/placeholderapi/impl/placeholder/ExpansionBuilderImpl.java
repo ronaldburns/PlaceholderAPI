@@ -100,12 +100,9 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 	/*
 	 * Used for type verification
 	 */
+	@SuppressWarnings("unused")
 	private V parse(S s, O o, Optional<String> t) {
 		return null;
-	}
-
-	private static boolean verifyToken(Class<?> param) {
-		return Optional.class.isAssignableFrom(param) || String.class.isAssignableFrom(param);
 	}
 
 	private static boolean verifySource(Class<?> param) {
@@ -489,7 +486,6 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 	 */
 	public static List<ExpansionBuilderImpl<?, ?, ?>> loadAll(Object object, Object plugin) {
 		Map<Method, Boolean> methods = Store.findAll(object);
-		Store store = Store.get();
 		@SuppressWarnings("rawtypes")
 		List<ExpansionBuilder> l = methods.entrySet().stream().map(e -> lfm(object, e.getKey(), plugin, e.getValue()))
 				.collect(Collectors.toList());
@@ -545,8 +541,6 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 		return n;
 	}
 
-	private Runnable regList, unregList;
-
 	/**
 	 * Create a builder for a method in the object.
 	 *
@@ -573,15 +567,12 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 	@SuppressWarnings("unchecked")
 	@Override
 	public ExpansionBuilderImpl<S, O, V> from(Object obj, String id, Object plugin) {
-		Class<?> clazz = obj.getClass();
 		Method m = Store.find(obj, id, relational);
-		boolean togglerel = false;
 		if (m == null) {
 			m = Store.find(obj, id, !relational);
 			if (m == null) {
 				throw new IllegalArgumentException("No placeholder by that ID found!");
 			}
-			togglerel = true;
 		}
 		return frommethod(obj, m, plugin);
 	}
