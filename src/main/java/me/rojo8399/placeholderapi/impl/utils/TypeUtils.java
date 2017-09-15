@@ -162,8 +162,6 @@ public class TypeUtils {
 		return !or(one, two);
 	}
 
-	// reduction operator shorthands
-
 	public static boolean or(boolean one, boolean two) {
 		return one || two;
 	}

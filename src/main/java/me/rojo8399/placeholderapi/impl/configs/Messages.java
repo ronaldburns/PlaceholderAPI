@@ -83,11 +83,15 @@ public class Messages {
 		public Message by = of("by");
 		@Setting
 		public Direction directions = new Direction();
+		@Setting("invalid")
+		public Message invalid = of("&cThat is not a valid %s!");
 		@Setting("no-permission")
 		public Message noPerm = of("&cYou are not allowed to do that!");
+
 		@Setting("no-value")
 		public Message noValue = of("&cNo value present.");
-
+		@Setting
+		public Message suggestions = of("Suggestions: ");
 		@Setting
 		public Message version = of("&7version");
 	}
@@ -117,10 +121,14 @@ public class Messages {
 		public Message infoButtonHover = of("&bClick to get more info!");
 		@Setting("invalid-placeholder")
 		public Message invalidPlaceholder = of("&cThat is not a valid placeholder!");
+		@Setting("invalid-source-observer")
+		public Message invalidSrcObs = of("&cThe provided types are invalid sources or observers!");
 		@Setting("javascript-description")
 		public Message jsdesc = of("Execute JavaScripts.");
 		@Setting("must-specify")
 		public Message mustSpecify = of("&cYou must specify a placeholder!");
+		@Setting("placeholder-not-enabled")
+		public Message notEnabled = of("&cPlaceholder not enabled!");
 		@Setting("parse-button-hover")
 		public Message parseButtonHover = of("&bClick to parse this placeholder for you!");
 		@Setting("placeholder-disabled")
@@ -155,6 +163,8 @@ public class Messages {
 		public Message supportedPlaceholdersRelational = of("&6Supported relational placeholders:");
 		@Setting("time-description")
 		public Message timedesc = of("View the current date and time.");
+		@Setting("token-needed")
+		public Message tokenNeeded = of("&cThis placeholder needs a token!");
 	}
 
 	@ConfigSerializable

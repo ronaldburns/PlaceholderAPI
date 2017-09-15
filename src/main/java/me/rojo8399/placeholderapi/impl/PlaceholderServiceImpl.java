@@ -47,6 +47,7 @@ import com.google.common.reflect.TypeToken;
 import me.rojo8399.placeholderapi.ExpansionBuilder;
 import me.rojo8399.placeholderapi.NoValueException;
 import me.rojo8399.placeholderapi.PlaceholderService;
+import me.rojo8399.placeholderapi.impl.configs.Messages;
 import me.rojo8399.placeholderapi.impl.placeholder.Expansion;
 import me.rojo8399.placeholderapi.impl.placeholder.ExpansionBuilderImpl;
 import me.rojo8399.placeholderapi.impl.placeholder.Store;
@@ -255,13 +256,13 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 				// Again, filler string.
 				if (!template.getArguments().get(a).isOptional()) {
 					Text suggestions = Text.NEW_LINE;
-					suggestions = suggestions.concat(Text.of("Suggestions: ",
+					suggestions = suggestions.concat(Text.of(Messages.get().misc.suggestions.t(),
 							Text.joinWith(Text.of(", "),
 									store.allIds().stream().filter(str -> TypeUtils.closeTo(id, str)).map(Text::of)
 											.collect(Collectors.toList()))));
 					args.put(a,
 							Text.of(TextColors.WHITE,
-									TextActions.showText(Text.of(TextColors.RED, "This ID is invaid!", suggestions)),
+									TextActions.showText(Text.of(Messages.get().misc.invalid.t("ID"), suggestions)),
 									template.getOpenArgString(), TextColors.RED, a, TextColors.WHITE,
 									template.getCloseArgString()));
 				}
@@ -270,7 +271,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			String token = noToken ? null : format.substring(index + 1);
 			Text value = null;
 			boolean empty = true;
-			String errorMsg = "This placeholder needs a token!";
+			Text errorMsg = Messages.get().placeholder.tokenNeeded.t();
 			List<String> suggestions = new ArrayList<>();
 			try {
 				value = store.parse(id, rel, s, o, Optional.ofNullable(token), Text.class).orElse(null);
@@ -278,7 +279,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 				if (e instanceof NoValueException) {
 					value = null;
 					empty = false;
-					errorMsg = e.getMessage();
+					errorMsg = ((NoValueException) e).getTextMessage();
 					suggestions = ((NoValueException) e).suggestions();
 				} else {
 					String cl = "";
@@ -301,7 +302,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 					if (e instanceof NoValueException) {
 						value = null;
 						empty = false;
-						errorMsg = e.getMessage();
+						errorMsg = ((NoValueException) e).getTextMessage();
 						suggestions = ((NoValueException) e).suggestions();
 					} else {
 						String cl = "";
@@ -321,11 +322,10 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 				Text arg;
 				if (noToken) {
 					if (enabled) {
-						arg = Text.of(TextColors.RED,
-								TextActions.showText(Text.of(TextColors.RED, "This placeholder needs a token!")), a);
+						arg = Text.of(TextColors.RED, TextActions.showText(errorMsg), a);
 					} else {
-						arg = Text.of(TextColors.RED,
-								TextActions.showText(Text.of(TextColors.RED, "Expansion is not enabled!")), a);
+						arg = Text.of(TextColors.RED, TextActions.showText(Messages.get().placeholder.notEnabled.t()),
+								a);
 					}
 
 				} else {
@@ -337,7 +337,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 					}
 					Text sug = Text.EMPTY;
 					if (!suggestions.isEmpty()) {
-						sug = Text.of(Text.NEW_LINE, "Suggestions: ", Text.joinWith(Text.of(", "),
+						sug = Text.of(Text.NEW_LINE, Messages.get().misc.suggestions, Text.joinWith(Text.of(", "),
 								suggestions.stream().map(Text::of).collect(Collectors.toList())));
 					}
 					arg = Text.of(idCol, TextActions.showText(Text.of(TextColors.RED, errorMsg, sug)), id,

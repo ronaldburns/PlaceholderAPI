@@ -52,6 +52,7 @@ import me.rojo8399.placeholderapi.Relational;
 import me.rojo8399.placeholderapi.Source;
 import me.rojo8399.placeholderapi.Token;
 import me.rojo8399.placeholderapi.impl.PlaceholderAPIPlugin;
+import me.rojo8399.placeholderapi.impl.configs.Messages;
 import me.rojo8399.placeholderapi.impl.placeholder.gen.ClassPlaceholderFactory;
 import me.rojo8399.placeholderapi.impl.placeholder.gen.DefineableClassLoader;
 import me.rojo8399.placeholderapi.impl.placeholder.gen.InternalExpansion;
@@ -298,7 +299,7 @@ public class Store {
 		@SuppressWarnings("unchecked")
 		Expansion<Object, Object, ?> exp = (Expansion<Object, Object, ?>) get(id, relational).get();
 		if (!exp.isEnabled()) {
-			throw new NoValueException("Expansion is not enabled!");
+			throw new NoValueException(Messages.get().placeholder.notEnabled.t());
 		}
 		try {
 			if (src == null || obs == null) {
@@ -317,7 +318,7 @@ public class Store {
 		} catch (NoValueException e) {
 			throw new NoValueException(e.getMessage(), exp.getSuggestions(token.orElse(null)));
 		}
-		throw new NoValueException("Provided source or observer did not match the right type!");
+		throw new NoValueException(Messages.get().placeholder.invalidSrcObs.t());
 	}
 
 	public <T> Optional<T> parse(String id, boolean relational, Object src, Object obs, Optional<String> token,

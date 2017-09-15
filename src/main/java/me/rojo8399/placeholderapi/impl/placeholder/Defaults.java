@@ -778,7 +778,7 @@ public class Defaults {
 	}
 
 	@Placeholder(id = "sound")
-	public Text sound(@Nullable @Source Player p, @Token(fix = true) String identifier) {
+	public Text sound(@Nullable @Source Player p, @Token(fix = true) String identifier) throws NoValueException {
 		boolean all = identifier.contains("all");
 		if (all) {
 			identifier = ALLSOUND_PATTERN.matcher(identifier).replaceAll("");
@@ -799,6 +799,8 @@ public class Defaults {
 					pl.playSound(sound.get(), position, volume, pitch);
 				}
 			}
+		} else {
+			throw new NoValueException(Messages.get().misc.invalid.t("sound"));
 		}
 		return null;
 	}

@@ -26,6 +26,10 @@ package me.rojo8399.placeholderapi;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.spongepowered.api.text.Text;
+
+import me.rojo8399.placeholderapi.impl.configs.Messages;
+
 /**
  * A no value exception representing when the returned placeholder should not
  * parse.
@@ -40,12 +44,13 @@ public class NoValueException extends Exception {
 	private static final long serialVersionUID = 4162128874653399415L;
 
 	private List<String> suggestions = new ArrayList<>();
+	private Text message;
 
 	/**
 	 * Create a new NoValueException.
 	 */
 	public NoValueException() {
-		super("That is not a valid token!");
+		this(Messages.get().misc.invalid.t("token"));
 	}
 
 	/**
@@ -56,6 +61,15 @@ public class NoValueException extends Exception {
 	 */
 	public NoValueException(String message) {
 		super(message);
+	}
+
+	public NoValueException(Text message) {
+		this.message = message;
+	}
+
+	public NoValueException(Text message, List<String> suggestions) {
+		this.message = message;
+		this.suggestions = suggestions;
 	}
 
 	public NoValueException(String message, List<String> suggestions) {
@@ -103,6 +117,13 @@ public class NoValueException extends Exception {
 
 	public List<String> suggestions() {
 		return suggestions;
+	}
+
+	public Text getTextMessage() {
+		if (this.message == null) {
+			return Text.of(super.getMessage());
+		}
+		return this.message;
 	}
 
 }
