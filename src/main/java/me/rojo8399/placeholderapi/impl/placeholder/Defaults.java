@@ -21,7 +21,7 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-package me.rojo8399.placeholderapi.impl.placeholder.impl;
+package me.rojo8399.placeholderapi.impl.placeholder;
 
 import java.math.BigDecimal;
 import java.text.NumberFormat;
@@ -83,8 +83,6 @@ import me.rojo8399.placeholderapi.Token;
 import me.rojo8399.placeholderapi.impl.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.impl.configs.JavascriptManager;
 import me.rojo8399.placeholderapi.impl.configs.Messages;
-import me.rojo8399.placeholderapi.impl.placeholder.Expansion;
-import me.rojo8399.placeholderapi.impl.placeholder.Store;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 
