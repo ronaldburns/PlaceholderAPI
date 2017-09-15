@@ -23,13 +23,7 @@
  */
 package me.rojo8399.placeholderapi.impl.placeholder.gen;
 
-import org.spongepowered.api.Sponge;
-
-import me.rojo8399.placeholderapi.impl.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.impl.placeholder.Expansion;
-import ninja.leaping.configurate.ConfigurationNode;
-import ninja.leaping.configurate.objectmapping.ObjectMapper;
-import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 
 /**
  * @author Wundero
@@ -37,15 +31,11 @@ import ninja.leaping.configurate.objectmapping.ObjectMappingException;
  */
 public abstract class InternalExpansion<S, O, V> extends Expansion<S, O, V> {
 
+	protected Object handle;
+
 	public InternalExpansion(String id, Object handle) {
 		super(id);
 		this.handle = handle;
-	}
-
-	protected Object handle;
-
-	public Object getHandle() {
-		return handle;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -58,46 +48,8 @@ public abstract class InternalExpansion<S, O, V> extends Expansion<S, O, V> {
 		}
 	}
 
-	@Override
-	protected void saveConfigObject() {
-		if (handle == null || PlaceholderAPIPlugin.getInstance() == null
-				|| PlaceholderAPIPlugin.getInstance().getRootConfig() == null) {
-			return;
-		}
-		ConfigurationNode node = PlaceholderAPIPlugin.getInstance().getRootConfig().getNode("expansions",
-				(relational() ? "rel_" : "") + Sponge.getPluginManager().fromInstance(getPlugin()).get().getId(),
-				id().toLowerCase().trim());
-		try {
-			ObjectMapper.forObject(handle).serialize(node);
-			PlaceholderAPIPlugin.getInstance().saveConfig();
-		} catch (Exception e2) {
-		}
-	}
-
-	@Override
-	protected void populateConfigObject() {
-		if (PlaceholderAPIPlugin.getInstance() == null || PlaceholderAPIPlugin.getInstance().getRootConfig() == null) {
-			return;
-		}
-		ConfigurationNode node = PlaceholderAPIPlugin.getInstance().getRootConfig().getNode("expansions",
-				(relational() ? "rel_" : "") + Sponge.getPluginManager().fromInstance(getPlugin()).get().getId(),
-				id().toLowerCase().trim());
-		if (node.isVirtual()) {
-			try {
-				ObjectMapper.forObject(handle).serialize(node);
-				PlaceholderAPIPlugin.getInstance().saveConfig();
-			} catch (Exception e2) {
-			}
-		}
-		try {
-			handle = ObjectMapper.forObject(handle).populate(node);
-		} catch (ObjectMappingException e1) {
-			try {
-				ObjectMapper.forObject(handle).serialize(node);
-				PlaceholderAPIPlugin.getInstance().saveConfig();
-			} catch (Exception e2) {
-			}
-		}
+	public Object getHandle() {
+		return handle;
 	}
 
 }

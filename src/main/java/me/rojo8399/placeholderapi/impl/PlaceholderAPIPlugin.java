@@ -85,40 +85,46 @@ import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 		"rojo8399", "Wundero" })
 public class PlaceholderAPIPlugin {
 
+	private static PlaceholderAPIPlugin instance;
 	public static final String PLUGIN_ID = "placeholderapi";
 	public static final String PLUGIN_NAME = "PlaceholderAPI";
 	public static final String PLUGIN_VERSION = "4.2";
-	private static PlaceholderAPIPlugin instance;
+
+	public static PlaceholderAPIPlugin getInstance() {
+		return instance;
+	}
+
+	private Set<Object> alreadyRegistered = new HashSet<>();
+
+	private Config config;
 
 	@Inject
-	private Logger logger;
+	@ConfigDir(sharedRoot = false)
+	private Path configDir;
 
-	@Inject
-	private Metrics metrics;
+	private DateTimeFormatter formatter;
 
 	@Inject
 	private Game game;
-
-	@Inject
-	private PluginContainer plugin;
-
 	private JavascriptManager jsm;
-
-	@Inject
-	@DefaultConfig(sharedRoot = false)
-	private Path path;
 	@Inject
 	@DefaultConfig(sharedRoot = false)
 	private ConfigurationLoader<CommentedConfigurationNode> loader;
 	@Inject
-	@ConfigDir(sharedRoot = false)
-	private Path configDir;
-	private ConfigurationNode root;
-	private Config config;
+	private Logger logger;
+	@Inject
+	private Metrics metrics;
+	private ConfigurationLoader<CommentedConfigurationNode> msgloader;
 	private ConfigurationNode msgRoot;
 	private Messages msgs;
-	private ConfigurationLoader<CommentedConfigurationNode> msgloader;
-	private DateTimeFormatter formatter;
+	@Inject
+	@DefaultConfig(sharedRoot = false)
+	private Path path;
+
+	@Inject
+	private PluginContainer plugin;
+
+	private ConfigurationNode root;
 
 	private PlaceholderService s;
 
@@ -126,91 +132,36 @@ public class PlaceholderAPIPlugin {
 		return formatter;
 	}
 
+	public Config getConfig() {
+		return config;
+	}
+
+	public Game getGame() {
+		return game;
+	}
+
+	public Logger getLogger() {
+		return logger;
+	}
+
 	public ConfigurationNode getRootConfig() {
 		return root;
 	}
 
-	public void saveConfig() {
-		try {
-			loader.save(root);
-		} catch (Exception e) {
-		}
+	private ConfigurationNode loadDefault() throws IOException {
+		return HoconConfigurationLoader.builder()
+				.setURL(game.getAssetManager().getAsset(this, "config.conf").get().getUrl()).build()
+				.load(loader.getDefaultOptions());
 	}
 
-	@Listener
-	public void onGamePreInitializationEvent(GamePreInitializationEvent event)
-			throws IOException, ObjectMappingException {
-		instance = this;
-		plugin = game.getPluginManager().getPlugin(PLUGIN_ID).get();
-		Asset conf = game.getAssetManager().getAsset(this, "config.conf").get();
-		jsm = new JavascriptManager(new File(path.toFile().getParentFile(), "javascript"));
-		// Load config
-		if (!Files.exists(path)) {
-			try {
-				conf.copyToFile(path);
-			} catch (IOException ex) {
-				logger.error("Could not copy the config file!");
-				try {
-					throw ex;
-				} finally {
-					mapDefault();
-				}
-			}
-		}
+	private void mapDefault() throws IOException, ObjectMappingException {
 		try {
-			root = loader.load();
-		} catch (IOException ex) {
-			logger.error("Could not load the config file!");
-			try {
-				throw ex;
-			} finally {
-				mapDefault();
-			}
+			config = (root = loadDefault()).getValue(Config.type);
+		} catch (IOException | ObjectMappingException ex) {
+			logger.error("Could not load the embedded default config! Disabling plugin.");
+			game.getEventManager().unregisterPluginListeners(this);
+			throw ex;
 		}
-		try {
-			config = root.getValue(Config.type);
-		} catch (ObjectMappingException ex) {
-			logger.error("Invalid config file!");
-			try {
-				throw ex;
-			} finally {
-				mapDefault();
-			}
-		}
-		File msgFile = new File(configDir.toFile(), "messages.conf");
-		msgloader = HoconConfigurationLoader.builder().setFile(msgFile).build();
-		try {
-			msgs = (msgRoot = msgloader.load()).getValue(Messages.type);
-			if (msgs == null) {
-				msgs = new Messages();
-				msgRoot.setValue(Messages.type, msgs);
-				msgloader.save(msgRoot);
-			}
-		} catch (IOException ex) {
-			logger.error("Could not load the messages file!");
-			try {
-				throw ex;
-			} finally {
-				msgs = new Messages();
-				msgRoot.setValue(Messages.type, msgs);
-				msgloader.save(msgRoot);
-			}
-		} catch (ObjectMappingException ex) {
-			logger.error("Invalid messages file!");
-			try {
-				throw ex;
-			} finally {
-				msgs = new Messages();
-				msgRoot.setValue(Messages.type, msgs);
-				msgloader.save(msgRoot);
-			}
-		}
-		Messages.init(msgs);
-		this.formatter = DateTimeFormatter.ofPattern(config.dateFormat);
-		s = PlaceholderServiceImpl.get();
-		registerPlaceholders();
-		// Provide default implementation
-		game.getServiceManager().setProvider(this, PlaceholderService.class, s);
 	}
 
 	@Listener
@@ -295,25 +246,80 @@ public class PlaceholderAPIPlugin {
 
 	}
 
-	private Set<Object> alreadyRegistered = new HashSet<>();
-
-	public void registerListeners(Object object, Object plugin) {
-		if (alreadyRegistered.contains(object)) {
-			return;
+	@Listener
+	public void onGamePreInitializationEvent(GamePreInitializationEvent event)
+			throws IOException, ObjectMappingException {
+		instance = this;
+		plugin = game.getPluginManager().getPlugin(PLUGIN_ID).get();
+		Asset conf = game.getAssetManager().getAsset(this, "config.conf").get();
+		jsm = new JavascriptManager(new File(path.toFile().getParentFile(), "javascript"));
+		// Load config
+		if (!Files.exists(path)) {
+			try {
+				conf.copyToFile(path);
+			} catch (IOException ex) {
+				logger.error("Could not copy the config file!");
+				try {
+					throw ex;
+				} finally {
+					mapDefault();
+				}
+			}
 		}
-		Sponge.getEventManager().registerListeners(plugin, object);
-		alreadyRegistered.add(object);
-	}
-
-	public void registerListeners(Object object) {
-		registerListeners(object, this);
-	}
-
-	public void unregisterListeners(Object object) {
-		if (alreadyRegistered.contains(object)) {
-			alreadyRegistered.remove(object);
-			Sponge.getEventManager().unregisterListeners(object);
+		try {
+			root = loader.load();
+		} catch (IOException ex) {
+			logger.error("Could not load the config file!");
+			try {
+				throw ex;
+			} finally {
+				mapDefault();
+			}
 		}
+		try {
+			config = root.getValue(Config.type);
+		} catch (ObjectMappingException ex) {
+			logger.error("Invalid config file!");
+			try {
+				throw ex;
+			} finally {
+				mapDefault();
+			}
+		}
+		File msgFile = new File(configDir.toFile(), "messages.conf");
+		msgloader = HoconConfigurationLoader.builder().setFile(msgFile).build();
+		try {
+			msgs = (msgRoot = msgloader.load()).getValue(Messages.type);
+			if (msgs == null) {
+				msgs = new Messages();
+				msgRoot.setValue(Messages.type, msgs);
+				msgloader.save(msgRoot);
+			}
+		} catch (IOException ex) {
+			logger.error("Could not load the messages file!");
+			try {
+				throw ex;
+			} finally {
+				msgs = new Messages();
+				msgRoot.setValue(Messages.type, msgs);
+				msgloader.save(msgRoot);
+			}
+		} catch (ObjectMappingException ex) {
+			logger.error("Invalid messages file!");
+			try {
+				throw ex;
+			} finally {
+				msgs = new Messages();
+				msgRoot.setValue(Messages.type, msgs);
+				msgloader.save(msgRoot);
+			}
+		}
+		Messages.init(msgs);
+		this.formatter = DateTimeFormatter.ofPattern(config.dateFormat);
+		s = PlaceholderServiceImpl.get();
+		registerPlaceholders();
+		// Provide default implementation
+		game.getServiceManager().setProvider(this, PlaceholderService.class, s);
 	}
 
 	@Listener
@@ -336,9 +342,37 @@ public class PlaceholderAPIPlugin {
 		});
 	}
 
+	@Listener
+	public void onReload(GameReloadEvent event) throws IOException, ObjectMappingException {
+		reloadConfig();
+
+		// Send Messages to console and player
+		event.getCause().first(Player.class).ifPresent(p -> p.sendMessage(Messages.get().plugin.reloadSuccess.t()));
+		logger.info("Reloaded PlaceholderAPI");
+	}
+
+	@Listener
+	public void onStop(GameStoppingEvent event) {
+		saveConfig();
+		Store.get().saveAll();
+	}
+
+	public void registerListeners(Object object) {
+		registerListeners(object, this);
+	}
+
+	public void registerListeners(Object object, Object plugin) {
+		if (alreadyRegistered.contains(object)) {
+			return;
+		}
+		Sponge.getEventManager().registerListeners(plugin, object);
+		alreadyRegistered.add(object);
+	}
+
 	public void registerPlaceholders() {
 		EconomyService ex = game.getServiceManager().provide(EconomyService.class).orElse(null);
 		Defaults handle = new Defaults(ex, this.jsm, s);
+		registerListeners(handle);
 		s.loadAll(handle, this).stream().map(builder -> {
 			switch (builder.getId()) {
 			case "player": {
@@ -389,9 +423,9 @@ public class PlaceholderAPIPlugin {
 								"baltop_<number>_[currency]")
 						.version("2.0");
 			case "server":
-				return builder
-						.description(Messages.get().placeholder.serverdesc.value).tokens("unique_players", "online",
-								"max_players", "motd", "cores", "tps", "ram_used", "ram_free", "ram_total", "ram_max")
+				return builder.description(Messages.get().placeholder.serverdesc.value)
+						.tokens("unique_players", "online", "max_players", "motd", "cores", "tps", "ram_used",
+								"ram_free", "ram_total", "ram_max", "uptime", "uptime_percent", "uptime_total")
 						.version("2.0");
 			case "sound":
 				return builder.description(Messages.get().placeholder.sounddesc.value)
@@ -404,7 +438,10 @@ public class PlaceholderAPIPlugin {
 			return builder;
 		}).forEach(t -> {
 			try {
+				String i = t.getId();
+				boolean r = t.isRelational();
 				t.author("Wundero").plugin(this).buildAndRegister();
+				Store.get().get(i, r).ifPresent(e -> e.reloadListeners());
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -412,21 +449,6 @@ public class PlaceholderAPIPlugin {
 		if (ex == null) {
 			Store.get().get("economy", false).ifPresent(Expansion::disable);
 		}
-	}
-
-	@Listener
-	public void onReload(GameReloadEvent event) throws IOException, ObjectMappingException {
-		reloadConfig();
-
-		// Send Messages to console and player
-		event.getCause().first(Player.class).ifPresent(p -> p.sendMessage(Messages.get().plugin.reloadSuccess.t()));
-		logger.info("Reloaded PlaceholderAPI");
-	}
-
-	@Listener
-	public void onStop(GameStoppingEvent event) {
-		saveConfig();
-		Store.get().saveAll();
 	}
 
 	public void reloadConfig() throws IOException, ObjectMappingException {
@@ -456,36 +478,18 @@ public class PlaceholderAPIPlugin {
 		Messages.init(msgs);
 	}
 
-	private void mapDefault() throws IOException, ObjectMappingException {
+	public void saveConfig() {
 		try {
-			config = (root = loadDefault()).getValue(Config.type);
-		} catch (IOException | ObjectMappingException ex) {
-			logger.error("Could not load the embedded default config! Disabling plugin.");
-			game.getEventManager().unregisterPluginListeners(this);
-			throw ex;
+			loader.save(root);
+		} catch (Exception e) {
 		}
 	}
 
-	private ConfigurationNode loadDefault() throws IOException {
-		return HoconConfigurationLoader.builder()
-				.setURL(game.getAssetManager().getAsset(this, "config.conf").get().getUrl()).build()
-				.load(loader.getDefaultOptions());
-	}
-
-	public Config getConfig() {
-		return config;
-	}
-
-	public Game getGame() {
-		return game;
-	}
-
-	public Logger getLogger() {
-		return logger;
-	}
-
-	public static PlaceholderAPIPlugin getInstance() {
-		return instance;
+	public void unregisterListeners(Object object) {
+		if (alreadyRegistered.contains(object)) {
+			alreadyRegistered.remove(object);
+			Sponge.getEventManager().unregisterListeners(object);
+		}
 	}
 
 }

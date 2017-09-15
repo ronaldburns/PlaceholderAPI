@@ -41,6 +41,8 @@ import me.rojo8399.placeholderapi.impl.utils.TypeUtils;
 
 public interface PlaceholderService {
 
+	static final Pattern DEFAULT_PATTERN = Pattern.compile("[%\\{]([^ \\{\\}%]+)[\\}%]");
+
 	/**
 	 * Create a new ExpansionBuilder to build an expansion.
 	 * 
@@ -55,6 +57,48 @@ public interface PlaceholderService {
 	 */
 	public <S, O, V> ExpansionBuilder<S, O, V, ?> builder(Class<? extends S> source, Class<? extends O> observer,
 			Class<? extends V> value);
+
+	/**
+	 * Fill a map with placeholders from a template.
+	 * 
+	 * @param template
+	 *            The template to draw the values from. Any non-optional values
+	 *            which cannot be parsed will be filled with the string
+	 *            representation of the template argument.
+	 * @param source
+	 *            The source to draw placeholders from. This object must be of the
+	 *            type CommandSource, Locatable, User, or any subtypes of those
+	 *            classes. Any other object type will throw an exception.
+	 * @param observer
+	 *            The observer of the placeholders drawn from the source. For
+	 *            example, "distance" would be the distance from the source to the
+	 *            observer, and "visible" would be if the observer can see the
+	 *            source. This object must be of the type CommandSource, Locatable,
+	 *            User, or any subtypes of those classes. Any other object type will
+	 *            throw an exception.
+	 * @return The filled map.
+	 */
+	public Map<String, Object> fillPlaceholders(TextTemplate template, Object source, Object observer);
+
+	/**
+	 * Gets the default placeholder pattern for use with other parsers. Group 1 is
+	 * the group that matches to placeholders. There are no other capturing groups.
+	 * This is the pattern used if no pattern is specified for the other methods.
+	 * 
+	 * @return The default pattern.
+	 */
+	public default Pattern getDefaultPattern() {
+		return DEFAULT_PATTERN;
+	}
+
+	/**
+	 * Check to see if a placeholder id has been registered.
+	 * 
+	 * @param id
+	 *            The id of the placeholder to check.
+	 * @return Whether the placeholder has been registered.
+	 */
+	public boolean isRegistered(String id);
 
 	/**
 	 * Create an expansion builder based off of the '@Placeholder' annotated method
@@ -95,44 +139,6 @@ public interface PlaceholderService {
 	public List<? extends ExpansionBuilder<?, ?, ?, ?>> loadAll(Object handle, Object plugin);
 
 	/**
-	 * Register an Expansion.
-	 * 
-	 * This method is not preferred as the builder allows standardization of most
-	 * features and, more importantly, both prevents many errors and simplifies the
-	 * creation process. The builder also allows you to register your placeholder
-	 * upon creation, which makes this not a very useful method. It is included in
-	 * case you want to create an expansion then modify it heavily.
-	 * 
-	 * @param expansion
-	 *            The expansion to attempt to register.
-	 * 
-	 * @return whether the expansion was successfully registered.
-	 */
-	public boolean registerExpansion(Expansion<?, ?, ?> expansion);
-
-	/**
-	 * Fill a map with placeholders from a template.
-	 * 
-	 * @param template
-	 *            The template to draw the values from. Any non-optional values
-	 *            which cannot be parsed will be filled with the string
-	 *            representation of the template argument.
-	 * @param source
-	 *            The source to draw placeholders from. This object must be of the
-	 *            type CommandSource, Locatable, User, or any subtypes of those
-	 *            classes. Any other object type will throw an exception.
-	 * @param observer
-	 *            The observer of the placeholders drawn from the source. For
-	 *            example, "distance" would be the distance from the source to the
-	 *            observer, and "visible" would be if the observer can see the
-	 *            source. This object must be of the type CommandSource, Locatable,
-	 *            User, or any subtypes of those classes. Any other object type will
-	 *            throw an exception.
-	 * @return The filled map.
-	 */
-	public Map<String, Object> fillPlaceholders(TextTemplate template, Object source, Object observer);
-
-	/**
 	 * Parse a placeholder.
 	 * 
 	 * @param placeholder
@@ -151,6 +157,34 @@ public interface PlaceholderService {
 	 * @return The parsed object.
 	 */
 	public Object parse(String placeholder, Object source, Object observer);
+
+	/**
+	 * Parse a placeholder.
+	 * 
+	 * @param placeholder
+	 *            The placeholder to parse.
+	 * @param source
+	 *            The source to draw placeholders from. This object must be of the
+	 *            type CommandSource, Locatable, User, or any subtypes of those
+	 *            classes. Any other object type will throw an exception.
+	 * @param observer
+	 *            The observer of the placeholders drawn from the source. For
+	 *            example, "distance" would be the distance from the source to the
+	 *            observer, and "visible" would be if the observer can see the
+	 *            source. This object must be of the type CommandSource, Locatable,
+	 *            User, or any subtypes of those classes. Any other object type will
+	 *            throw an exception.
+	 * @param expected
+	 *            The expected class. If possible, this will try to cast the
+	 *            returned parsed object to the provided class. If said class is the
+	 *            Text class, it will parse the object into a text object
+	 *            automatically. If it is the String class, it will return the
+	 *            object's toString method. Any other objects will just be casted.
+	 * @return The parsed object, if available.
+	 */
+	public default <T> Optional<T> parse(String placeholder, Object source, Object observer, Class<T> expected) {
+		return TypeUtils.tryCast(parse(placeholder, source, observer), expected);
+	}
 
 	/**
 	 * Parse a list of placeholders.
@@ -196,34 +230,6 @@ public interface PlaceholderService {
 	 *            Text class, it will parse the object into a text object
 	 *            automatically. If it is the String class, it will return the
 	 *            object's toString method. Any other objects will just be casted.
-	 * @return The parsed object, if available.
-	 */
-	public default <T> Optional<T> parse(String placeholder, Object source, Object observer, Class<T> expected) {
-		return TypeUtils.tryCast(parse(placeholder, source, observer), expected);
-	}
-
-	/**
-	 * Parse a placeholder.
-	 * 
-	 * @param placeholder
-	 *            The placeholder to parse.
-	 * @param source
-	 *            The source to draw placeholders from. This object must be of the
-	 *            type CommandSource, Locatable, User, or any subtypes of those
-	 *            classes. Any other object type will throw an exception.
-	 * @param observer
-	 *            The observer of the placeholders drawn from the source. For
-	 *            example, "distance" would be the distance from the source to the
-	 *            observer, and "visible" would be if the observer can see the
-	 *            source. This object must be of the type CommandSource, Locatable,
-	 *            User, or any subtypes of those classes. Any other object type will
-	 *            throw an exception.
-	 * @param expected
-	 *            The expected class. If possible, this will try to cast the
-	 *            returned parsed object to the provided class. If said class is the
-	 *            Text class, it will parse the object into a text object
-	 *            automatically. If it is the String class, it will return the
-	 *            object's toString method. Any other objects will just be casted.
 	 * @return The parsed object.
 	 */
 	public default <T> T parseNullable(String placeholder, Object source, Object observer, Class<T> expected) {
@@ -231,32 +237,39 @@ public interface PlaceholderService {
 	}
 
 	/**
-	 * Replace placeholders in a template with parsed values.
+	 * Register an Expansion.
 	 * 
-	 * @param template
-	 *            The template to draw the values from. Any non-optional values
-	 *            which cannot be parsed will be replaced with the string version of
-	 *            the template argument.
-	 * @param source
-	 *            The source to draw placeholders from. This object must be of the
-	 *            type CommandSource, Locatable, User, or any subtypes of those
-	 *            classes. Any other object type will throw an exception.
-	 * @param observer
-	 *            The observer of the placeholders drawn from the source. For
-	 *            example, "distance" would be the distance from the source to the
-	 *            observer, and "visible" would be if the observer can see the
-	 *            source. This object must be of the type CommandSource, Locatable,
-	 *            User, or any subtypes of those classes. Any other object type will
-	 *            throw an exception.
-	 * @return The parsed text.
+	 * This method is not preferred as the builder allows standardization of most
+	 * features and, more importantly, both prevents many errors and simplifies the
+	 * creation process. The builder also allows you to register your placeholder
+	 * upon creation, which makes this not a very useful method. It is included in
+	 * case you want to create an expansion then modify it heavily.
+	 * 
+	 * @param expansion
+	 *            The expansion to attempt to register.
+	 * 
+	 * @return whether the expansion was successfully registered.
 	 */
-	public Text replacePlaceholders(TextTemplate template, Object source, Object observer);
+	public boolean registerExpansion(Expansion<?, ?, ?> expansion);
+
+	/**
+	 * Register a deserializer for type T to the plugin.
+	 * 
+	 * This will, on parsing a token, attempt to deserialize the token into the
+	 * type. If this throws an exception or returns null, the plugin will move on to
+	 * the next deserializer.
+	 * 
+	 * NOTE: There is no reason to provide a Text deserializer or a primitive type
+	 * (basic numbers + char and boolean) deserializer as those are handled by the
+	 * plugin by default.
+	 */
+	public <T> void registerTypeDeserializer(TypeToken<T> token, Function<String, T> deserializer);
 
 	/**
 	 * Replace placeholders in a text with parsed values.
 	 * 
 	 * @param text
-	 *            The text to draw values from. This will replace any placeholders
+	 *            The string to draw values from. This will replace any placeholders
 	 *            found by the pattern.
 	 * @param source
 	 *            The source to draw placeholders from. This object must be of the
@@ -269,14 +282,10 @@ public interface PlaceholderService {
 	 *            source. This object must be of the type CommandSource, Locatable,
 	 *            User, or any subtypes of those classes. Any other object type will
 	 *            throw an exception.
-	 * @param pattern
-	 *            The pattern to match placeholders with. Placeholders will be
-	 *            matched to group 1, so any other groups ahead of where you want
-	 *            the placeholders in the pattern should be non-capturing.
 	 * @return The parsed text.
 	 */
-	public default Text replacePlaceholders(Text text, Object source, Object observer, Pattern pattern) {
-		return replacePlaceholders(TextUtils.toTemplate(text, pattern), source, observer);
+	public default Text replacePlaceholders(String text, Object source, Object observer) {
+		return replacePlaceholders(text, source, observer, DEFAULT_PATTERN);
 	}
 
 	/**
@@ -306,19 +315,6 @@ public interface PlaceholderService {
 		return replacePlaceholders(TextUtils.parse(text, pattern), source, observer);
 	}
 
-	static final Pattern DEFAULT_PATTERN = Pattern.compile("[%\\{]([^ \\{\\}%]+)[\\}%]");
-
-	/**
-	 * Gets the default placeholder pattern for use with other parsers. Group 1 is
-	 * the group that matches to placeholders. There are no other capturing groups.
-	 * This is the pattern used if no pattern is specified for the other methods.
-	 * 
-	 * @return The default pattern.
-	 */
-	public default Pattern getDefaultPattern() {
-		return DEFAULT_PATTERN;
-	}
-
 	/**
 	 * Replace placeholders in a text with parsed values.
 	 * 
@@ -346,8 +342,36 @@ public interface PlaceholderService {
 	 * Replace placeholders in a text with parsed values.
 	 * 
 	 * @param text
-	 *            The string to draw values from. This will replace any placeholders
+	 *            The text to draw values from. This will replace any placeholders
 	 *            found by the pattern.
+	 * @param source
+	 *            The source to draw placeholders from. This object must be of the
+	 *            type CommandSource, Locatable, User, or any subtypes of those
+	 *            classes. Any other object type will throw an exception.
+	 * @param observer
+	 *            The observer of the placeholders drawn from the source. For
+	 *            example, "distance" would be the distance from the source to the
+	 *            observer, and "visible" would be if the observer can see the
+	 *            source. This object must be of the type CommandSource, Locatable,
+	 *            User, or any subtypes of those classes. Any other object type will
+	 *            throw an exception.
+	 * @param pattern
+	 *            The pattern to match placeholders with. Placeholders will be
+	 *            matched to group 1, so any other groups ahead of where you want
+	 *            the placeholders in the pattern should be non-capturing.
+	 * @return The parsed text.
+	 */
+	public default Text replacePlaceholders(Text text, Object source, Object observer, Pattern pattern) {
+		return replacePlaceholders(TextUtils.toTemplate(text, pattern), source, observer);
+	}
+
+	/**
+	 * Replace placeholders in a template with parsed values.
+	 * 
+	 * @param template
+	 *            The template to draw the values from. Any non-optional values
+	 *            which cannot be parsed will be replaced with the string version of
+	 *            the template argument.
 	 * @param source
 	 *            The source to draw placeholders from. This object must be of the
 	 *            type CommandSource, Locatable, User, or any subtypes of those
@@ -361,34 +385,13 @@ public interface PlaceholderService {
 	 *            throw an exception.
 	 * @return The parsed text.
 	 */
-	public default Text replacePlaceholders(String text, Object source, Object observer) {
-		return replacePlaceholders(text, source, observer, DEFAULT_PATTERN);
-	}
-
-	/**
-	 * Replace placeholders in a template with parsed values.
-	 * 
-	 * @param template
-	 *            The template to draw the values from. Any non-optional values
-	 *            which cannot be parsed will be replaced with the string version of
-	 *            the template argument.
-	 * @param source
-	 *            The source to draw placeholders from. This object must be of the
-	 *            type CommandSource, Locatable, User, or any subtypes of those
-	 *            classes. Any other object type will throw an exception. If there
-	 *            are relational placeholders to be parsed, source will be used as
-	 *            both the source and the observer.
-	 * @return The parsed text.
-	 */
-	public default Text replaceSourcePlaceholders(TextTemplate template, Object source) {
-		return replacePlaceholders(template, source, source);
-	}
+	public Text replacePlaceholders(TextTemplate template, Object source, Object observer);
 
 	/**
 	 * Replace placeholders in a text with parsed values.
 	 * 
 	 * @param text
-	 *            The text to draw values from. This will replace any placeholders
+	 *            The string to draw values from. This will replace any placeholders
 	 *            found by the pattern.
 	 * @param source
 	 *            The source to draw placeholders from. This object must be of the
@@ -396,14 +399,10 @@ public interface PlaceholderService {
 	 *            classes. Any other object type will throw an exception. If there
 	 *            are relational placeholders to be parsed, source will be used as
 	 *            both the source and the observer.
-	 * @param pattern
-	 *            The pattern to match placeholders with. Placeholders will be
-	 *            matched to group 1, so any other groups ahead of where you want
-	 *            the placeholders in the pattern should be non-capturing.
 	 * @return The parsed text.
 	 */
-	public default Text replaceSourcePlaceholders(Text text, Object source, Pattern pattern) {
-		return replacePlaceholders(text, source, source, pattern);
+	public default Text replaceSourcePlaceholders(String text, Object source) {
+		return replaceSourcePlaceholders(text, source, DEFAULT_PATTERN);
 	}
 
 	/**
@@ -450,8 +449,31 @@ public interface PlaceholderService {
 	 * Replace placeholders in a text with parsed values.
 	 * 
 	 * @param text
-	 *            The string to draw values from. This will replace any placeholders
+	 *            The text to draw values from. This will replace any placeholders
 	 *            found by the pattern.
+	 * @param source
+	 *            The source to draw placeholders from. This object must be of the
+	 *            type CommandSource, Locatable, User, or any subtypes of those
+	 *            classes. Any other object type will throw an exception. If there
+	 *            are relational placeholders to be parsed, source will be used as
+	 *            both the source and the observer.
+	 * @param pattern
+	 *            The pattern to match placeholders with. Placeholders will be
+	 *            matched to group 1, so any other groups ahead of where you want
+	 *            the placeholders in the pattern should be non-capturing.
+	 * @return The parsed text.
+	 */
+	public default Text replaceSourcePlaceholders(Text text, Object source, Pattern pattern) {
+		return replacePlaceholders(text, source, source, pattern);
+	}
+
+	/**
+	 * Replace placeholders in a template with parsed values.
+	 * 
+	 * @param template
+	 *            The template to draw the values from. Any non-optional values
+	 *            which cannot be parsed will be replaced with the string version of
+	 *            the template argument.
 	 * @param source
 	 *            The source to draw placeholders from. This object must be of the
 	 *            type CommandSource, Locatable, User, or any subtypes of those
@@ -460,30 +482,9 @@ public interface PlaceholderService {
 	 *            both the source and the observer.
 	 * @return The parsed text.
 	 */
-	public default Text replaceSourcePlaceholders(String text, Object source) {
-		return replaceSourcePlaceholders(text, source, DEFAULT_PATTERN);
+	public default Text replaceSourcePlaceholders(TextTemplate template, Object source) {
+		return replacePlaceholders(template, source, source);
 	}
-
-	/**
-	 * Check to see if a placeholder id has been registered.
-	 * 
-	 * @param id
-	 *            The id of the placeholder to check.
-	 * @return Whether the placeholder has been registered.
-	 */
-	public boolean isRegistered(String id);
-
-	/**
-	 * Verify that the object provided matches the valid types of CommandSource,
-	 * Locatable or User. In the future these types may change, so using this method
-	 * is preferred if you do not know the type or if the type you are going to
-	 * provide is correct.
-	 * 
-	 * @param source
-	 *            The object to verify.
-	 * @return Whether the object is valid.
-	 */
-	public boolean verifySource(Object source);
 
 	/**
 	 * Verify that the object provided matches the valid types of CommandSource,
@@ -501,16 +502,15 @@ public interface PlaceholderService {
 	}
 
 	/**
-	 * Register a deserializer for type T to the plugin.
+	 * Verify that the object provided matches the valid types of CommandSource,
+	 * Locatable or User. In the future these types may change, so using this method
+	 * is preferred if you do not know the type or if the type you are going to
+	 * provide is correct.
 	 * 
-	 * This will, on parsing a token, attempt to deserialize the token into the
-	 * type. If this throws an exception or returns null, the plugin will move on to
-	 * the next deserializer.
-	 * 
-	 * NOTE: There is no reason to provide a Text deserializer or a primitive type
-	 * (basic numbers + char and boolean) deserializer as those are handled by the
-	 * plugin by default.
+	 * @param source
+	 *            The object to verify.
+	 * @return Whether the object is valid.
 	 */
-	public <T> void registerTypeDeserializer(TypeToken<T> token, Function<String, T> deserializer);
+	public boolean verifySource(Object source);
 
 }

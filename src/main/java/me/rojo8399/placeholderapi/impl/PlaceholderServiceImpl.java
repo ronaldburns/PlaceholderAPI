@@ -23,11 +23,13 @@
  */
 package me.rojo8399.placeholderapi.impl;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.spongepowered.api.data.DataHolder;
 import org.spongepowered.api.service.permission.Subject;
@@ -35,6 +37,7 @@ import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
 import org.spongepowered.api.text.action.TextActions;
 import org.spongepowered.api.text.channel.MessageReceiver;
+import org.spongepowered.api.text.format.TextColor;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.world.Locatable;
 
@@ -57,130 +60,24 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 
 	private static PlaceholderServiceImpl instance; // lazy instantiation
 
-	private PlaceholderServiceImpl() {
-	}
-
 	public static PlaceholderServiceImpl get() {
 		return instance == null ? instance = new PlaceholderServiceImpl() : instance;
 	}
 
-	public boolean refreshPlaceholder(String id) {
-		return store.reload(id);
-	}
-
-	public void refreshAll() {
-		store.reloadAll();
-	}
-
-	Store getStore() {
-		return store;
-	}
-
 	private Store store = Store.get();
 
-	/*
-	 * Replace placeholders then parse value using the function
-	 */
-	private Map<String, Object> rpt(Object s, Object o, TextTemplate template, Map<String, Object> args) {
-		if (args == null) {
-			args = new HashMap<>();
-		}
-		// For every existing argument
-		for (String a : template.getArguments().keySet()) {
-			if (args.containsKey(a)) {
-				continue;
-			}
-			String format = a.toLowerCase();
-			boolean rel = !format.isEmpty() && format.toLowerCase().startsWith("rel");
-			if (rel) {
-				format = format.substring(4);
-			}
-			int index = format.indexOf("_");
-			if (index == 0 || index == format.length()) {
-				// We want to skip this but we cannot leave required arguments
-				// so filler string is used.
-				if (!template.getArguments().get(a).isOptional()) {
-					args.put(a, template.getOpenArgString() + a + template.getCloseArgString());
-				}
-				continue;
-			}
-			boolean noToken = false;
-			if (index == -1) {
-				noToken = true;
-				index = format.length();
-			}
-			String id = format.substring(0, index).toLowerCase();
-			if (!store.has(id)) {
-				// Again, filler string.
-				if (!template.getArguments().get(a).isOptional()) {
-					args.put(a, Text.of(TextColors.WHITE, template.getOpenArgString(), TextColors.RED, a,
-							TextColors.WHITE, template.getCloseArgString()));
-				}
-				continue;
-			}
-			String token = noToken ? null : format.substring(index + 1);
-			Text value = null;
-			boolean empty = true;
-			try {
-				value = store.parse(id, rel, s, o, Optional.ofNullable(token), Text.class).orElse(null);
-			} catch (Exception e) {
-				if (e instanceof NoValueException) {
-					value = null;
-					empty = false;
-				} else {
-					String cl = "";
-					try {
-						cl = e.getCause().getMessage() + " ";
-					} catch (Exception xe) {
-					}
-					value = Text.of(TextColors.RED,
-							TextActions.showText(Text.of(TextColors.RED, "Check the console for details!")),
-							"ERROR: " + cl + e.getMessage());
-					e.printStackTrace();
-				}
-			}
-
-			if (value == null && PlaceholderAPIPlugin.getInstance().getConfig().relationaltoregular && rel) {
-				empty = true;
-				try {
-					value = store.parse(id, false, o, s, Optional.ofNullable(token), Text.class).orElse(null);
-				} catch (Exception e) {
-					if (e instanceof NoValueException) {
-						value = null;
-						empty = false;
-					} else {
-						String cl = "";
-						try {
-							cl = e.getCause().getMessage() + " ";
-						} catch (Exception xe) {
-						}
-						value = Text.of(TextColors.RED,
-								TextActions.showText(Text.of(TextColors.RED, "Check the console for details!")),
-								"ERROR: " + cl + e.getMessage());
-						e.printStackTrace();
-					}
-				}
-			}
-			if (value == null && !empty) {
-				Text arg;
-				if (noToken) {
-					arg = Text.of(TextColors.RED, a);
-				} else {
-					arg = Text.of(TextColors.WHITE, id, TextColors.RED, "_" + token);
-				}
-				value = Text.of(TextColors.WHITE, template.getOpenArgString(), arg, TextColors.WHITE,
-						template.getCloseArgString());
-			} else if (value == null) {
-				value = Text.EMPTY;
-			}
-			args.put(a, value);
-		}
-		return args;
+	private PlaceholderServiceImpl() {
 	}
 
-	private void validate(Object source, Object observer) {
-		Preconditions.checkArgument(verifySource(source), "Source is not the right type!");
-		Preconditions.checkArgument(verifySource(observer), "Observer is not the right type!");
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see me.rojo8399.placeholderapi.PlaceholderService#builder()
+	 */
+	@Override
+	public <S, O, V> ExpansionBuilder<S, O, V, ?> builder(Class<? extends S> s, Class<? extends O> o,
+			Class<? extends V> v) {
+		return ExpansionBuilderImpl.builder(s, o, v);
 	}
 
 	/*
@@ -193,6 +90,45 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	public Map<String, Object> fillPlaceholders(TextTemplate template, Object source, Object observer) {
 		validate(source, observer);
 		return rpt(source, observer, template, new HashMap<>());
+	}
+
+	Store getStore() {
+		return store;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * me.rojo8399.placeholderapi.PlaceholderService#isRegistered(java.lang.
+	 * String)
+	 */
+	@Override
+	public boolean isRegistered(String id) {
+		return store.has(id);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see me.rojo8399.placeholderapi.PlaceholderService#load(java.lang.Object,
+	 * java.lang.String, java.lang.Object)
+	 */
+	@Override
+	public ExpansionBuilder<?, ?, ?, ?> load(Object handle, String id, Object plugin) {
+		return ExpansionBuilderImpl.load(handle, id, plugin);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * me.rojo8399.placeholderapi.PlaceholderService#loadAll(java.lang.Object,
+	 * java.lang.Object)
+	 */
+	@Override
+	public List<? extends ExpansionBuilder<?, ?, ?, ?>> loadAll(Object handle, Object plugin) {
+		return ExpansionBuilderImpl.loadAll(handle, plugin);
 	}
 
 	/*
@@ -244,41 +180,12 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * me.rojo8399.placeholderapi.PlaceholderService#replacePlaceholders(org.
-	 * spongepowered.api.text.TextTemplate, java.lang.Object, java.lang.Object)
-	 */
-	@Override
-	public Text replacePlaceholders(TextTemplate template, Object source, Object observer) {
-		return template.apply(fillPlaceholders(template, source, observer)).build();
+	public void refreshAll() {
+		store.reloadAll();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * me.rojo8399.placeholderapi.PlaceholderService#verifySource(java.lang.
-	 * Object)
-	 */
-	@Override
-	public boolean verifySource(Object source) {
-		return source == null || (source instanceof Locatable || source instanceof MessageReceiver
-				|| source instanceof Subject || source instanceof DataHolder);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * me.rojo8399.placeholderapi.PlaceholderService#isRegistered(java.lang.
-	 * String)
-	 */
-	@Override
-	public boolean isRegistered(String id) {
-		return store.has(id);
+	public boolean refreshPlaceholder(String id) {
+		return store.reload(id);
 	}
 
 	/*
@@ -292,46 +199,176 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 		return store.register(expansion);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see me.rojo8399.placeholderapi.PlaceholderService#builder()
-	 */
-	@Override
-	public <S, O, V> ExpansionBuilder<S, O, V, ?> builder(Class<? extends S> s, Class<? extends O> o,
-			Class<? extends V> v) {
-		return ExpansionBuilderImpl.builder(s, o, v);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * me.rojo8399.placeholderapi.PlaceholderService#loadAll(java.lang.Object,
-	 * java.lang.Object)
-	 */
-	@Override
-	public List<? extends ExpansionBuilder<?, ?, ?, ?>> loadAll(Object handle, Object plugin) {
-		return ExpansionBuilderImpl.loadAll(handle, plugin);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see me.rojo8399.placeholderapi.PlaceholderService#load(java.lang.Object,
-	 * java.lang.String, java.lang.Object)
-	 */
-	@Override
-	public ExpansionBuilder<?, ?, ?, ?> load(Object handle, String id, Object plugin) {
-		return ExpansionBuilderImpl.load(handle, id, plugin);
-	}
-
 	/* (non-Javadoc)
 	 * @see me.rojo8399.placeholderapi.PlaceholderService#registerTypeDeserializer(java.util.function.Function)
 	 */
 	@Override
 	public <T> void registerTypeDeserializer(TypeToken<T> token, Function<String, T> deserializer) {
 		TypeUtils.registerDeserializer(token, deserializer);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * me.rojo8399.placeholderapi.PlaceholderService#replacePlaceholders(org.
+	 * spongepowered.api.text.TextTemplate, java.lang.Object, java.lang.Object)
+	 */
+	@Override
+	public Text replacePlaceholders(TextTemplate template, Object source, Object observer) {
+		return template.apply(fillPlaceholders(template, source, observer)).build();
+	}
+
+	/*
+	 * Replace placeholders then parse value using the function
+	 */
+	private Map<String, Object> rpt(Object s, Object o, TextTemplate template, Map<String, Object> args) {
+		if (args == null) {
+			args = new HashMap<>();
+		}
+		// For every existing argument
+		for (String a : template.getArguments().keySet()) {
+			if (args.containsKey(a)) {
+				continue;
+			}
+			String format = a.toLowerCase();
+			boolean rel = !format.isEmpty() && format.toLowerCase().startsWith("rel");
+			if (rel) {
+				format = format.substring(4);
+			}
+			int index = format.indexOf("_");
+			if (index == 0 || index == format.length()) {
+				// We want to skip this but we cannot leave required arguments
+				// so filler string is used.
+				if (!template.getArguments().get(a).isOptional()) {
+					args.put(a, template.getOpenArgString() + a + template.getCloseArgString());
+				}
+				continue;
+			}
+			boolean noToken = false;
+			if (index == -1) {
+				noToken = true;
+				index = format.length();
+			}
+			String id = format.substring(0, index).toLowerCase();
+			if (!store.has(id)) {
+				// Again, filler string.
+				if (!template.getArguments().get(a).isOptional()) {
+					Text suggestions = Text.NEW_LINE;
+					suggestions = suggestions.concat(Text.of("Suggestions: ",
+							Text.joinWith(Text.of(", "),
+									store.allIds().stream().filter(str -> TypeUtils.closeTo(id, str)).map(Text::of)
+											.collect(Collectors.toList()))));
+					args.put(a,
+							Text.of(TextColors.WHITE,
+									TextActions.showText(Text.of(TextColors.RED, "This ID is invaid!", suggestions)),
+									template.getOpenArgString(), TextColors.RED, a, TextColors.WHITE,
+									template.getCloseArgString()));
+				}
+				continue;
+			}
+			String token = noToken ? null : format.substring(index + 1);
+			Text value = null;
+			boolean empty = true;
+			String errorMsg = "This placeholder needs a token!";
+			List<String> suggestions = new ArrayList<>();
+			try {
+				value = store.parse(id, rel, s, o, Optional.ofNullable(token), Text.class).orElse(null);
+			} catch (Exception e) {
+				if (e instanceof NoValueException) {
+					value = null;
+					empty = false;
+					errorMsg = e.getMessage();
+					suggestions = ((NoValueException) e).suggestions();
+				} else {
+					String cl = "";
+					try {
+						cl = e.getCause().getMessage() + " ";
+					} catch (Exception xe) {
+					}
+					value = Text.of(TextColors.RED,
+							TextActions.showText(Text.of(TextColors.RED, "Check the console for details!")),
+							"ERROR: " + cl + e.getMessage());
+					e.printStackTrace();
+				}
+			}
+
+			if (value == null && PlaceholderAPIPlugin.getInstance().getConfig().relationaltoregular && rel) {
+				empty = true;
+				try {
+					value = store.parse(id, false, o, s, Optional.ofNullable(token), Text.class).orElse(null);
+				} catch (Exception e) {
+					if (e instanceof NoValueException) {
+						value = null;
+						empty = false;
+						errorMsg = e.getMessage();
+						suggestions = ((NoValueException) e).suggestions();
+					} else {
+						String cl = "";
+						try {
+							cl = e.getCause().getMessage() + " ";
+						} catch (Exception xe) {
+						}
+						value = Text.of(TextColors.RED,
+								TextActions.showText(Text.of(TextColors.RED, "Check the console for details!")),
+								"ERROR: " + cl + e.getMessage());
+						e.printStackTrace();
+					}
+				}
+			}
+			boolean enabled = store.get(id, false).orElseGet(() -> store.get(id, true).get()).isEnabled();
+			if (value == null && !empty) {
+				Text arg;
+				if (noToken) {
+					if (enabled) {
+						arg = Text.of(TextColors.RED,
+								TextActions.showText(Text.of(TextColors.RED, "This placeholder needs a token!")), a);
+					} else {
+						arg = Text.of(TextColors.RED,
+								TextActions.showText(Text.of(TextColors.RED, "Expansion is not enabled!")), a);
+					}
+
+				} else {
+					TextColor idCol = TextColors.WHITE;
+					if (store.has(id)) {
+						idCol = enabled ? TextColors.WHITE : TextColors.RED;
+					} else {
+						idCol = TextColors.RED;
+					}
+					Text sug = Text.EMPTY;
+					if (!suggestions.isEmpty()) {
+						sug = Text.of(Text.NEW_LINE, "Suggestions: ", Text.joinWith(Text.of(", "),
+								suggestions.stream().map(Text::of).collect(Collectors.toList())));
+					}
+					arg = Text.of(idCol, TextActions.showText(Text.of(TextColors.RED, errorMsg, sug)), id,
+							TextColors.RED, "_" + token);
+				}
+				value = Text.of(TextColors.WHITE, template.getOpenArgString(), arg, TextColors.WHITE,
+						template.getCloseArgString());
+			} else if (value == null) {
+				value = Text.EMPTY;
+			}
+			args.put(a, value);
+		}
+		return args;
+	}
+
+	private void validate(Object source, Object observer) {
+		Preconditions.checkArgument(verifySource(source), "Source is not the right type!");
+		Preconditions.checkArgument(verifySource(observer), "Observer is not the right type!");
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * me.rojo8399.placeholderapi.PlaceholderService#verifySource(java.lang.
+	 * Object)
+	 */
+	@Override
+	public boolean verifySource(Object source) {
+		return source == null || (source instanceof Locatable || source instanceof MessageReceiver
+				|| source instanceof Subject || source instanceof DataHolder);
 	}
 
 }

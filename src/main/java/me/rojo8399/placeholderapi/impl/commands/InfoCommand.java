@@ -49,45 +49,8 @@ import me.rojo8399.placeholderapi.impl.utils.TypeUtils;
 
 public class InfoCommand implements CommandExecutor {
 
-	@Override
-	public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
-		String placeholder = (String) args.getOne("placeholder")
-				.orElseThrow(() -> new CommandException(Messages.get().placeholder.mustSpecify.t()));
-		PlaceholderService service = PlaceholderAPIPlugin.getInstance().getGame().getServiceManager()
-				.provideUnchecked(PlaceholderService.class);
-		if (!service.isRegistered(placeholder)) {
-			throw new CommandException(Messages.get().placeholder.invalidPlaceholder.t());
-		}
-		Text barrier = TextUtils.repeat(Text.of(TextColors.GOLD, "="), 35);
-		src.sendMessage(barrier);
-		src.sendMessage(formatExpansion(placeholder, src));
-		src.sendMessage(barrier);
-		return CommandResult.success();
-	}
-
 	private static final Pattern OPT = Pattern.compile("[\\<\\[\\(\\{]([^ \\<\\>\\[\\]\\{\\}\\(\\)]+)[\\>\\}\\]\\)]",
 			Pattern.CASE_INSENSITIVE);
-
-	private static Text formatExpansion(String e, CommandSource src) {
-		List<Expansion<?, ?, ?>> conts = Arrays.asList(Store.get().get(e, true), Store.get().get(e, false)).stream()
-				.flatMap(TypeUtils.unmapOptional()).collect(Collectors.toList());
-		Expansion<?, ?, ?> norm;
-		try {
-			norm = conts.get(0);
-		} catch (Exception ex) {
-			return Messages.get().placeholder.improperRegistration.t();
-		}
-		Expansion<?, ?, ?> rel = null;
-		if (conts.size() > 1) {
-			rel = conts.get(1);
-		}
-		Text out = format(norm, src);
-		if (rel != null) {
-			out = out.concat(Text.NEW_LINE);
-			out = out.concat(format(rel, src));
-		}
-		return out;
-	}
 
 	private static Text format(Expansion<?, ?, ?> e, CommandSource src) {
 		final String name = e.id();
@@ -129,6 +92,33 @@ public class InfoCommand implements CommandExecutor {
 				support);
 	}
 
+	private static Text formatExpansion(String e, CommandSource src) {
+		List<Expansion<?, ?, ?>> conts = Arrays.asList(Store.get().get(e, true), Store.get().get(e, false)).stream()
+				.flatMap(TypeUtils.unmapOptional()).collect(Collectors.toList());
+		Expansion<?, ?, ?> norm;
+		try {
+			norm = conts.get(0);
+		} catch (Exception ex) {
+			return Messages.get().placeholder.improperRegistration.t();
+		}
+		Expansion<?, ?, ?> rel = null;
+		if (conts.size() > 1) {
+			rel = conts.get(1);
+		}
+		Text out = format(norm, src);
+		if (rel != null) {
+			out = out.concat(Text.NEW_LINE);
+			out = out.concat(format(rel, src));
+		}
+		return out;
+	}
+
+	private static Text reload(String token) {
+		return Messages.get().placeholder.reloadButton.t().toBuilder()
+				.onHover(TextActions.showText(Messages.get().placeholder.reloadButtonHover.t()))
+				.onClick(TextActions.runCommand("/papi r " + token)).build();
+	}
+
 	private static Text seeall(List<Text> tokens, boolean relational) {
 		final Text t = Text.joinWith(Text.of(", "), tokens);
 		Text h = relational ? Messages.get().placeholder.allPlaceholdersHoverRelational.t()
@@ -143,10 +133,14 @@ public class InfoCommand implements CommandExecutor {
 		return Text.of("    ", m2);
 	}
 
-	private static Text reload(String token) {
-		return Messages.get().placeholder.reloadButton.t().toBuilder()
-				.onHover(TextActions.showText(Messages.get().placeholder.reloadButtonHover.t()))
-				.onClick(TextActions.runCommand("/papi r " + token)).build();
+	private static Text token(String token, CommandSource src, boolean relational) {
+		if (!(src instanceof Player)) {
+			return Text.of(TextColors.GREEN, token);
+		}
+		String p = src.getName();
+		return Text.of(TextColors.GREEN, TextActions.showText(Messages.get().placeholder.parseButtonHover.t()),
+				TextActions.runCommand("/papi p " + p + " %" + (relational ? "rel_" : "") + token + "%"),
+				(relational ? "rel_" : "") + token);
 	}
 
 	private static Text token(String token, CommandSource src, boolean relational, boolean opt) {
@@ -162,14 +156,20 @@ public class InfoCommand implements CommandExecutor {
 				(relational ? "rel_" : "") + token);
 	}
 
-	private static Text token(String token, CommandSource src, boolean relational) {
-		if (!(src instanceof Player)) {
-			return Text.of(TextColors.GREEN, token);
+	@Override
+	public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
+		String placeholder = (String) args.getOne("placeholder")
+				.orElseThrow(() -> new CommandException(Messages.get().placeholder.mustSpecify.t()));
+		PlaceholderService service = PlaceholderAPIPlugin.getInstance().getGame().getServiceManager()
+				.provideUnchecked(PlaceholderService.class);
+		if (!service.isRegistered(placeholder)) {
+			throw new CommandException(Messages.get().placeholder.invalidPlaceholder.t());
 		}
-		String p = src.getName();
-		return Text.of(TextColors.GREEN, TextActions.showText(Messages.get().placeholder.parseButtonHover.t()),
-				TextActions.runCommand("/papi p " + p + " %" + (relational ? "rel_" : "") + token + "%"),
-				(relational ? "rel_" : "") + token);
+		Text barrier = TextUtils.repeat(Text.of(TextColors.GOLD, "="), 35);
+		src.sendMessage(barrier);
+		src.sendMessage(formatExpansion(placeholder, src));
+		src.sendMessage(barrier);
+		return CommandResult.success();
 	}
 
 }

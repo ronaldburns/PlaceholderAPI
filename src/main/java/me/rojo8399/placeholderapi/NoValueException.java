@@ -23,6 +23,9 @@
  */
 package me.rojo8399.placeholderapi;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * A no value exception representing when the returned placeholder should not
  * parse.
@@ -36,11 +39,13 @@ public class NoValueException extends Exception {
 	 */
 	private static final long serialVersionUID = 4162128874653399415L;
 
+	private List<String> suggestions = new ArrayList<>();
+
 	/**
 	 * Create a new NoValueException.
 	 */
 	public NoValueException() {
-		super("No value should be present.");
+		super("That is not a valid token!");
 	}
 
 	/**
@@ -53,14 +58,9 @@ public class NoValueException extends Exception {
 		super(message);
 	}
 
-	/**
-	 * Create a new NoValueException.
-	 * 
-	 * @param cause
-	 *            Unused.
-	 */
-	public NoValueException(Throwable cause) {
-		super(cause);
+	public NoValueException(String message, List<String> suggestions) {
+		super(message);
+		this.suggestions = suggestions;
 	}
 
 	/**
@@ -89,6 +89,20 @@ public class NoValueException extends Exception {
 	 */
 	public NoValueException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
+	}
+
+	/**
+	 * Create a new NoValueException.
+	 * 
+	 * @param cause
+	 *            Unused.
+	 */
+	public NoValueException(Throwable cause) {
+		super(cause);
+	}
+
+	public List<String> suggestions() {
+		return suggestions;
 	}
 
 }

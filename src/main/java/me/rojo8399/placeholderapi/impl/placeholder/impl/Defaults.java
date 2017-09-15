@@ -24,7 +24,6 @@
 package me.rojo8399.placeholderapi.impl.placeholder.impl;
 
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -72,6 +71,7 @@ import org.spongepowered.api.world.Locatable;
 
 import com.flowpowered.math.vector.Vector3d;
 
+import me.rojo8399.placeholderapi.Attach;
 import me.rojo8399.placeholderapi.Listening;
 import me.rojo8399.placeholderapi.NoValueException;
 import me.rojo8399.placeholderapi.Observer;
@@ -91,6 +91,187 @@ import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 @Listening
 @ConfigSerializable
 public class Defaults {
+
+	public static class Service {
+		private CommandSource o;
+		private Player p;
+		private PlaceholderService s;
+
+		public Service(PlaceholderService s, Player p, CommandSource o) {
+			this.s = s;
+			this.p = p;
+			this.o = o;
+		}
+
+		public Text get(String placeholders) {
+			return get(placeholders, s.getDefaultPattern().pattern());
+		}
+
+		public Text get(String placeholders, String pattern) {
+			if (placeholders.toLowerCase().contains("javascript")) {
+				return Text.of(placeholders);
+			}
+			return s.replacePlaceholders(placeholders, p, s, Pattern.compile(pattern, Pattern.CASE_INSENSITIVE));
+		}
+
+		public String value(String placeholder) {
+			return value(placeholder, s.getDefaultPattern().pattern());
+		}
+
+		public String value(String placeholder, String pattern) {
+			if (placeholder.toLowerCase().contains("javascript")) {
+				return placeholder;
+			}
+			return TextSerializers.FORMATTING_CODE.serialize(
+					s.replacePlaceholders(placeholder, p, o, Pattern.compile(pattern, Pattern.CASE_INSENSITIVE)));
+		}
+	}
+
+	@ConfigSerializable
+	private static class Uptime {
+
+		@Setting("end-time")
+		public long finishTimeMillis;
+		@Setting("start-time")
+		public long startTimeMillis;
+
+		public void finish() {
+			finishTimeMillis = System.currentTimeMillis();
+		}
+
+		public void start() {
+			startTimeMillis = System.currentTimeMillis();
+		}
+
+		@Override
+		public String toString() {
+			return startTimeMillis + " to " + finishTimeMillis;
+		}
+	}
+
+	private static final Pattern ALLSOUND_PATTERN = Pattern.compile("([_]?all[_]?)", Pattern.CASE_INSENSITIVE);
+
+	private static int MB = 1024 * 1024;
+
+	private static Runtime runtime = Runtime.getRuntime();
+
+	private static boolean between(double o, double min, double max) {
+		return o >= min && o <= max;
+	}
+
+	private static String getCardinal(Player player) {
+		Vector3d rot = player.getHeadRotation();
+		double rotation = rot.abs().getY();
+		if (between(rotation, 0, 22.5) || between(rotation, 337.5, 360)) {
+			return Messages.get().misc.directions.south.value;
+		}
+		if (between(rotation, 22.5, 67.5)) {
+			return Messages.get().misc.directions.southwest.value;
+		}
+		if (between(rotation, 67.5, 112.5)) {
+			return Messages.get().misc.directions.west.value;
+		}
+		if (between(rotation, 112.5, 157.5)) {
+			return Messages.get().misc.directions.northwest.value;
+		}
+		if (between(rotation, 157.5, 202.5)) {
+			return Messages.get().misc.directions.north.value;
+		}
+		if (between(rotation, 202.5, 247.5)) {
+			return Messages.get().misc.directions.northeast.value;
+		}
+		if (between(rotation, 247.5, 292.5)) {
+			return Messages.get().misc.directions.east.value;
+		}
+		if (between(rotation, 292.5, 337.5)) {
+			return Messages.get().misc.directions.southeast.value;
+		}
+		return "ERROR";
+	}
+
+	private static Subject getParentGroup(Subject subject) {
+		List<Subject> parents = subject.getParents();
+		return parents.stream().sorted((s1, s2) -> {
+			if (s1.isChildOf(s2)) {
+				return 1;
+			}
+			if (s2.isChildOf(s1)) {
+				return -1;
+			}
+			return 0;
+		}).findFirst().orElse(parents.isEmpty() ? subject : parents.get(0));
+	}
+
+	private static double getTime(Player player, TimeUnit unit) {
+		boolean ticks = unit == null;
+		long time = Optional.ofNullable(
+				player.get(Keys.STATISTICS).orElseThrow(() -> new IllegalStateException("Player must have statistics!"))
+						.get(Statistics.TIME_PLAYED))
+				.orElse(0L);
+		if (ticks) {
+			return time;
+		} else {
+			double time2 = ((double) time) / 20;
+			if (unit == TimeUnit.SECONDS) {
+				return time2;
+			}
+			double value = time2 / TimeUnit.SECONDS.convert(1, unit);
+			return value;
+		}
+	}
+
+	private static long getTime(Player player, TimeUnit unit, boolean round) {
+		boolean ticks = unit == null;
+		long time = Optional.ofNullable(
+				player.get(Keys.STATISTICS).orElseThrow(() -> new IllegalStateException("Player must have statistics!"))
+						.get(Statistics.TIME_PLAYED))
+				.orElse(0L);
+		if (ticks) {
+			return time;
+		} else {
+			double time2 = ((double) time) / 20;
+			if (unit == TimeUnit.SECONDS) {
+				if (!round) {
+					return (long) time2;
+				}
+				return Math.round(time2);
+			}
+			double value = time2 / TimeUnit.SECONDS.convert(1, unit);
+			if (!round) {
+				return (long) value;
+			}
+			return Math.round(value);
+		}
+	}
+
+	/* ordered */
+	private Map<Currency, List<UniqueAccount>> balTop = new HashMap<>();
+
+	private boolean changed = false;
+
+	private Map<String, Currency> currencies = new HashMap<String, Currency>();
+
+	private Uptime current;
+
+	private Currency def;
+
+	private boolean eco = true;
+
+	private ScriptEngine engine;
+
+	private Map<Currency, Long> lastUpdate = new HashMap<>();
+
+	private JavascriptManager manager;
+	private PlaceholderService s;
+	private Server server;
+	private EconomyService service;
+	private UserStorageService storage = null;
+
+	@Setting
+	@Attach("server")
+	private List<Uptime> uptimes = new ArrayList<>();
+
+	private Set<User> users = new HashSet<>();
 
 	public Defaults(EconomyService service, JavascriptManager manager, PlaceholderService s) {
 		if (service != null) {
@@ -118,10 +299,196 @@ public class Defaults {
 		current.start();
 	}
 
-	private boolean eco = true;
+	private void calculateBalTop(Currency cur) {
+		if (lastUpdate.containsKey(cur) && lastUpdate.get(cur) != null) {
+			long last = lastUpdate.get(cur);
+			if (Duration.ofMillis(System.currentTimeMillis() - last).toMinutes() <= 3) {
+				return;
+			}
+		}
+		List<UniqueAccount> baltop = new ArrayList<>();
+		baltop = this.users.stream().map(u -> u.getUniqueId()).filter(service::hasAccount)
+				.map(service::getOrCreateAccount).filter(Optional::isPresent).map(Optional::get)
+				.sorted((a, b) -> a.getBalance(cur).compareTo(b.getBalance(cur))).collect(Collectors.toList());
+		balTop.put(cur, baltop);
+		lastUpdate.put(cur, System.currentTimeMillis());
+	}
 
-	private void putCur(Currency c) {
-		currencies.put(c.getName().toLowerCase().replace(" ", ""), c);
+	private boolean contains(Player p) {
+		return users.stream().map(u -> u.getUniqueId()).anyMatch(p.getUniqueId()::equals);
+	}
+
+	@Placeholder(id = "economy")
+	public Object economy(@Token(fix = true) @Nullable String token, @Nullable @Source User player)
+			throws NoValueException {
+		if (service == null || !eco) {
+			throw new NoValueException();
+		}
+		if (token == null) {
+			Text amt = def.format(BigDecimal.valueOf(1234.56));
+			Text v = Text.of(def.getName() + " (" + def.getId() + ") - ");
+			return v.concat(amt);
+		}
+		String t = token;
+		Currency toUse = def;
+		if (t.contains("_")) {
+			String[] a = t.split("_");
+			t = a[0];
+			for (int i = 1; i < a.length - 1; i++) {
+				t += "_" + a[i];
+			}
+			String c = a[a.length - 1];
+			if (currencies.containsKey(c)) {
+				toUse = currencies.get(c);
+			}
+		}
+		final Currency toUseFinal = toUse;
+		if (player == null) {
+			// fix t for baltop
+			int baltop = 0;
+			if (t.startsWith("baltop")) {
+				if (t.contains("_")) {
+					String aft = t.substring(t.indexOf("_") + 1);
+					t = t.substring(0, t.indexOf("_"));
+					try {
+						baltop = Integer.parseInt(aft);
+					} catch (Exception e) {
+						baltop = 5;
+					}
+				} else {
+					baltop = 5;
+				}
+				if (baltop <= 0) {
+					baltop = 1;
+				}
+				calculateBalTop(toUse);
+				List<UniqueAccount> baltop2 = balTop.get(toUse).subList(0, baltop);
+				if (t.startsWith("baltopf")) {
+					return Text.joinWith(Text.of(", "), baltop2.stream()
+							.map(a -> Text.of(a.getDisplayName(), ": " + toUseFinal.format(a.getBalance(toUseFinal))))
+							.collect(Collectors.toList()));
+				}
+				return Text.joinWith(Text.of(", "),
+						baltop2.stream()
+								.map(a -> Text.of(a.getDisplayName(), ": " + a.getBalance(toUseFinal).toPlainString()))
+								.collect(Collectors.toList()));
+			}
+			switch (t) {
+			case "display":
+				return toUse.getDisplayName();
+			case "plural_display":
+				return toUse.getPluralDisplayName();
+			case "symbol":
+				return toUse.getSymbol();
+			}
+			if (currencies.containsKey(t)) {
+				toUse = currencies.get(t);
+				Text amt = toUse.format(BigDecimal.valueOf(1234.56));
+				Text v = Text.of(toUse.getName() + " (" + toUse.getId() + ") - ");
+				return v.concat(amt);
+			}
+			throw new NoValueException();
+		}
+		// Don't handle nonexistent accounts here, instead throw error
+		UniqueAccount acc = service.getOrCreateAccount(player.getUniqueId()).get();
+		switch (t) {
+		case "balance":
+			return acc.getBalance(toUse).toPlainString();
+		case "bal_format":
+			return toUse.format(acc.getBalance(toUse));
+		case "display":
+			return toUse.getDisplayName();
+		case "plural_display":
+			return toUse.getPluralDisplayName();
+		case "symbol":
+			return toUse.getSymbol();
+		}
+		if (currencies.containsKey(t)) {
+			toUse = currencies.get(t);
+			Text amt = toUse.format(BigDecimal.valueOf(1234.56));
+			Text v = Text.of(toUse.getName() + " (" + toUse.getId() + ") - ");
+			return v.concat(amt);
+		}
+		throw new NoValueException();
+	}
+
+	private long getDowntimeMillis() {
+		long lastFinTime = 0;
+		long out = 0;
+		for (Uptime u : uptimes) {
+			if (lastFinTime == 0) {
+				lastFinTime = u.finishTimeMillis;
+				continue;
+			}
+			out += u.startTimeMillis - lastFinTime;
+			lastFinTime = u.finishTimeMillis;
+		}
+		if (out == 0) {
+			out = System.currentTimeMillis() - lastFinTime;
+		}
+		return out;
+	}
+
+	private long getUptimeMillis() {
+		return uptimes.stream().map(u -> u.finishTimeMillis - u.startTimeMillis)
+				.reduce((long) Sponge.getServer().getRunningTimeTicks() * 50, (a, b) -> a + b);
+	}
+
+	@Placeholder(id = "rank")
+	@Relational
+	public Boolean isAbove(@Token String token, @Source User underrank, @Observer User overrank)
+			throws NoValueException {
+		if (!(token.equalsIgnoreCase("greater_than") || token.equalsIgnoreCase("less_than"))) {
+			throw new NoValueException();
+		}
+		if (token.equalsIgnoreCase("greater_than")) {
+			if (underrank.isChildOf(overrank)) {
+				return true;
+			}
+			return getParentGroup(underrank).isChildOf(getParentGroup(overrank));
+		} else {
+			if (overrank.isChildOf(underrank)) {
+				return true;
+			}
+			return getParentGroup(overrank).isChildOf(getParentGroup(underrank));
+		}
+	}
+
+	@Placeholder(id = "javascript")
+	public Object js(@Nullable @Source Player player, @Nullable @Observer CommandSource observer, @Token String token) {
+		if (engine == null) {
+			// Lazily instantiate engine
+			engine = new ScriptEngineManager(null).getEngineByName("Nashorn");
+			// Insert default server variable - constant
+			engine.put("server",
+					server == null ? (server = PlaceholderAPIPlugin.getInstance().getGame().getServer()) : server);
+		}
+		// Insert player + parser objects, which change every time
+		engine.put("player", player);
+		engine.put("observer", observer);
+		// Allow retrieving values for registered expansions except for
+		// javascript
+		// scripts - will parse like a normal string (e.g. "%player_name%")
+		Service service = new Service(s, player, observer);
+		engine.put("service", service);
+		// Evaluate the script
+		return manager.eval(engine, token);
+	}
+
+	@Listener
+	public void newEco(ChangeServiceProviderEvent event) {
+		if (event.getService().equals(EconomyService.class)) {
+			EconomyService s = (EconomyService) event.getNewProvider();
+			if (s != null) {
+				eco = true;
+				this.service = s;
+				this.def = service.getDefaultCurrency();
+				this.currencies.clear();
+				service.getCurrencies().forEach(this::putCur);
+			} else {
+				eco = false;
+			}
+		}
 	}
 
 	@Placeholder(id = "player")
@@ -239,86 +606,15 @@ public class Defaults {
 		}
 	}
 
-	private static double getTime(Player player, TimeUnit unit) {
-		boolean ticks = unit == null;
-		long time = Optional.ofNullable(
-				player.get(Keys.STATISTICS).orElseThrow(() -> new IllegalStateException("Player must have statistics!"))
-						.get(Statistics.TIME_PLAYED))
-				.orElse(0L);
-		if (ticks) {
-			return time;
-		} else {
-			double time2 = ((double) time) / 20;
-			if (unit == TimeUnit.SECONDS) {
-				return time2;
-			}
-			double value = time2 / TimeUnit.SECONDS.convert(1, unit);
-			return value;
+	@Listener
+	public void onJoin(ClientConnectionEvent.Join event, @Getter("getTargetEntity") Player player) {
+		uptimes = uptimes.stream()
+				.filter(u -> Duration.ofMillis(System.currentTimeMillis() - u.finishTimeMillis).toDays() <= 30)
+				.collect(Collectors.toList());
+		if (contains(player)) {
+			return;
 		}
-	}
-
-	private static long getTime(Player player, TimeUnit unit, boolean round) {
-		boolean ticks = unit == null;
-		long time = Optional.ofNullable(
-				player.get(Keys.STATISTICS).orElseThrow(() -> new IllegalStateException("Player must have statistics!"))
-						.get(Statistics.TIME_PLAYED))
-				.orElse(0L);
-		if (ticks) {
-			return time;
-		} else {
-			double time2 = ((double) time) / 20;
-			if (unit == TimeUnit.SECONDS) {
-				if (!round) {
-					return (long) time2;
-				}
-				return Math.round(time2);
-			}
-			double value = time2 / TimeUnit.SECONDS.convert(1, unit);
-			if (!round) {
-				return (long) value;
-			}
-			return Math.round(value);
-		}
-	}
-
-	@Setting
-	private List<Uptime> uptimes = new ArrayList<>();
-
-	private long getDowntimeMillis() {
-		long lastFinTime = 0;
-		long out = 0;
-		for (Uptime u : uptimes) {
-			if (lastFinTime == 0) {
-				lastFinTime = u.finishTimeMillis;
-				continue;
-			}
-			out += u.startTimeMillis - lastFinTime;
-			lastFinTime = u.finishTimeMillis;
-		}
-		return out;
-	}
-
-	private long getUptimeMillis() {
-		return uptimes.stream().map(u -> u.finishTimeMillis - u.startTimeMillis).reduce(0l, (a, b) -> a + b);
-	}
-
-	private Uptime current;
-
-	@ConfigSerializable
-	private static class Uptime {
-
-		@Setting("start-time")
-		public long startTimeMillis;
-		@Setting("end-time")
-		public long finishTimeMillis;
-
-		public void start() {
-			startTimeMillis = System.currentTimeMillis();
-		}
-
-		public void finish() {
-			finishTimeMillis = System.currentTimeMillis();
-		}
+		changed = users.add(player) || changed;
 	}
 
 	@Listener
@@ -328,38 +624,62 @@ public class Defaults {
 		Store.get().get("server", false).ifPresent(Expansion::saveConfig);
 	}
 
-	private static String getCardinal(Player player) {
-		Vector3d rot = player.getHeadRotation();
-		double rotation = rot.abs().getY();
-		if (between(rotation, 0, 22.5) || between(rotation, 337.5, 360)) {
-			return Messages.get().misc.directions.south.value;
-		}
-		if (between(rotation, 22.5, 67.5)) {
-			return Messages.get().misc.directions.southwest.value;
-		}
-		if (between(rotation, 67.5, 112.5)) {
-			return Messages.get().misc.directions.west.value;
-		}
-		if (between(rotation, 112.5, 157.5)) {
-			return Messages.get().misc.directions.northwest.value;
-		}
-		if (between(rotation, 157.5, 202.5)) {
-			return Messages.get().misc.directions.north.value;
-		}
-		if (between(rotation, 202.5, 247.5)) {
-			return Messages.get().misc.directions.northeast.value;
-		}
-		if (between(rotation, 247.5, 292.5)) {
-			return Messages.get().misc.directions.east.value;
-		}
-		if (between(rotation, 292.5, 337.5)) {
-			return Messages.get().misc.directions.southeast.value;
-		}
-		return "ERROR";
+	/*
+	 * @Placeholder(id = "playerlist") public List<Player> list(@Nullable @Token(fix
+	 * = true) String token) { if (token == null) { return
+	 * Sponge.getServer().getOnlinePlayers().stream() .filter(p ->
+	 * !p.getOrElse(Keys.VANISH_PREVENTS_TARGETING,
+	 * false)).collect(Collectors.toList()); } Stream<Player> out =
+	 * Sponge.getServer().getOnlinePlayers().stream() .filter(p ->
+	 * !p.getOrElse(Keys.VANISH_PREVENTS_TARGETING, false)); if
+	 * (PERM.matcher(token).find()) { Matcher m = PERM.matcher(token); while
+	 * (m.find()) { String permission = m.group(1); out = out.filter(p ->
+	 * p.hasPermission(permission)); } } if (WORLD.matcher(token).find()) { Matcher
+	 * m = WORLD.matcher(token); while (m.find()) { String world = m.group(1); out =
+	 * out.filter(p -> p.getWorld().getName().toLowerCase().startsWith(world)); } }
+	 * // TODO: /* better token matching data key boolean filter -> load key from t
+	 * - IS_FLYING, for example data key numeric filter -> load key again, but also
+	 * load comparator (>, >=, <, <=, =) and number - Health > 10, for example -
+	 * sort greatest value for key??? better idea??: placeholder value filter ->
+	 * load placeholder from key, load value from key, load comparator sanity checks
+	 * (no > for boolean, no value present = true/0/max int, depending, no comp
+	 * present: =) sort by highest comparison limiter, top X players if available ->
+	 * sort by highest comp then alphabetically
+	 *//*
+		 * return out.collect(Collectors.toList()); }
+		 */
+
+	private void putCur(Currency c) {
+		currencies.put(c.getName().toLowerCase().replace(" ", ""), c);
 	}
 
-	private static boolean between(double o, double min, double max) {
-		return o >= min && o <= max;
+	@Placeholder(id = "rank")
+	public Object rank(@Source User player, @Token(fix = true) @Nullable String token) throws NoValueException {
+		if (token == null) {
+			return getParentGroup(player).getIdentifier();
+		}
+		Subject rank = getParentGroup(player);
+		String t = token;
+		switch (t) {
+		case "prefix":
+		case "suffix":
+			return rank.getOption(t).orElse("");
+		case "name":
+			return rank.getIdentifier();
+		}
+		if (t.contains("_") && t.indexOf("_") < t.length()) {
+			if (t.startsWith("option")) {
+				String opt = t.substring(t.indexOf("_") + 1);
+				return rank.getOption(opt).orElse("");
+			}
+			// this also covers "permission_..."
+			// return whether the rank has a permission
+			if (t.startsWith("perm")) {
+				String perm = t.substring(t.indexOf("_") + 1);
+				return rank.getPermissionValue(rank.getActiveContexts(), perm).toString();
+			}
+		}
+		throw new NoValueException();
 	}
 
 	@Placeholder(id = "player")
@@ -419,121 +739,6 @@ public class Defaults {
 		throw new NoValueException();
 	}
 
-	private static Subject getParentGroup(Subject subject) {
-		List<Subject> parents = subject.getParents();
-		return parents.stream().sorted((s1, s2) -> {
-			if (s1.isChildOf(s2)) {
-				return 1;
-			}
-			if (s2.isChildOf(s1)) {
-				return -1;
-			}
-			return 0;
-		}).findFirst().orElse(parents.isEmpty() ? subject : parents.get(0));
-	}
-
-	@Placeholder(id = "rank")
-	@Relational
-	public Boolean isAbove(@Token String token, @Source User underrank, @Observer User overrank)
-			throws NoValueException {
-		if (!(token.equalsIgnoreCase("greater_than") || token.equalsIgnoreCase("less_than"))) {
-			throw new NoValueException();
-		}
-		if (token.equalsIgnoreCase("greater_than")) {
-			if (underrank.isChildOf(overrank)) {
-				return true;
-			}
-			return getParentGroup(underrank).isChildOf(getParentGroup(overrank));
-		} else {
-			if (overrank.isChildOf(underrank)) {
-				return true;
-			}
-			return getParentGroup(overrank).isChildOf(getParentGroup(underrank));
-		}
-	}
-
-	@Placeholder(id = "rank")
-	public Object rank(@Source User player, @Token(fix = true) @Nullable String token) throws NoValueException {
-		if (token == null) {
-			return getParentGroup(player).getIdentifier();
-		}
-		Subject rank = getParentGroup(player);
-		String t = token;
-		switch (t) {
-		case "prefix":
-		case "suffix":
-			return rank.getOption(t).orElse("");
-		case "name":
-			return rank.getIdentifier();
-		}
-		if (t.contains("_") && t.indexOf("_") < t.length()) {
-			if (t.startsWith("option")) {
-				String opt = t.substring(t.indexOf("_") + 1);
-				return rank.getOption(opt).orElse("");
-			}
-			// this also covers "permission_..."
-			// return whether the rank has a permission
-			if (t.startsWith("perm")) {
-				String perm = t.substring(t.indexOf("_") + 1);
-				return rank.getPermissionValue(rank.getActiveContexts(), perm).toString();
-			}
-		}
-		throw new NoValueException();
-	}
-
-	private static Runtime runtime = Runtime.getRuntime();
-	private static int MB = 1024 * 1024;
-	private UserStorageService storage = null;
-	private Set<User> users = new HashSet<>();
-	private boolean changed = false;
-
-	public int unique() {
-		return users.size();
-	}
-
-	@Listener
-	public void onJoin(ClientConnectionEvent.Join event, @Getter("getTargetEntity") Player player) {
-		if (contains(player)) {
-			return;
-		}
-		changed = users.add(player) || changed;
-	}
-
-	@Listener
-	public void newEco(ChangeServiceProviderEvent event) {
-		if (event.getService().equals(EconomyService.class)) {
-			EconomyService s = (EconomyService) event.getNewProvider();
-			if (s != null) {
-				eco = true;
-				this.service = s;
-				this.def = service.getDefaultCurrency();
-				this.currencies.clear();
-				service.getCurrencies().forEach(this::putCur);
-			} else {
-				eco = false;
-			}
-		}
-	}
-
-	private boolean contains(Player p) {
-		return users.stream().map(u -> u.getUniqueId()).anyMatch(p.getUniqueId()::equals);
-	}
-
-	public void sync() {
-		if (!changed) {
-			return;
-		}
-		if (storage == null) {
-			return;
-		}
-		try {
-			users = storage.getAll().stream().map(g -> storage.get(g)).filter(o -> o.isPresent()).map(o -> o.get())
-					.collect(Collectors.toSet());
-			changed = false;
-		} catch (Exception e) {
-		}
-	}
-
 	@Placeholder(id = "server")
 	public Object server(@Token(fix = true) String identifier) throws NoValueException {
 		switch (identifier) {
@@ -550,9 +755,13 @@ public class Defaults {
 		case "uptime_percent":
 			long um = this.getUptimeMillis();
 			long dm = this.getDowntimeMillis();
-			return DecimalFormat.getPercentInstance().format(100D * (um / ((double) dm + (double) um))) + "%";
+			NumberFormat fmt = NumberFormat.getPercentInstance();
+			fmt.setMaximumFractionDigits(2);
+			fmt.setMinimumFractionDigits(2);
+			return fmt.format((um / ((double) dm + (double) um)));
 		case "uptime_total":
-			return Duration.ofMillis(this.getUptimeMillis());
+			Duration dur = Duration.ofMillis(this.getUptimeMillis());
+			return dur;
 		case "ram_used":
 			return ((runtime.totalMemory() - runtime.freeMemory()) / MB);
 		case "ram_free":
@@ -569,161 +778,6 @@ public class Defaults {
 			throw new NoValueException();
 		}
 	}
-
-	private EconomyService service;
-	private Map<String, Currency> currencies = new HashMap<String, Currency>();
-	private Currency def;
-
-	@Placeholder(id = "economy")
-	public Object economy(@Token(fix = true) @Nullable String token, @Nullable @Source User player)
-			throws NoValueException {
-		if (service == null || !eco) {
-			throw new NoValueException();
-		}
-		if (token == null) {
-			Text amt = def.format(BigDecimal.valueOf(1234.56));
-			Text v = Text.of(def.getName() + " (" + def.getId() + ") - ");
-			return v.concat(amt);
-		}
-		String t = token;
-		Currency toUse = def;
-		if (t.contains("_")) {
-			String[] a = t.split("_");
-			t = a[0];
-			for (int i = 1; i < a.length - 1; i++) {
-				t += "_" + a[i];
-			}
-			String c = a[a.length - 1];
-			if (currencies.containsKey(c)) {
-				toUse = currencies.get(c);
-			}
-		}
-		final Currency toUseFinal = toUse;
-		if (player == null) {
-			// fix t for baltop
-			int baltop = 0;
-			if (t.startsWith("baltop")) {
-				if (t.contains("_")) {
-					String aft = t.substring(t.indexOf("_") + 1);
-					t = t.substring(0, t.indexOf("_"));
-					try {
-						baltop = Integer.parseInt(aft);
-					} catch (Exception e) {
-						baltop = 5;
-					}
-				} else {
-					baltop = 5;
-				}
-				if (baltop <= 0) {
-					baltop = 1;
-				}
-				calculateBalTop(toUse);
-				List<UniqueAccount> baltop2 = balTop.get(toUse).subList(0, baltop);
-				if (t.startsWith("baltopf")) {
-					return Text.joinWith(Text.of(", "), baltop2.stream()
-							.map(a -> Text.of(a.getDisplayName(), ": " + toUseFinal.format(a.getBalance(toUseFinal))))
-							.collect(Collectors.toList()));
-				}
-				return Text.joinWith(Text.of(", "),
-						baltop2.stream()
-								.map(a -> Text.of(a.getDisplayName(), ": " + a.getBalance(toUseFinal).toPlainString()))
-								.collect(Collectors.toList()));
-			}
-			switch (t) {
-			case "display":
-				return toUse.getDisplayName();
-			case "plural_display":
-				return toUse.getPluralDisplayName();
-			case "symbol":
-				return toUse.getSymbol();
-			}
-			if (currencies.containsKey(t)) {
-				toUse = currencies.get(t);
-				Text amt = toUse.format(BigDecimal.valueOf(1234.56));
-				Text v = Text.of(toUse.getName() + " (" + toUse.getId() + ") - ");
-				return v.concat(amt);
-			}
-			throw new NoValueException();
-		}
-		// Don't handle nonexistent accounts here, instead throw error
-		UniqueAccount acc = service.getOrCreateAccount(player.getUniqueId()).get();
-		switch (t) {
-		case "balance":
-			return acc.getBalance(toUse).toPlainString();
-		case "bal_format":
-			return toUse.format(acc.getBalance(toUse));
-		case "display":
-			return toUse.getDisplayName();
-		case "plural_display":
-			return toUse.getPluralDisplayName();
-		case "symbol":
-			return toUse.getSymbol();
-		}
-		if (currencies.containsKey(t)) {
-			toUse = currencies.get(t);
-			Text amt = toUse.format(BigDecimal.valueOf(1234.56));
-			Text v = Text.of(toUse.getName() + " (" + toUse.getId() + ") - ");
-			return v.concat(amt);
-		}
-		throw new NoValueException();
-	}
-
-	/* ordered */
-	private Map<Currency, List<UniqueAccount>> balTop = new HashMap<>();
-	private Map<Currency, Long> lastUpdate = new HashMap<>();
-
-	private void calculateBalTop(Currency cur) {
-		if (lastUpdate.containsKey(cur) && lastUpdate.get(cur) != null) {
-			long last = lastUpdate.get(cur);
-			if (Duration.ofMillis(System.currentTimeMillis() - last).toMinutes() <= 3) {
-				return;
-			}
-		}
-		List<UniqueAccount> baltop = new ArrayList<>();
-		baltop = this.users.stream().map(u -> u.getUniqueId()).filter(service::hasAccount)
-				.map(service::getOrCreateAccount).filter(Optional::isPresent).map(Optional::get)
-				.sorted((a, b) -> a.getBalance(cur).compareTo(b.getBalance(cur))).collect(Collectors.toList());
-		balTop.put(cur, baltop);
-		lastUpdate.put(cur, System.currentTimeMillis());
-	}
-
-	@Placeholder(id = "time")
-	public LocalDateTime time() {
-		return LocalDateTime.now();
-	}
-	/*
-	 * private static final Pattern PERM = Pattern.compile(
-	 * "perm(?:ission)?\\_([A-Za-z0-9*\\-]+(?:\\.[A-Za-z0-9*\\-]+)+)",
-	 * Pattern.CASE_INSENSITIVE), WORLD =
-	 * Pattern.compile("world\\_([A-Za-z0-9\\_\\-]+)", Pattern.CASE_INSENSITIVE);
-	 */
-
-	/*
-	 * @Placeholder(id = "playerlist") public List<Player> list(@Nullable @Token(fix
-	 * = true) String token) { if (token == null) { return
-	 * Sponge.getServer().getOnlinePlayers().stream() .filter(p ->
-	 * !p.getOrElse(Keys.VANISH_PREVENTS_TARGETING,
-	 * false)).collect(Collectors.toList()); } Stream<Player> out =
-	 * Sponge.getServer().getOnlinePlayers().stream() .filter(p ->
-	 * !p.getOrElse(Keys.VANISH_PREVENTS_TARGETING, false)); if
-	 * (PERM.matcher(token).find()) { Matcher m = PERM.matcher(token); while
-	 * (m.find()) { String permission = m.group(1); out = out.filter(p ->
-	 * p.hasPermission(permission)); } } if (WORLD.matcher(token).find()) { Matcher
-	 * m = WORLD.matcher(token); while (m.find()) { String world = m.group(1); out =
-	 * out.filter(p -> p.getWorld().getName().toLowerCase().startsWith(world)); } }
-	 * // TODO: /* better token matching data key boolean filter -> load key from t
-	 * - IS_FLYING, for example data key numeric filter -> load key again, but also
-	 * load comparator (>, >=, <, <=, =) and number - Health > 10, for example -
-	 * sort greatest value for key??? better idea??: placeholder value filter ->
-	 * load placeholder from key, load value from key, load comparator sanity checks
-	 * (no > for boolean, no value present = true/0/max int, depending, no comp
-	 * present: =) sort by highest comparison limiter, top X players if available ->
-	 * sort by highest comp then alphabetically
-	 *//*
-		 * return out.collect(Collectors.toList()); }
-		 */
-
-	private static final Pattern ALLSOUND_PATTERN = Pattern.compile("([_]?all[_]?)", Pattern.CASE_INSENSITIVE);
 
 	@Placeholder(id = "sound")
 	public Text sound(@Nullable @Source Player p, @Token(fix = true) String identifier) {
@@ -761,65 +815,34 @@ public class Defaults {
 		}).map(Map.Entry::getValue).reduce(-1l, (a, b) -> a >= 0 ? a + b : b);
 	}
 
-	private ScriptEngine engine;
-	private JavascriptManager manager;
-	private PlaceholderService s;
-	private Server server;
-
-	@Placeholder(id = "javascript")
-	public Object js(@Nullable @Source Player player, @Nullable @Observer CommandSource observer, @Token String token) {
-		if (engine == null) {
-			// Lazily instantiate engine
-			engine = new ScriptEngineManager(null).getEngineByName("Nashorn");
-			// Insert default server variable - constant
-			engine.put("server",
-					server == null ? (server = PlaceholderAPIPlugin.getInstance().getGame().getServer()) : server);
+	public void sync() {
+		if (!changed) {
+			return;
 		}
-		// Insert player + parser objects, which change every time
-		engine.put("player", player);
-		engine.put("observer", observer);
-		// Allow retrieving values for registered expansions except for
-		// javascript
-		// scripts - will parse like a normal string (e.g. "%player_name%")
-		Service service = new Service(s, player, observer);
-		engine.put("service", service);
-		// Evaluate the script
-		return manager.eval(engine, token);
+		if (storage == null) {
+			return;
+		}
+		try {
+			users = storage.getAll().stream().map(g -> storage.get(g)).filter(o -> o.isPresent()).map(o -> o.get())
+					.collect(Collectors.toSet());
+			changed = false;
+		} catch (Exception e) {
+		}
 	}
 
-	public static class Service {
-		private PlaceholderService s;
-		private Player p;
-		private CommandSource o;
+	@Placeholder(id = "time")
+	public LocalDateTime time() {
+		return LocalDateTime.now();
+	}
+	/*
+	 * private static final Pattern PERM = Pattern.compile(
+	 * "perm(?:ission)?\\_([A-Za-z0-9*\\-]+(?:\\.[A-Za-z0-9*\\-]+)+)",
+	 * Pattern.CASE_INSENSITIVE), WORLD =
+	 * Pattern.compile("world\\_([A-Za-z0-9\\_\\-]+)", Pattern.CASE_INSENSITIVE);
+	 */
 
-		public Service(PlaceholderService s, Player p, CommandSource o) {
-			this.s = s;
-			this.p = p;
-			this.o = o;
-		}
-
-		public String value(String placeholder) {
-			return value(placeholder, s.getDefaultPattern().pattern());
-		}
-
-		public String value(String placeholder, String pattern) {
-			if (placeholder.toLowerCase().contains("javascript")) {
-				return placeholder;
-			}
-			return TextSerializers.FORMATTING_CODE.serialize(
-					s.replacePlaceholders(placeholder, p, o, Pattern.compile(pattern, Pattern.CASE_INSENSITIVE)));
-		}
-
-		public Text get(String placeholders) {
-			return get(placeholders, s.getDefaultPattern().pattern());
-		}
-
-		public Text get(String placeholders, String pattern) {
-			if (placeholders.toLowerCase().contains("javascript")) {
-				return Text.of(placeholders);
-			}
-			return s.replacePlaceholders(placeholders, p, s, Pattern.compile(pattern, Pattern.CASE_INSENSITIVE));
-		}
+	public int unique() {
+		return users.size();
 	}
 
 }

@@ -34,8 +34,8 @@ import java.lang.annotation.Target;
 @Retention(RUNTIME)
 @Target(PARAMETER)
 /**
- * This annotation denotes the object viewing the placeholders.
- * Supported types: Locatable, User, CommandSource
+ * This annotation denotes the object viewing the placeholders. Supported types:
+ * Locatable, User, CommandSource
  */
 public @interface Observer {
 }

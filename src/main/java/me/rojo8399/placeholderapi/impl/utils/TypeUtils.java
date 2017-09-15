@@ -28,7 +28,7 @@ import java.lang.reflect.Modifier;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -41,6 +41,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.data.value.BaseValue;
 import org.spongepowered.api.item.inventory.ItemStack;
@@ -56,10 +57,48 @@ public class TypeUtils {
 
 	private static Map<TypeToken<?>, Function<String, ?>> deserializers = new HashMap<>();
 
-	public static void registerDeserializer(TypeToken<?> token, Function<String, ?> fun) {
-		Preconditions.checkNotNull(fun, "deserializer");
-		Preconditions.checkNotNull(token, "token");
-		deserializers.put(token, fun);
+	private static final Pattern STRING_TO_VAL_PATTERN = Pattern
+			.compile("(parse.*)|(valueOf)|(deserialize)|(fromString)|(from)", Pattern.CASE_INSENSITIVE);
+
+	public static int add(int one, int two) {
+		return one + two;
+	}
+
+	public static boolean and(boolean one, boolean two) {
+		return one && two;
+	}
+
+	/**
+	 * Case insensitive
+	 */
+	public static boolean closeTo(String a, String b) {
+		if (a == null && b == null) {
+			return true;
+		}
+		if (a == null || b == null) {
+			return false;
+		}
+		if (a.isEmpty() && b.isEmpty()) {
+			return true;
+		}
+		if (a.isEmpty() || b.isEmpty()) {
+			return false;
+		}
+		if (a.equalsIgnoreCase(b)) {
+			return true;
+		}
+		a = a.toLowerCase();
+		b = b.toLowerCase();
+		if (StringUtils.getJaroWinklerDistance(a, b) > 0.7) {
+			return true;
+		}
+		if (a.contains(b) && b.length() > 1) {
+			return true;
+		}
+		if (b.contains(a) && a.length() > 1) {
+			return true;
+		}
+		return false;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -92,12 +131,51 @@ public class TypeUtils {
 		throw new IllegalArgumentException("Class is not primitive or a wrapper!");
 	}
 
-	public static <T> Optional<T> tryCast(Object val, final Class<T> expected, Boolean fixStrings) {
-		if (val instanceof String && fixStrings) {
-			return tryCast(((String) val).toLowerCase().trim(), expected);
-		} else {
-			return tryCast(val, expected);
+	public static String formatDuration(Duration duration) {
+		long seconds = duration.getSeconds();
+		long absSeconds = Math.abs(seconds);
+		String positive = String.format("%d h %d m %d s", absSeconds / 3600, (absSeconds % 3600) / 60, absSeconds % 60);
+		return seconds < 0 ? "-" + positive : positive;
+	}
+
+	public static boolean isTrue(String val) {
+		switch (val.toLowerCase()) {
+		case "t":
+		case "true":
+		case "1":
+		case "y":
+		case "yes":
+			return true;
 		}
+		return false;
+	}
+
+	public static int mult(int one, int two) {
+		return one * two;
+	}
+
+	public static boolean nand(boolean one, boolean two) {
+		return !and(one, two);
+	}
+
+	public static boolean nor(boolean one, boolean two) {
+		return !or(one, two);
+	}
+
+	// reduction operator shorthands
+
+	public static boolean or(boolean one, boolean two) {
+		return one || two;
+	}
+
+	public static void registerDeserializer(TypeToken<?> token, Function<String, ?> fun) {
+		Preconditions.checkNotNull(fun, "deserializer");
+		Preconditions.checkNotNull(token, "token");
+		deserializers.put(token, fun);
+	}
+
+	public static int sub(int one, int two) {
+		return one - two;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -125,11 +203,11 @@ public class TypeUtils {
 				if (val instanceof Instant) {
 					return TypeUtils.tryOptional(() -> expected.cast(
 							TextSerializers.FORMATTING_CODE.deserialize(PlaceholderAPIPlugin.getInstance().formatter()
-									.format(LocalDateTime.ofInstant((Instant) val, ZoneOffset.systemDefault())))));
+									.format(LocalDateTime.ofInstant((Instant) val, ZoneId.systemDefault())))));
 				}
 				if (val instanceof Duration) {
-					return TypeUtils.tryOptional(() -> expected
-							.cast(TextSerializers.FORMATTING_CODE.deserialize(formatDuration((Duration) val))));
+					String dur = formatDuration((Duration) val);
+					return TypeUtils.tryOptional(() -> expected.cast(TextSerializers.FORMATTING_CODE.deserialize(dur)));
 				}
 				if (val instanceof LocalDateTime) {
 					return TypeUtils.tryOptional(() -> expected.cast(TextSerializers.FORMATTING_CODE
@@ -165,7 +243,7 @@ public class TypeUtils {
 		}
 		if (val instanceof String) {
 			if (String.class.isAssignableFrom(expected)) {
-				return tryOptional(() -> expected.cast((String) val));
+				return tryOptional(() -> expected.cast(val));
 			}
 			if (expected.isArray() && String.class.isAssignableFrom(expected.getComponentType())) {
 				String v = (String) val;
@@ -259,6 +337,33 @@ public class TypeUtils {
 		return TypeUtils.tryOptional(() -> expected.cast(val));
 	}
 
+	public static <T> Optional<T> tryCast(Object val, final Class<T> expected, Boolean fixStrings) {
+		if (val instanceof String && fixStrings) {
+			return tryCast(((String) val).toLowerCase().trim(), expected);
+		} else {
+			return tryCast(val, expected);
+		}
+	}
+
+	/**
+	 * Will only work on unchecked but catchable exceptions.
+	 */
+	public static <T> Optional<T> tryOptional(Supplier<T> fun) {
+		try {
+			return Optional.ofNullable(fun.get());
+		} catch (Exception e) {
+			return Optional.empty();
+		}
+	}
+
+	public static <T> T tryOrNull(Supplier<T> funct) {
+		try {
+			return funct.get();
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
 	public static List<?> unboxPrimitiveArray(Object primArr) {
 		if (primArr.getClass().isArray()) {
 			if (primArr.getClass().getComponentType().isPrimitive()) {
@@ -334,9 +439,6 @@ public class TypeUtils {
 		}
 	}
 
-	private static final Pattern STRING_TO_VAL_PATTERN = Pattern
-			.compile("(parse.*)|(valueOf)|(deserialize)|(fromString)|(from)", Pattern.CASE_INSENSITIVE);
-
 	public static <T> Function<Optional<? extends T>, Stream<? extends T>> unmapOptional() {
 		return (opt) -> Stream.of(opt).filter(Optional::isPresent).map(Optional::get);
 	}
@@ -345,81 +447,12 @@ public class TypeUtils {
 		return stream.flatMap(unmapOptional());
 	}
 
-	public static String formatDuration(Duration duration) {
-		long seconds = duration.getSeconds();
-		long absSeconds = Math.abs(seconds);
-		String positive = String.format("%d h %02d m %02 s", absSeconds / 3600, (absSeconds % 3600) / 60,
-				absSeconds % 60);
-		return seconds < 0 ? "-" + positive : positive;
-	}
-
-	// reduction operator shorthands
-
-	public static boolean and(boolean one, boolean two) {
-		return one && two;
-	}
-
-	public static boolean or(boolean one, boolean two) {
-		return one || two;
-	}
-
-	public static boolean nand(boolean one, boolean two) {
-		return !and(one, two);
-	}
-
-	public static boolean nor(boolean one, boolean two) {
-		return !or(one, two);
-	}
-
-	public static int sub(int one, int two) {
-		return one - two;
-	}
-
-	public static int mult(int one, int two) {
-		return one * two;
-	}
-
-	public static int add(int one, int two) {
-		return one + two;
-	}
-
-	public static boolean xor(boolean o, boolean t) {
-		return !xnor(o, t);
-	}
-
 	public static boolean xnor(boolean o, boolean t) {
 		return (o && t) || (!o && !t);
 	}
 
-	/**
-	 * Will only work on unchecked but catchable exceptions.
-	 */
-	public static <T> Optional<T> tryOptional(Supplier<T> fun) {
-		try {
-			return Optional.ofNullable(fun.get());
-		} catch (Exception e) {
-			return Optional.empty();
-		}
-	}
-
-	public static <T> T tryOrNull(Supplier<T> funct) {
-		try {
-			return funct.get();
-		} catch (Exception e) {
-			return null;
-		}
-	}
-
-	public static boolean isTrue(String val) {
-		switch (val.toLowerCase()) {
-		case "t":
-		case "true":
-		case "1":
-		case "y":
-		case "yes":
-			return true;
-		}
-		return false;
+	public static boolean xor(boolean o, boolean t) {
+		return !xnor(o, t);
 	}
 
 }

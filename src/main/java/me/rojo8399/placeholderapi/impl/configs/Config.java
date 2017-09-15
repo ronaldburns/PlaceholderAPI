@@ -32,27 +32,9 @@ import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 public class Config {
 	public static final TypeToken<Config> type = TypeToken.of(Config.class);
 
-	@Setting("relational-parse-for-recipient")
-	public boolean relationaltoregular = true;
-
 	@Setting("date-time-format")
 	public String dateFormat = "uuuu LLL dd HH:mm:ss";
 
-	@Setting
-	public Expansions expansions;
-
-	@ConfigSerializable
-	public static class Expansions {
-		@Setting
-		public boolean player = true;
-		@Setting
-		public boolean rank = false;
-		@Setting
-		public boolean sound = false;
-		@Setting
-		public boolean javascript = false;
-		@Setting
-		public boolean economy = false;
-
-	}
+	@Setting("relational-parse-for-recipient")
+	public boolean relationaltoregular = true;
 }

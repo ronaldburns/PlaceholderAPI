@@ -98,9 +98,253 @@ import me.rojo8399.placeholderapi.impl.utils.TypeUtils;
  */
 public class ClassPlaceholderFactory {
 
-	private AtomicInteger iid = new AtomicInteger();
-	private String targetPackage;
-	private DefineableClassLoader classLoader;
+	private static final String OBJECT_NAME = Type.getInternalName(Object.class);
+	private static final String OPT_NAME = Type.getInternalName(Optional.class);
+	private static final Map<Class<?>, Integer> order;
+
+	private static final String PLACEHOLDER_NAME = Type.getInternalName(InternalExpansion.class);
+
+	private static final String STRING_NAME = Type.getInternalName(String.class);
+
+	private static final String TLC_SIG, TRIM_SIG;
+
+	static {
+		order = new HashMap<>();
+		order.put(Source.class, 0);
+		order.put(Observer.class, 1);
+		order.put(Token.class, 2);
+		String f;
+		try {
+			f = Type.getMethodDescriptor(String.class.getMethod("toLowerCase"));
+		} catch (Exception e) {
+			f = "()Ljava/lang/String;";
+		}
+		TLC_SIG = f;
+		try {
+			f = Type.getMethodDescriptor(String.class.getMethod("trim"));
+		} catch (Exception e) {
+			f = "()Ljava/lang/String;";
+		}
+		TRIM_SIG = f;
+	}
+
+	private static Class<?> boxedPrim(Class<?> primClass) {
+		if (primClass.isPrimitive()) {
+			if (primClass.equals(int.class)) {
+				return Integer.class;
+			}
+			if (primClass.equals(char.class)) {
+				return Character.class;
+			}
+			if (primClass.equals(byte.class)) {
+				return Byte.class;
+			}
+			if (primClass.equals(boolean.class)) {
+				return Boolean.class;
+			}
+			if (primClass.equals(long.class)) {
+				return Long.class;
+			}
+			if (primClass.equals(short.class)) {
+				return Short.class;
+			}
+			if (primClass.equals(float.class)) {
+				return Float.class;
+			}
+			if (primClass.equals(double.class)) {
+				return Double.class;
+			}
+		}
+		return primClass;
+	}
+
+	private static void boxToPrim(MethodVisitor mv, Class<?> p, int varloc) {
+		if (!p.isPrimitive()) {
+			return;
+		}
+		String boxName = null, typeName = null, value = Type.getInternalName(p);
+		int store = ISTORE, load = ILOAD;
+		Consumer<MethodVisitor> converter = (mv2) -> {
+		};
+		if (p.equals(int.class)) {
+			boxName = "Integer";
+			typeName = "I";
+		}
+		if (p.equals(char.class)) {
+			boxName = "Character";
+			typeName = "C";
+			converter = mv2 -> mv2.visitInsn(I2C);
+		}
+		if (p.equals(byte.class)) {
+			boxName = "Byte";
+			typeName = "B";
+			converter = mv2 -> mv2.visitInsn(I2B);
+		}
+		if (p.equals(boolean.class)) {
+			boxName = "Boolean";
+			typeName = "Z";
+			converter = mv2 -> mv2.visitInsn(I2B);
+		}
+		if (p.equals(long.class)) {
+			boxName = "Long";
+			typeName = "J";
+			load = LLOAD;
+			store = LSTORE;
+		}
+		if (p.equals(short.class)) {
+			boxName = "Short";
+			typeName = "S";
+			converter = mv2 -> mv2.visitInsn(I2S);
+		}
+		if (p.equals(float.class)) {
+			boxName = "Float";
+			typeName = "F";
+			load = FLOAD;
+			store = FSTORE;
+		}
+		if (p.equals(double.class)) {
+			boxName = "Double";
+			typeName = "D";
+			load = DLOAD;
+			store = DSTORE;
+		}
+		if (typeName == null || boxName == null) {
+			return;
+		}
+		mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/" + boxName, value + "Value", "()" + typeName, false);
+		mv.visitVarInsn(store, varloc);
+		mv.visitVarInsn(load, varloc);
+		converter.accept(mv);
+	}
+
+	private static int getOrder(Parameter p) {
+		for (java.lang.annotation.Annotation a : p.getAnnotations()) {
+			if (order.containsKey(a.annotationType())) {
+				return order.get(a.annotationType());
+			}
+		}
+		return 0;
+	}
+
+	private static void nullCheck(MethodVisitor mv, boolean nullable, Consumer<MethodVisitor> success,
+			boolean throwError) {
+		if (nullable) {
+			return;
+		}
+		// assume null check obj already loaded to stack
+		Label no = new Label();
+		mv.visitJumpInsn(IFNONNULL, no);
+		if (throwError) {
+			mv.visitTypeInsn(Opcodes.NEW, Type.getInternalName(NoValueException.class));
+			mv.visitVarInsn(ASTORE, 7);
+			mv.visitVarInsn(ALOAD, 7);
+			mv.visitMethodInsn(Opcodes.INVOKESPECIAL, Type.getInternalName(NoValueException.class), "<init>", "()V",
+					false);
+			mv.visitVarInsn(ALOAD, 7);
+			mv.visitInsn(Opcodes.ATHROW);
+		} else {
+			mv.visitInsn(ACONST_NULL);
+			mv.visitInsn(ARETURN);
+		}
+		mv.visitLabel(no);
+		success.accept(mv);
+	}
+
+	private static void returnInsn(MethodVisitor mv, Class<?> clazz) {
+		if (clazz.isPrimitive()) {
+			if (clazz.equals(float.class)) {
+				mv.visitInsn(FRETURN);
+				return;
+			}
+			if (clazz.equals(long.class)) {
+				mv.visitInsn(LRETURN);
+				return;
+			}
+			if (clazz.equals(double.class)) {
+				mv.visitInsn(DRETURN);
+				return;
+			}
+			mv.visitInsn(IRETURN);
+			return;
+		}
+		mv.visitInsn(ARETURN);
+	}
+
+	private static void skipIfNull(MethodVisitor mv, Consumer<MethodVisitor> success) {
+		// assume null check obj already loaded to stack
+		Label no = new Label();
+		mv.visitJumpInsn(IFNULL, no);
+		success.accept(mv);
+		mv.visitLabel(no);
+	}
+
+	private static void tryCatch(MethodVisitor mv, Consumer<MethodVisitor> t, Consumer<MethodVisitor> c) {
+		Label st = new Label(), et = new Label(), sc = new Label(), ec = new Label();
+		mv.visitTryCatchBlock(st, et, sc, "java/lang/Exception");
+		mv.visitLabel(st);
+		t.accept(mv);
+		mv.visitLabel(et);
+		mv.visitJumpInsn(GOTO, ec);
+		mv.visitLabel(sc);
+		c.accept(mv);
+		mv.visitLabel(ec);
+	}
+
+	private static void unboxFromPrim(MethodVisitor mv, Class<?> p) {
+		if (!p.isPrimitive()) {
+			return;
+		}
+		String boxName = null, typeName = null;
+		if (p.equals(int.class)) {
+			boxName = "Integer";
+			typeName = "I";
+		}
+		if (p.equals(char.class)) {
+			boxName = "Character";
+			typeName = "C";
+		}
+		if (p.equals(byte.class)) {
+			boxName = "Byte";
+			typeName = "B";
+		}
+		if (p.equals(boolean.class)) {
+			boxName = "Boolean";
+			typeName = "Z";
+		}
+		if (p.equals(long.class)) {
+			boxName = "Long";
+			typeName = "J";
+		}
+		if (p.equals(short.class)) {
+			boxName = "Short";
+			typeName = "S";
+		}
+		if (p.equals(float.class)) {
+			boxName = "Float";
+			typeName = "F";
+		}
+		if (p.equals(double.class)) {
+			boxName = "Double";
+			typeName = "D";
+		}
+		if (typeName == null || boxName == null) {
+			return;
+		}
+		mv.visitMethodInsn(INVOKESTATIC, "java/lang/" + boxName, "valueOf",
+				"(" + typeName + ")Ljava/lang/" + boxName + ";", false);
+	}
+
+	private static void utilsTryCast(MethodVisitor mv, Class<?> expected, boolean orNull) {
+		// assume obj to cast is already on stack and only that obj is on stack
+		mv.visitLdcInsn(Type.getType(expected));
+		mv.visitFieldInsn(GETSTATIC, "java/lang/Boolean", "TRUE", "Ljava/lang/Boolean;");
+		mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(TypeUtils.class), "tryCast",
+				"(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/Boolean;)Ljava/util/Optional;", false);
+		if (orNull) {
+			mv.visitInsn(ACONST_NULL);
+			mv.visitMethodInsn(INVOKEVIRTUAL, OPT_NAME, "orElse", "(Ljava/lang/Object;)Ljava/lang/Object;", false);
+		}
+	}
 
 	private final LoadingCache<Method, Class<? extends Expansion<?, ?, ?>>> cache = CacheBuilder.newBuilder()
 			.concurrencyLevel(1).weakValues().build(new CacheLoader<Method, Class<? extends Expansion<?, ?, ?>>>() {
@@ -109,6 +353,12 @@ public class ClassPlaceholderFactory {
 					return createClass(method);
 				}
 			});
+
+	private DefineableClassLoader classLoader;
+
+	private AtomicInteger iid = new AtomicInteger();
+
+	private String targetPackage;
 
 	public ClassPlaceholderFactory(String targetPackage, DefineableClassLoader loader) {
 		checkNotNull(targetPackage, "targetPackage");
@@ -144,34 +394,6 @@ public class ClassPlaceholderFactory {
 		System.out.println("written " + name);
 		*/
 		return this.classLoader.defineClass(name, bytes);
-	}
-
-	private static final String OBJECT_NAME = Type.getInternalName(Object.class);
-	private static final String STRING_NAME = Type.getInternalName(String.class);
-	private static final String PLACEHOLDER_NAME = Type.getInternalName(InternalExpansion.class);
-	private static final String OPT_NAME = Type.getInternalName(Optional.class);
-	private static final String TLC_SIG, TRIM_SIG;
-
-	private static final Map<Class<?>, Integer> order;
-
-	static {
-		order = new HashMap<>();
-		order.put(Source.class, 0);
-		order.put(Observer.class, 1);
-		order.put(Token.class, 2);
-		String f;
-		try {
-			f = Type.getMethodDescriptor(String.class.getMethod("toLowerCase"));
-		} catch (Exception e) {
-			f = "()Ljava/lang/String;";
-		}
-		TLC_SIG = f;
-		try {
-			f = Type.getMethodDescriptor(String.class.getMethod("trim"));
-		} catch (Exception e) {
-			f = "()Ljava/lang/String;";
-		}
-		TRIM_SIG = f;
 	}
 
 	private byte[] generateClass(String name, Class<?> handle, Method method) {
@@ -344,224 +566,6 @@ public class ClassPlaceholderFactory {
 		}
 		cw.visitEnd();
 		return cw.toByteArray();
-	}
-
-	private static void unboxFromPrim(MethodVisitor mv, Class<?> p) {
-		if (!p.isPrimitive()) {
-			return;
-		}
-		String boxName = null, typeName = null;
-		if (p.equals(int.class)) {
-			boxName = "Integer";
-			typeName = "I";
-		}
-		if (p.equals(char.class)) {
-			boxName = "Character";
-			typeName = "C";
-		}
-		if (p.equals(byte.class)) {
-			boxName = "Byte";
-			typeName = "B";
-		}
-		if (p.equals(boolean.class)) {
-			boxName = "Boolean";
-			typeName = "Z";
-		}
-		if (p.equals(long.class)) {
-			boxName = "Long";
-			typeName = "J";
-		}
-		if (p.equals(short.class)) {
-			boxName = "Short";
-			typeName = "S";
-		}
-		if (p.equals(float.class)) {
-			boxName = "Float";
-			typeName = "F";
-		}
-		if (p.equals(double.class)) {
-			boxName = "Double";
-			typeName = "D";
-		}
-		if (typeName == null || boxName == null) {
-			return;
-		}
-		mv.visitMethodInsn(INVOKESTATIC, "java/lang/" + boxName, "valueOf",
-				"(" + typeName + ")Ljava/lang/" + boxName + ";", false);
-	}
-
-	private static void returnInsn(MethodVisitor mv, Class<?> clazz) {
-		if (clazz.isPrimitive()) {
-			if (clazz.equals(float.class)) {
-				mv.visitInsn(FRETURN);
-				return;
-			}
-			if (clazz.equals(long.class)) {
-				mv.visitInsn(LRETURN);
-				return;
-			}
-			if (clazz.equals(double.class)) {
-				mv.visitInsn(DRETURN);
-				return;
-			}
-			mv.visitInsn(IRETURN);
-			return;
-		}
-		mv.visitInsn(ARETURN);
-	}
-
-	private static Class<?> boxedPrim(Class<?> primClass) {
-		if (primClass.isPrimitive()) {
-			if (primClass.equals(int.class)) {
-				return Integer.class;
-			}
-			if (primClass.equals(char.class)) {
-				return Character.class;
-			}
-			if (primClass.equals(byte.class)) {
-				return Byte.class;
-			}
-			if (primClass.equals(boolean.class)) {
-				return Boolean.class;
-			}
-			if (primClass.equals(long.class)) {
-				return Long.class;
-			}
-			if (primClass.equals(short.class)) {
-				return Short.class;
-			}
-			if (primClass.equals(float.class)) {
-				return Float.class;
-			}
-			if (primClass.equals(double.class)) {
-				return Double.class;
-			}
-		}
-		return primClass;
-	}
-
-	private static void boxToPrim(MethodVisitor mv, Class<?> p, int varloc) {
-		if (!p.isPrimitive()) {
-			return;
-		}
-		String boxName = null, typeName = null, value = Type.getInternalName(p);
-		int store = ISTORE, load = ILOAD;
-		Consumer<MethodVisitor> converter = (mv2) -> {
-		};
-		if (p.equals(int.class)) {
-			boxName = "Integer";
-			typeName = "I";
-		}
-		if (p.equals(char.class)) {
-			boxName = "Character";
-			typeName = "C";
-			converter = mv2 -> mv2.visitInsn(I2C);
-		}
-		if (p.equals(byte.class)) {
-			boxName = "Byte";
-			typeName = "B";
-			converter = mv2 -> mv2.visitInsn(I2B);
-		}
-		if (p.equals(boolean.class)) {
-			boxName = "Boolean";
-			typeName = "Z";
-			converter = mv2 -> mv2.visitInsn(I2B);
-		}
-		if (p.equals(long.class)) {
-			boxName = "Long";
-			typeName = "J";
-			load = LLOAD;
-			store = LSTORE;
-		}
-		if (p.equals(short.class)) {
-			boxName = "Short";
-			typeName = "S";
-			converter = mv2 -> mv2.visitInsn(I2S);
-		}
-		if (p.equals(float.class)) {
-			boxName = "Float";
-			typeName = "F";
-			load = FLOAD;
-			store = FSTORE;
-		}
-		if (p.equals(double.class)) {
-			boxName = "Double";
-			typeName = "D";
-			load = DLOAD;
-			store = DSTORE;
-		}
-		if (typeName == null || boxName == null) {
-			return;
-		}
-		mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/" + boxName, value + "Value", "()" + typeName, false);
-		mv.visitVarInsn(store, varloc);
-		mv.visitVarInsn(load, varloc);
-		converter.accept(mv);
-	}
-
-	private static void utilsTryCast(MethodVisitor mv, Class<?> expected, boolean orNull) {
-		// assume obj to cast is already on stack and only that obj is on stack
-		mv.visitLdcInsn(Type.getType(expected));
-		mv.visitFieldInsn(GETSTATIC, "java/lang/Boolean", "TRUE", "Ljava/lang/Boolean;");
-		mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(TypeUtils.class), "tryCast",
-				"(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/Boolean;)Ljava/util/Optional;", false);
-		if (orNull) {
-			mv.visitInsn(ACONST_NULL);
-			mv.visitMethodInsn(INVOKEVIRTUAL, OPT_NAME, "orElse", "(Ljava/lang/Object;)Ljava/lang/Object;", false);
-		}
-	}
-
-	private static void skipIfNull(MethodVisitor mv, Consumer<MethodVisitor> success) {
-		// assume null check obj already loaded to stack
-		Label no = new Label();
-		mv.visitJumpInsn(IFNULL, no);
-		success.accept(mv);
-		mv.visitLabel(no);
-	}
-
-	private static void nullCheck(MethodVisitor mv, boolean nullable, Consumer<MethodVisitor> success,
-			boolean throwError) {
-		if (nullable) {
-			return;
-		}
-		// assume null check obj already loaded to stack
-		Label no = new Label();
-		mv.visitJumpInsn(IFNONNULL, no);
-		if (throwError) {
-			mv.visitTypeInsn(Opcodes.NEW, Type.getInternalName(NoValueException.class));
-			mv.visitVarInsn(ASTORE, 7);
-			mv.visitVarInsn(ALOAD, 7);
-			mv.visitMethodInsn(Opcodes.INVOKESPECIAL, Type.getInternalName(NoValueException.class), "<init>", "()V",
-					false);
-			mv.visitVarInsn(ALOAD, 7);
-			mv.visitInsn(Opcodes.ATHROW);
-		} else {
-			mv.visitInsn(ACONST_NULL);
-			mv.visitInsn(ARETURN);
-		}
-		mv.visitLabel(no);
-		success.accept(mv);
-	}
-
-	private static void tryCatch(MethodVisitor mv, Consumer<MethodVisitor> t, Consumer<MethodVisitor> c) {
-		Label st = new Label(), et = new Label(), sc = new Label(), ec = new Label();
-		mv.visitTryCatchBlock(st, et, sc, "java/lang/Exception");
-		mv.visitLabel(st);
-		t.accept(mv);
-		mv.visitLabel(et);
-		mv.visitJumpInsn(GOTO, ec);
-		mv.visitLabel(sc);
-		c.accept(mv);
-		mv.visitLabel(ec);
-	}
-
-	private static int getOrder(Parameter p) {
-		for (java.lang.annotation.Annotation a : p.getAnnotations()) {
-			if (order.containsKey(a.annotationType())) {
-				return order.get(a.annotationType());
-			}
-		}
-		return 0;
 	}
 
 }

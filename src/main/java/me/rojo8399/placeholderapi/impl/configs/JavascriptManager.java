@@ -44,8 +44,8 @@ import javax.script.ScriptException;
  */
 public class JavascriptManager {
 
-	private Map<String, String> scripts = new HashMap<>();
 	private File folder;
+	private Map<String, String> scripts = new HashMap<>();
 
 	public JavascriptManager(File scriptFolder) throws IOException {
 		if (scriptFolder.exists() && scriptFolder.isFile()) {
@@ -63,30 +63,6 @@ public class JavascriptManager {
 			r.close();
 			scripts.put(sub.getName().replace(".js", "").toLowerCase(), str);
 		}
-	}
-
-	public void reloadScripts() throws IOException {
-		scripts.clear();
-		for (File sub : folder.listFiles((f, s) -> s.endsWith(".js"))) {
-			BufferedReader r = new BufferedReader(new FileReader(sub));
-			String str = r.lines().reduce("", (s1, s2) -> s1 + "\n" + s2);
-			r.close();
-			scripts.put(sub.getName().replace(".js", "").toLowerCase(), str);
-		}
-	}
-
-	public List<String> getScriptNames() {
-		List<String> out = new ArrayList<>();
-		out.addAll(scripts.keySet());
-		return out;
-	}
-
-	public Reader getScript(String name) {
-		if (!scripts.containsKey(name)) {
-			// Prevents creating reader on null
-			return null;
-		}
-		return new StringReader(scripts.get(name));
 	}
 
 	public Object eval(ScriptEngine engine, String token) {
@@ -138,6 +114,30 @@ public class JavascriptManager {
 			} catch (ScriptException e) {
 				return "ERROR: " + e.getMessage();
 			}
+		}
+	}
+
+	public Reader getScript(String name) {
+		if (!scripts.containsKey(name)) {
+			// Prevents creating reader on null
+			return null;
+		}
+		return new StringReader(scripts.get(name));
+	}
+
+	public List<String> getScriptNames() {
+		List<String> out = new ArrayList<>();
+		out.addAll(scripts.keySet());
+		return out;
+	}
+
+	public void reloadScripts() throws IOException {
+		scripts.clear();
+		for (File sub : folder.listFiles((f, s) -> s.endsWith(".js"))) {
+			BufferedReader r = new BufferedReader(new FileReader(sub));
+			String str = r.lines().reduce("", (s1, s2) -> s1 + "\n" + s2);
+			r.close();
+			scripts.put(sub.getName().replace(".js", "").toLowerCase(), str);
 		}
 	}
 
