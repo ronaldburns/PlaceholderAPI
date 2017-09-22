@@ -116,11 +116,14 @@ public class NoValueException extends Exception {
 	}
 
 	public List<String> suggestions() {
-		return suggestions;
+		return suggestions == null ? new ArrayList<>() : suggestions;
 	}
 
 	public Text getTextMessage() {
 		if (this.message == null) {
+			if(super.getMessage()==null) {
+				return Text.EMPTY;
+			}
 			return Text.of(super.getMessage());
 		}
 		return this.message;

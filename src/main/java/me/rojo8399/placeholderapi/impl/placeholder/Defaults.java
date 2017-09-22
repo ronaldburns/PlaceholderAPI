@@ -68,6 +68,7 @@ import org.spongepowered.api.statistic.Statistics;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.serializer.TextSerializers;
 import org.spongepowered.api.world.Locatable;
+import org.spongepowered.api.world.storage.WorldProperties;
 
 import com.flowpowered.math.vector.Vector3d;
 
@@ -83,13 +84,29 @@ import me.rojo8399.placeholderapi.Token;
 import me.rojo8399.placeholderapi.impl.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.impl.configs.JavascriptManager;
 import me.rojo8399.placeholderapi.impl.configs.Messages;
+import me.rojo8399.placeholderapi.impl.utils.TypeUtils;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 
+/**
+ * The default placeholders provided by the plugin. These also server as
+ * examples of many, though not all, possibilities for the plugin to use as
+ * placeholders.
+ * 
+ * The class is a listener class AND a configurable class, allowing the
+ * placeholders to be attached directly to PlaceholderAPI.
+ * 
+ * @author Wundero
+ *
+ */
 @Listening
 @ConfigSerializable
 public class Defaults {
 
+	/**
+	 * This class simply represents the service PlaceholderAPI provides, except
+	 * simplified in order to be used in JavaScript placeholders.
+	 */
 	public static class Service {
 		private CommandSource o;
 		private Player p;
@@ -125,6 +142,12 @@ public class Defaults {
 		}
 	}
 
+	/**
+	 * Dynamic object used for configuring the "server" placeholder. Notice that the
+	 * fields inside this class do NOT need to be attached to any one placeholder;
+	 * the fields in this class do not know what placeholder is going to use them so
+	 * they do not need to be attached.
+	 */
 	@ConfigSerializable
 	private static class Uptime {
 
@@ -147,11 +170,25 @@ public class Defaults {
 		}
 	}
 
+	/**
+	 * Pattern to match against a sound placeholder containing _all or all_.
+	 */
 	private static final Pattern ALLSOUND_PATTERN = Pattern.compile("([_]?all[_]?)", Pattern.CASE_INSENSITIVE);
 
+	/**
+	 * Runtime utility to convert to MB from bytes.
+	 */
 	private static int MB = 1024 * 1024;
 
+	/**
+	 * Current runtime; used by server placeholder.
+	 */
 	private static Runtime runtime = Runtime.getRuntime();
+
+	/*
+	 * Begin utilities methods: these methods are used throughout the class 
+	 * but do not play major roles in explaining the plugin.
+	 */
 
 	private static boolean between(double o, double min, double max) {
 		return o >= min && o <= max;
@@ -265,12 +302,22 @@ public class Defaults {
 	private EconomyService service;
 	private UserStorageService storage = null;
 
+	/**
+	 * This field is what the object will use as a configurable field; fields
+	 * DIRECTLY inside of the object registered MUST be attached to a placeholder
+	 * using the Attach annotation. If they are not attached, they will be ignored
+	 * completely.
+	 */
 	@Setting
-	@Attach("server")
+	@Attach("server") // Use the id of the placeholder you would like to attach to. The actual
+						// placeholder you attach to is arbitrary, however it must exist within this
+						// class.
 	private List<Uptime> uptimes = new ArrayList<>();
 
 	private Set<User> users = new HashSet<>();
 
+	// Since the object is instantiated before being passed to PlaceholderAPI, you
+	// can do whatever for this.
 	public Defaults(EconomyService service, JavascriptManager manager, PlaceholderService s) {
 		if (service != null) {
 			eco = true;
@@ -316,6 +363,43 @@ public class Defaults {
 		return users.stream().map(u -> u.getUniqueId()).anyMatch(p.getUniqueId()::equals);
 	}
 
+	/**
+	 * This is the first placeholder in the object. This handles how the placeholder
+	 * "economy" parses. I return an object to allow me to return any value without
+	 * having to make a nice supertype.
+	 * 
+	 * The parameters in this method are annotated with Nullable. If they have this
+	 * annotation, they can have null values and you should handle accordingly; if
+	 * they do not have this annotation, you can safely assume those parameters will
+	 * NEVER be null.
+	 * 
+	 * @param token
+	 *            This parameter is the part in the placeholder after the first _.
+	 *            For example, {economy_balance} gives a token of "balance". The
+	 *            'fix = true' parameter tells PlaceholderAPI to make the token
+	 *            lower case and remove excess characters.
+	 * 
+	 *            For the token, you can request types other than String if you
+	 *            want. If you know your token will have multiple _ separated
+	 *            sections, you can request a String[]. If you want a number, you
+	 *            can request a Double or an Integer. PlaceholderAPI will handle the
+	 *            conversion for you. PlaceholderAPI will also try it's best to cast
+	 *            to a given type but, if the type does not have nice
+	 *            deserialization options, may not ever parse the placeholder. If
+	 *            you want the placeholder to parse to any object type, you must
+	 *            register a type serializer into PlaceholderService.
+	 * @param player
+	 *            This parameter is the Source parameter, or who the placeholder is
+	 *            replacing for. In this case, it would be who's balance to draw
+	 *            from.
+	 * @return whatever the value of the placeholder is.
+	 * @throws NoValueException
+	 *             - Throw this exception if you do not want the placeholder
+	 *             replaced. For example, "{economy_a}" should throw a
+	 *             NoValueException so that PlaceholderAPI helps the user fix issues
+	 *             with their placeholders. If you return null, PlaceholderAPI will
+	 *             fill with an empty string.
+	 */
 	@Placeholder(id = "economy")
 	public Object economy(@Token(fix = true) @Nullable String token, @Nullable @Source User player)
 			throws NoValueException {
@@ -432,6 +516,27 @@ public class Defaults {
 				.reduce((long) Sponge.getServer().getRunningTimeTicks() * 50, (a, b) -> a + b);
 	}
 
+	/**
+	 * This is another example of a placeholder. This one is simple in comparison to
+	 * the others.
+	 * 
+	 * The Relational annotation forces this to be used with the rel_ prefix in the
+	 * placeholder, like this: {rel_rank_greater_than}. This provides no guarantees
+	 * that it will actually need or use both source and observer. Again, all
+	 * parameters here are null-safe (will not call the method if those parameters
+	 * are null).
+	 * 
+	 * @param token
+	 *            This is the token, like in all other placeholders.
+	 * @param underrank
+	 *            This is the player comparing. For instance, if you say source >
+	 *            observer, source will be a child of observer and thus have more
+	 *            permissions.
+	 * @param overrank
+	 *            This is the player being compared to.
+	 * @return Whether the expression, greater_than or less_than, returns true.
+	 * @throws NoValueException
+	 */
 	@Placeholder(id = "rank")
 	@Relational
 	public Boolean isAbove(@Token String token, @Source User underrank, @Observer User overrank)
@@ -473,6 +578,10 @@ public class Defaults {
 		return manager.eval(engine, token);
 	}
 
+	/**
+	 * Listener is registered because of the @Listening annotation. No need to
+	 * attach it to your plugin, PlaceholderAPI will do this for you.
+	 */
 	@Listener
 	public void newEco(ChangeServiceProviderEvent event) {
 		if (event.getService().equals(EconomyService.class)) {
@@ -557,13 +666,14 @@ public class Defaults {
 		case "remaining_air":
 			return p.getOrElse(Keys.REMAINING_AIR, 300);
 		case "item_in_main_hand":
+			// ItemStack return types are parsed nicely
 			return p.getItemInHand(HandTypes.MAIN_HAND).orElse(ItemStackSnapshot.NONE.createStack());
 		case "item_in_off_hand":
 			return p.getItemInHand(HandTypes.OFF_HAND).orElse(ItemStackSnapshot.NONE.createStack());
 		case "walk_speed":
 			return p.getOrElse(Keys.WALKING_SPEED, 1.0);
 		case "time_played_seconds":
-			return getTime(p, TimeUnit.SECONDS, true);
+			return getTime(p, TimeUnit.SECONDS, true); // Instant and Duration return types are serialized
 		case "time_played_minutes":
 			return getTime(p, TimeUnit.MINUTES, true);
 		case "time_played_ticks":
@@ -621,31 +731,6 @@ public class Defaults {
 		uptimes.add(current);
 		Store.get().get("server", false).ifPresent(Expansion::saveConfig);
 	}
-
-	/*
-	 * @Placeholder(id = "playerlist") public List<Player> list(@Nullable @Token(fix
-	 * = true) String token) { if (token == null) { return
-	 * Sponge.getServer().getOnlinePlayers().stream() .filter(p ->
-	 * !p.getOrElse(Keys.VANISH_PREVENTS_TARGETING,
-	 * false)).collect(Collectors.toList()); } Stream<Player> out =
-	 * Sponge.getServer().getOnlinePlayers().stream() .filter(p ->
-	 * !p.getOrElse(Keys.VANISH_PREVENTS_TARGETING, false)); if
-	 * (PERM.matcher(token).find()) { Matcher m = PERM.matcher(token); while
-	 * (m.find()) { String permission = m.group(1); out = out.filter(p ->
-	 * p.hasPermission(permission)); } } if (WORLD.matcher(token).find()) { Matcher
-	 * m = WORLD.matcher(token); while (m.find()) { String world = m.group(1); out =
-	 * out.filter(p -> p.getWorld().getName().toLowerCase().startsWith(world)); } }
-	 * // TODO: /* better token matching data key boolean filter -> load key from t
-	 * - IS_FLYING, for example data key numeric filter -> load key again, but also
-	 * load comparator (>, >=, <, <=, =) and number - Health > 10, for example -
-	 * sort greatest value for key??? better idea??: placeholder value filter ->
-	 * load placeholder from key, load value from key, load comparator sanity checks
-	 * (no > for boolean, no value present = true/0/max int, depending, no comp
-	 * present: =) sort by highest comparison limiter, top X players if available ->
-	 * sort by highest comp then alphabetically
-	 *//*
-		 * return out.collect(Collectors.toList()); }
-		 */
 
 	private void putCur(Currency c) {
 		currencies.put(c.getName().toLowerCase().replace(" ", ""), c);
@@ -739,6 +824,46 @@ public class Defaults {
 
 	@Placeholder(id = "server")
 	public Object server(@Token(fix = true) String identifier) throws NoValueException {
+		boolean gt = false;
+		if (identifier.startsWith("time")) {
+			gt = true;
+			identifier = identifier.substring("time".length());
+		}
+		if (identifier.startsWith("game_time")) {
+			gt = true;
+			identifier = identifier.substring("game_time".length());
+		}
+		if (gt) {
+			Optional<WorldProperties> w = Sponge.getServer().getDefaultWorld();
+			if (!identifier.isEmpty()) {
+				String world = identifier.substring(1);
+				if (world.isEmpty()) {
+					if (w.isPresent()) {
+						return w.get().getWorldTime() % 24000;
+					} else {
+						String id1 = identifier;
+						throw new NoValueException(Messages.get().misc.invalid.t("world"),
+								Sponge.getServer().getAllWorldProperties().stream().map(wp -> wp.getWorldName())
+										.filter(n -> TypeUtils.closeTo(id1.replaceFirst("_", ""), n))
+										.map(s -> "time_" + s).collect(Collectors.toList()));
+					}
+				}
+				WorldProperties wp = Sponge.getServer().getWorld(world).map(wo -> wo.getProperties()).orElse(null);
+				if (wp != null) {
+					return wp.getWorldTime() % 24000;
+				}
+			} else {
+				if (w.isPresent()) {
+					return w.get().getWorldTime() % 24000;
+				}
+			}
+			String id1 = identifier;
+			throw new NoValueException(Messages.get().misc.invalid.t("world"),
+					Sponge.getServer().getAllWorldProperties().stream().map(wp -> wp.getWorldName())
+							.filter(n -> n.equalsIgnoreCase(w.get().getWorldName())
+									|| TypeUtils.closeTo(id1.replaceFirst("_", ""), n))
+							.map(s -> "time_" + s).collect(Collectors.toList()));
+		}
 		switch (identifier) {
 		case "online":
 			return Sponge.getServer().getOnlinePlayers().stream()
@@ -750,7 +875,7 @@ public class Defaults {
 		case "motd":
 			return Sponge.getServer().getMotd();
 		case "uptime":
-		case "uptime_percent":
+		case "uptime_percent": // Uptime config item used here.
 			long um = this.getUptimeMillis();
 			long dm = this.getDowntimeMillis();
 			NumberFormat fmt = NumberFormat.getPercentInstance();
@@ -830,16 +955,14 @@ public class Defaults {
 		}
 	}
 
+	/**
+	 * This method does not need parameters, but can still be called. LocalDateTime
+	 * is also nicely serialized.
+	 */
 	@Placeholder(id = "time")
 	public LocalDateTime time() {
 		return LocalDateTime.now();
 	}
-	/*
-	 * private static final Pattern PERM = Pattern.compile(
-	 * "perm(?:ission)?\\_([A-Za-z0-9*\\-]+(?:\\.[A-Za-z0-9*\\-]+)+)",
-	 * Pattern.CASE_INSENSITIVE), WORLD =
-	 * Pattern.compile("world\\_([A-Za-z0-9\\_\\-]+)", Pattern.CASE_INSENSITIVE);
-	 */
 
 	public int unique() {
 		return users.size();

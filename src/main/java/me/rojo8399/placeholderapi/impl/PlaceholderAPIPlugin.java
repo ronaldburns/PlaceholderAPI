@@ -424,8 +424,9 @@ public class PlaceholderAPIPlugin {
 						.version("2.0");
 			case "server":
 				return builder.description(Messages.get().placeholder.serverdesc.value)
-						.tokens("unique_players", "online", "max_players", "motd", "cores", "tps", "ram_used",
-								"ram_free", "ram_total", "ram_max", "uptime", "uptime_percent", "uptime_total")
+						.tokens("time_[world]", "game_time_[world]", "unique_players", "online", "max_players", "motd",
+								"cores", "tps", "ram_used", "ram_free", "ram_total", "ram_max", "uptime",
+								"uptime_percent", "uptime_total")
 						.version("2.0");
 			case "sound":
 				return builder.description(Messages.get().placeholder.sounddesc.value)

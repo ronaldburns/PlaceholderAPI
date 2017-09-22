@@ -316,7 +316,8 @@ public class Store {
 				return exp.parse(exp.convertSource(src), exp.convertObserver(obs), token);
 			}
 		} catch (NoValueException e) {
-			throw new NoValueException(e.getMessage(), exp.getSuggestions(token.orElse(null)));
+			throw new NoValueException(e.getTextMessage(),
+					e.suggestions().isEmpty() ? exp.getSuggestions(token.orElse(null)) : e.suggestions());
 		}
 		throw new NoValueException(Messages.get().placeholder.invalidSrcObs.t());
 	}
