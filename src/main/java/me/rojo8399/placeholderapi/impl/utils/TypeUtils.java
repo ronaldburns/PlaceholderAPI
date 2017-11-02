@@ -23,6 +23,8 @@
  */
 package me.rojo8399.placeholderapi.impl.utils;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.time.Duration;
@@ -52,6 +54,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
 
 import me.rojo8399.placeholderapi.impl.PlaceholderAPIPlugin;
+import me.rojo8399.placeholderapi.impl.PlaceholderServiceImpl;
 
 public class TypeUtils {
 
@@ -164,6 +167,58 @@ public class TypeUtils {
 
 	public static boolean or(boolean one, boolean two) {
 		return one || two;
+	}
+
+	/**
+	 * The required version range of the dependency in <b>Maven version range
+	 * syntax</b>:
+	 *
+	 * <table>
+	 * <tr>
+	 * <th>Range</th>
+	 * <th>Meaning</th>
+	 * </tr>
+	 * <tr>
+	 * <td>1.0</td>
+	 * <td>Any dependency version, 1.0 is recommended</td>
+	 * </tr>
+	 * <tr>
+	 * <td>[1.0]</td>
+	 * <td>x == 1.0</td>
+	 * </tr>
+	 * <tr>
+	 * <td>[1.0,)</td>
+	 * <td>x &gt;= 1.0</td>
+	 * </tr>
+	 * <tr>
+	 * <td>(1.0,)</td>
+	 * <td>x &gt; 1.0</td>
+	 * </tr>
+	 * <tr>
+	 * <td>(,1.0]</td>
+	 * <td>x &lt;= 1.0</td>
+	 * </tr>
+	 * <tr>
+	 * <td>(,1.0)</td>
+	 * <td>x &lt; 1.0</td>
+	 * </tr>
+	 * <tr>
+	 * <td>(1.0,2.0)</td>
+	 * <td>1.0 &lt; x &lt; 2.0</td>
+	 * </tr>
+	 * <tr>
+	 * <td>[1.0,2.0]</td>
+	 * <td>1.0 &lt;= x &lt;= 2.0</td>
+	 * </tr>
+	 * </table>
+	 *
+	 * @return The required version range, or an empty string if unspecified
+	 * @see <a href="https://goo.gl/edrup4">Maven version range specification</a>
+	 * @see <a href="https://goo.gl/WBsFIu">Maven version design document</a>
+	 */
+	public static boolean matchVersion(String pattern, String actual) {
+		// TODO this
+		return false;
 	}
 
 	public static void registerDeserializer(TypeToken<?> token, Function<String, ?> fun) {
@@ -312,6 +367,16 @@ public class TypeUtils {
 					return Optional.empty();
 				}
 				if (expected.isInstance(valout)) {
+					// Register a new deserializer once we confirm it works. Should prevent
+					// extremely long parsing from happening multiple times.
+					final MethodHandle mh = MethodHandles.publicLookup().unreflect(method);
+					PlaceholderServiceImpl.get().registerTypeDeserializer(TypeToken.of(expected), str -> {
+						try {
+							return (T) expected.cast(mh.invokeExact((String) val));
+						} catch (Throwable e1) {
+							throw new RuntimeException(e1);
+						}
+					});
 					return tryOptional(() -> expected.cast(valout));
 				}
 				if (valout instanceof Optional) {
@@ -321,6 +386,17 @@ public class TypeUtils {
 					}
 					Object v = valopt.get();
 					if (expected.isInstance(v)) {
+						// Register a new deserializer once we confirm it works. Should prevent
+						// extremely long parsing from happening multiple times.
+						final MethodHandle mh = MethodHandles.publicLookup().unreflect(method);
+						PlaceholderServiceImpl.get().registerTypeDeserializer(TypeToken.of(expected), str -> {
+							try {
+								Optional<?> optx = (Optional<?>) mh.invokeExact((String) val);
+								return (T) expected.cast(optx.get());
+							} catch (Throwable e1) {
+								throw new RuntimeException(e1);
+							}
+						});
 						return tryOptional(() -> expected.cast(v));
 					} else {
 						return Optional.empty();

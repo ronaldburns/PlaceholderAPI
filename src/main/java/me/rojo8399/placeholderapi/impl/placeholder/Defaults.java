@@ -354,7 +354,7 @@ public class Defaults {
 		List<UniqueAccount> baltop = new ArrayList<>();
 		baltop = this.users.stream().map(u -> u.getUniqueId()).filter(service::hasAccount)
 				.map(service::getOrCreateAccount).filter(Optional::isPresent).map(Optional::get)
-				.sorted((a, b) -> a.getBalance(cur).compareTo(b.getBalance(cur))).collect(Collectors.toList());
+				.sorted((a, b) -> -a.getBalance(cur).compareTo(b.getBalance(cur))).collect(Collectors.toList());
 		balTop.put(cur, baltop);
 		lastUpdate.put(cur, System.currentTimeMillis());
 	}
@@ -422,62 +422,49 @@ public class Defaults {
 			String c = a[a.length - 1];
 			if (currencies.containsKey(c)) {
 				toUse = currencies.get(c);
+			} else {
+				t += "_" + c;
 			}
 		}
 		final Currency toUseFinal = toUse;
-		if (player == null) {
-			// fix t for baltop
-			int baltop = 0;
-			if (t.startsWith("baltop")) {
-				if (t.contains("_")) {
-					String aft = t.substring(t.indexOf("_") + 1);
-					t = t.substring(0, t.indexOf("_"));
-					try {
-						baltop = Integer.parseInt(aft);
-					} catch (Exception e) {
-						baltop = 5;
+		// fix t for baltop
+		int baltop = 0;
+		if (t.startsWith("baltop")) {
+			if (t.contains("_")) {
+				String aft = t.substring(t.indexOf("_") + 1);
+				t = t.substring(0, t.indexOf("_"));
+				try {
+					baltop = Integer.parseInt(aft);
+				} catch (Exception e) {
+					if (aft.contains("_")) {
+						String cur = aft.split("_")[1];
+						throw new NoValueException("That is not a valid currency!", currencies.keySet().stream()
+								.filter(s -> TypeUtils.closeTo(cur, s)).collect(Collectors.toList()));
+					} else {
+						throw new NoValueException("That is not a valid currency!", currencies.keySet().stream()
+								.filter(s -> TypeUtils.closeTo(aft, s)).collect(Collectors.toList()));
 					}
-				} else {
-					baltop = 5;
 				}
-				if (baltop <= 0) {
-					baltop = 1;
-				}
-				calculateBalTop(toUse);
-				List<UniqueAccount> baltop2 = balTop.get(toUse).subList(0, baltop);
-				if (t.startsWith("baltopf")) {
-					return Text.joinWith(Text.of(", "), baltop2.stream()
-							.map(a -> Text.of(a.getDisplayName(), ": " + toUseFinal.format(a.getBalance(toUseFinal))))
-							.collect(Collectors.toList()));
-				}
+			} else {
+				baltop = 5;
+			}
+			if (baltop <= 0) {
+				baltop = 1;
+			}
+			calculateBalTop(toUse);
+			List<UniqueAccount> baltop2 = balTop.get(toUse).stream().limit(baltop).collect(Collectors.toList());
+			if (t.startsWith("baltopf")) {
 				return Text.joinWith(Text.of(", "),
-						baltop2.stream()
-								.map(a -> Text.of(a.getDisplayName(), ": " + a.getBalance(toUseFinal).toPlainString()))
+						baltop2.stream().map(
+								a -> Text.of(a.getDisplayName(), ": " + toUseFinal.format(a.getBalance(toUseFinal))))
 								.collect(Collectors.toList()));
 			}
-			switch (t) {
-			case "display":
-				return toUse.getDisplayName();
-			case "plural_display":
-				return toUse.getPluralDisplayName();
-			case "symbol":
-				return toUse.getSymbol();
-			}
-			if (currencies.containsKey(t)) {
-				toUse = currencies.get(t);
-				Text amt = toUse.format(BigDecimal.valueOf(1234.56));
-				Text v = Text.of(toUse.getName() + " (" + toUse.getId() + ") - ");
-				return v.concat(amt);
-			}
-			throw new NoValueException();
+			return Text.joinWith(Text.of(", "),
+					baltop2.stream()
+							.map(a -> Text.of(a.getDisplayName(), ": " + a.getBalance(toUseFinal).toPlainString()))
+							.collect(Collectors.toList()));
 		}
-		// Don't handle nonexistent accounts here, instead throw error
-		UniqueAccount acc = service.getOrCreateAccount(player.getUniqueId()).get();
 		switch (t) {
-		case "balance":
-			return acc.getBalance(toUse).toPlainString();
-		case "bal_format":
-			return toUse.format(acc.getBalance(toUse));
 		case "display":
 			return toUse.getDisplayName();
 		case "plural_display":
@@ -485,13 +472,29 @@ public class Defaults {
 		case "symbol":
 			return toUse.getSymbol();
 		}
+		if (player != null) {
+			// Don't handle nonexistent accounts here, instead throw error
+			UniqueAccount acc = service.getOrCreateAccount(player.getUniqueId()).get();
+			switch (t) {
+			case "balance":
+				return acc.getBalance(toUse).toPlainString();
+			case "bal_format":
+				return toUse.format(acc.getBalance(toUse));
+			}
+		}
 		if (currencies.containsKey(t)) {
 			toUse = currencies.get(t);
 			Text amt = toUse.format(BigDecimal.valueOf(1234.56));
 			Text v = Text.of(toUse.getName() + " (" + toUse.getId() + ") - ");
 			return v.concat(amt);
 		}
-		throw new NoValueException();
+		if (t.contains("_")) {
+			String[] arr = t.split("_");
+			t = arr[arr.length - 1];
+		}
+		final String ft = t;
+		throw new NoValueException("That is not a valid currency!",
+				currencies.keySet().stream().filter(s -> TypeUtils.closeTo(ft, s)).collect(Collectors.toList()));
 	}
 
 	private long getDowntimeMillis() {
@@ -931,6 +934,7 @@ public class Defaults {
 	}
 
 	@Placeholder(id = "statistic")
+	// @Requires(spongeVersion = "[6.0)")
 	public Long stat(@Source Player player, @Token(fix = true) String t) {
 		return player.getOrNull(Keys.STATISTICS).entrySet().stream().filter(e -> {
 			String s = e.getKey().getId().replace("._", ".").toLowerCase();

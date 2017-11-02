@@ -55,8 +55,8 @@ public interface PlaceholderService {
 	 * 
 	 * @return the expansion builder.
 	 */
-	public <S, O, V> ExpansionBuilder<S, O, V, ?> builder(Class<? extends S> source, Class<? extends O> observer,
-			Class<? extends V> value);
+	public <S, O, V> ExpansionBuilder<S, O, V, ? extends ExpansionBuilder<S, O, V, ?>> builder(
+			Class<? extends S> source, Class<? extends O> observer, Class<? extends V> value);
 
 	/**
 	 * Fill a map with placeholders from a template.
@@ -110,7 +110,7 @@ public interface PlaceholderService {
 	 * 
 	 * @return the expansion builder.
 	 */
-	public ExpansionBuilder<?, ?, ?, ?> load(Object handle, String id, Object plugin);
+	public ExpansionBuilder<?, ?, ?, ? extends ExpansionBuilder<?, ?, ?, ?>> load(Object handle, String id, Object plugin);
 
 	/**
 	 * Create new ExpansionBuilders for all methods annotated with '@Placeholder' in
@@ -136,7 +136,7 @@ public interface PlaceholderService {
 	 *            The plugin which holds the placeholders.
 	 * @return The list of builders matching the methods.
 	 */
-	public List<? extends ExpansionBuilder<?, ?, ?, ?>> loadAll(Object handle, Object plugin);
+	public List<? extends ExpansionBuilder<?, ?, ?, ? extends ExpansionBuilder<?, ?, ?, ?>>> loadAll(Object handle, Object plugin);
 
 	/**
 	 * Parse a placeholder.

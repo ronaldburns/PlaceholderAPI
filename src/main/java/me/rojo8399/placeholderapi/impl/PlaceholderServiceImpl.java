@@ -76,7 +76,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	 * @see me.rojo8399.placeholderapi.PlaceholderService#builder()
 	 */
 	@Override
-	public <S, O, V> ExpansionBuilder<S, O, V, ?> builder(Class<? extends S> s, Class<? extends O> o,
+	public <S, O, V> ExpansionBuilder<S, O, V, ? extends ExpansionBuilder<S, O, V, ?>> builder(Class<? extends S> s, Class<? extends O> o,
 			Class<? extends V> v) {
 		return ExpansionBuilderImpl.builder(s, o, v);
 	}

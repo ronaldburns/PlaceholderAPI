@@ -30,18 +30,20 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+/**
+ * This annotation denotes the token which will hold more intricate details
+ * about the placeholders needed. The plugin will <b>TRY</b> to parse it into
+ * the given type of the parameter, but there are no guarantees beyond the basic
+ * primitives (and their box class), String and Optional<\String>.
+ */
 @Documented
 @Retention(RUNTIME)
 @Target(PARAMETER)
-/**
- * This annotation denotes the token which will hold more intricate details
- * about the placeholders needed. Supported types: Optional<String>, String.
- */
 public @interface Token {
 
 	/**
-	 * 'Fix' the input token to be more useful. This will call toLowerCase and trim
-	 * on the string value of the token. This does nothing if the token is optional.
+	 * 'Fix' the input token to be more useful. This will call toLowerCase on the
+	 * string value of the token. This does nothing if the token is optional.
 	 * 
 	 * @return whether or not to fix the token
 	 */

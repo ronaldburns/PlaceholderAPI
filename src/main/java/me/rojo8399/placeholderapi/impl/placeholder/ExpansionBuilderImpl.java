@@ -79,7 +79,7 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 			return (ExpansionBuilderImpl<S, O, V>) builder;
 		}
 		ExpansionBuilderImpl<?, ?, ?> b = builder;
-		ExpansionBuilderImpl<S, O, V> n = unverified(exp.getSourceClass(), exp.getObserverClass(), exp.getValueClass());
+		ExpansionBuilderImpl<S, O, V> n = unverified(src(exp, builder), obs(exp, builder), val(exp, builder));
 		n.relational(b.relational).id(b.id).author(b.auth).description(b.desc).config(b.config).tokens(b.tokens)
 				.version(b.ver);
 		try {
@@ -94,6 +94,30 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 		}
 		n.func = exp::parse;
 		return n;
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <O> Class<? extends O> obs(Expansion<?, O, ?> e, ExpansionBuilderImpl<?, ?, ?> b) {
+		if (e.getObserverClass() == null) {
+			return (Class<? extends O>) b.getObserverClass();
+		}
+		return e.getObserverClass();
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <V> Class<? extends V> val(Expansion<?, ?, V> e, ExpansionBuilderImpl<?, ?, ?> b) {
+		if (e.getValueClass() == null) {
+			return (Class<? extends V>) b.getValueClass();
+		}
+		return e.getValueClass();
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <S> Class<? extends S> src(Expansion<S, ?, ?> e, ExpansionBuilderImpl<?, ?, ?> b) {
+		if (e.getSourceClass() == null) {
+			return (Class<? extends S>) b.getSourceClass();
+		}
+		return e.getSourceClass();
 	}
 
 	private static ExpansionBuilderImpl<?, ?, ?> lfm(Object o, Method m, Object p, boolean rel) {
@@ -221,7 +245,9 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 		if (verify) {
 			Preconditions.checkArgument(verify());
 		}
-		Expansion<S, O, V> exp = new Expansion<S, O, V>(id, plugin, auth, desc, ver, url, relational, tokens) {
+		Expansion<S, O, V> exp = new Expansion<S, O, V>(id, plugin, auth, desc, ver,
+				(url == null || url.isEmpty()) ? null : new URL(url), relational, tokens, this.sourceClass,
+				this.observerClass, this.returnClass) {
 			@Override
 			public V parse(S source, O observer, Optional<String> token) throws Exception {
 				return func.parse(source, observer, token);
@@ -241,6 +267,7 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 				PlaceholderAPIPlugin.getInstance().registerListeners(listeners, plugin);
 			});
 		}
+		id = null;
 		return exp;
 	}
 

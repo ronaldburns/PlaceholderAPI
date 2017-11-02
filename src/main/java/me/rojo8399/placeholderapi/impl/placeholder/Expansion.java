@@ -23,7 +23,6 @@
  */
 package me.rojo8399.placeholderapi.impl.placeholder;
 
-import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.ArrayList;
@@ -68,15 +67,27 @@ public abstract class Expansion<S, O, V> {
 	private String desc;
 	private boolean enabled = true;
 	private String id;
-	private Class<? extends O> observerClass;
+	private final Class<? extends O> observerClass;
 	private Object plugin;
 	private boolean relational = false;
 	private Runnable reloadListeners;
-	private Class<? extends S> sourceClass;
+	private final Class<? extends S> sourceClass;
 	private List<String> tokens;
 	private URL url;
 
-	private Class<? extends V> valueClass;
+	private final Class<? extends V> valueClass;
+	
+	public Class<? extends V> getValueClass() {
+		return valueClass;
+	}
+	
+	public Class<? extends S> getSourceClass() {
+		return sourceClass;
+	}
+	
+	public Class<? extends O> getObserverClass() {
+		return observerClass;
+	}
 
 	private String ver;
 
@@ -209,7 +220,6 @@ public abstract class Expansion<S, O, V> {
 		this.valueClass = value;
 		this.observerClass = observer;
 		this.relational = relational;
-		this.checkClasses();
 	}
 
 	/**
@@ -242,21 +252,6 @@ public abstract class Expansion<S, O, V> {
 	 */
 	public final String author() {
 		return author;
-	}
-
-	private final void checkClasses() {
-		Class<? extends V> v = getValueClass();
-		if (this.valueClass == null || !v.isAssignableFrom(this.valueClass)) {
-			this.valueClass = v;
-		}
-		Class<? extends S> s = getSourceClass();
-		if (this.sourceClass == null || !s.isAssignableFrom(this.sourceClass)) {
-			this.sourceClass = s;
-		}
-		Class<? extends O> o = getObserverClass();
-		if (this.observerClass == null || !o.isAssignableFrom(this.observerClass)) {
-			this.observerClass = o;
-		}
 	}
 
 	/**
@@ -332,36 +327,10 @@ public abstract class Expansion<S, O, V> {
 	}
 
 	/**
-	 * @return The class representing the observer type.
-	 */
-	@SuppressWarnings("unchecked")
-	public final Class<? extends O> getObserverClass() {
-		Method m = getParseMethod();
-		return (Class<? extends O>) m.getParameterTypes()[1];
-	}
-
-	private final Method getParseMethod() {
-		Class<?> clazz = this.getClass();
-		return Arrays.asList(clazz.getDeclaredMethods()).stream()
-				.filter(m -> m.getName().equalsIgnoreCase("parse") && Arrays.asList(m.getGenericParameterTypes())
-						.stream().map(Type::getTypeName).anyMatch(s -> s.contains("java.util.Optional")))
-				.findAny().get(); // we know it exists ;)
-	}
-
-	/**
 	 * @return The holding plugin.
 	 */
 	public Object getPlugin() {
 		return plugin;
-	}
-
-	/**
-	 * @return The class representing the source type.
-	 */
-	@SuppressWarnings("unchecked")
-	public final Class<? extends S> getSourceClass() {
-		Method m = getParseMethod();
-		return (Class<? extends S>) m.getParameterTypes()[0];
 	}
 
 	public List<String> getSuggestions(String token) {
@@ -372,15 +341,6 @@ public abstract class Expansion<S, O, V> {
 			return tokens;
 		}
 		return tokens.stream().filter(s -> TypeUtils.closeTo(s, token)).collect(Collectors.toList());
-	}
-
-	/**
-	 * @return The class representing the return type.
-	 */
-	@SuppressWarnings("unchecked")
-	public final Class<? extends V> getValueClass() {
-		Method m = getParseMethod();
-		return (Class<? extends V>) m.getReturnType();
 	}
 
 	/**
