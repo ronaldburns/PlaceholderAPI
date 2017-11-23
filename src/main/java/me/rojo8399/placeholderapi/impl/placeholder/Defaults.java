@@ -79,6 +79,7 @@ import me.rojo8399.placeholderapi.Observer;
 import me.rojo8399.placeholderapi.Placeholder;
 import me.rojo8399.placeholderapi.PlaceholderService;
 import me.rojo8399.placeholderapi.Relational;
+import me.rojo8399.placeholderapi.Requires;
 import me.rojo8399.placeholderapi.Source;
 import me.rojo8399.placeholderapi.Token;
 import me.rojo8399.placeholderapi.impl.PlaceholderAPIPlugin;
@@ -314,6 +315,10 @@ public class Defaults {
 						// class.
 	private List<Uptime> uptimes = new ArrayList<>();
 
+	@Setting
+	@Attach("server")
+	private boolean useUptimes = false;
+
 	private Set<User> users = new HashSet<>();
 
 	// Since the object is instantiated before being passed to PlaceholderAPI, you
@@ -404,7 +409,7 @@ public class Defaults {
 	public Object economy(@Token(fix = true) @Nullable String token, @Nullable @Source User player)
 			throws NoValueException {
 		if (service == null || !eco) {
-			throw new NoValueException();
+			throw new NoValueException("No economy plugin present!");
 		}
 		if (token == null) {
 			Text amt = def.format(BigDecimal.valueOf(1234.56));
@@ -719,9 +724,11 @@ public class Defaults {
 
 	@Listener
 	public void onJoin(ClientConnectionEvent.Join event, @Getter("getTargetEntity") Player player) {
-		uptimes = uptimes.stream()
-				.filter(u -> Duration.ofMillis(System.currentTimeMillis() - u.finishTimeMillis).toDays() <= 30)
-				.collect(Collectors.toList());
+		if (this.useUptimes) {
+			uptimes = uptimes.stream()
+					.filter(u -> Duration.ofMillis(System.currentTimeMillis() - u.finishTimeMillis).toDays() <= 30)
+					.collect(Collectors.toList());
+		}
 		if (contains(player)) {
 			return;
 		}
@@ -730,8 +737,12 @@ public class Defaults {
 
 	@Listener
 	public void onStopping(GameStoppingEvent event) {
-		current.finish();
-		uptimes.add(current);
+		if (this.useUptimes) {
+			current.finish();
+			uptimes.add(current);
+		} else {
+			uptimes.clear();
+		}
 		Store.get().get("server", false).ifPresent(Expansion::saveConfig);
 	}
 
@@ -879,6 +890,9 @@ public class Defaults {
 			return Sponge.getServer().getMotd();
 		case "uptime":
 		case "uptime_percent": // Uptime config item used here.
+			if (!useUptimes) {
+				throw new NoValueException("Uptime is not enabled!");
+			}
 			long um = this.getUptimeMillis();
 			long dm = this.getDowntimeMillis();
 			NumberFormat fmt = NumberFormat.getPercentInstance();
@@ -886,6 +900,9 @@ public class Defaults {
 			fmt.setMinimumFractionDigits(2);
 			return fmt.format((um / ((double) dm + (double) um)));
 		case "uptime_total":
+			if (!useUptimes) {
+				throw new NoValueException("Uptime is not enabled!");
+			}
 			Duration dur = Duration.ofMillis(this.getUptimeMillis());
 			return dur;
 		case "ram_used":
@@ -934,7 +951,7 @@ public class Defaults {
 	}
 
 	@Placeholder(id = "statistic")
-	// @Requires(spongeVersion = "[6.0)")
+	@Requires(spongeVersion = "[6.0,)")
 	public Long stat(@Source Player player, @Token(fix = true) String t) {
 		return player.getOrNull(Keys.STATISTICS).entrySet().stream().filter(e -> {
 			String s = e.getKey().getId().replace("._", ".").toLowerCase();

@@ -447,9 +447,6 @@ public class PlaceholderAPIPlugin {
 				e.printStackTrace();
 			}
 		});
-		if (ex == null) {
-			Store.get().get("economy", false).ifPresent(Expansion::disable);
-		}
 	}
 
 	public void reloadConfig() throws IOException, ObjectMappingException {

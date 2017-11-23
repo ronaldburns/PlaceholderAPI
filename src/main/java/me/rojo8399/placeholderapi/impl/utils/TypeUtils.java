@@ -217,8 +217,9 @@ public class TypeUtils {
 	 * @see <a href="https://goo.gl/WBsFIu">Maven version design document</a>
 	 */
 	public static boolean matchVersion(String pattern, String actual) {
-		// TODO this
-		return false;
+		VersionRange range = new VersionRange(pattern);
+		Version ver = new Version(actual);
+		return range.isInRange(ver);
 	}
 
 	public static void registerDeserializer(TypeToken<?> token, Function<String, ?> fun) {

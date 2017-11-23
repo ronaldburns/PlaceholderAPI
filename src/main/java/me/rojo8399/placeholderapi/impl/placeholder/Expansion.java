@@ -39,6 +39,7 @@ import org.spongepowered.api.world.Locatable;
 
 import com.google.common.base.Preconditions;
 
+import me.rojo8399.placeholderapi.IExpansion;
 import me.rojo8399.placeholderapi.impl.PlaceholderAPIPlugin;
 import me.rojo8399.placeholderapi.impl.utils.TypeUtils;
 import ninja.leaping.configurate.ConfigurationNode;
@@ -47,7 +48,7 @@ import ninja.leaping.configurate.ConfigurationNode;
  * @author Wundero
  *
  */
-public abstract class Expansion<S, O, V> {
+public abstract class Expansion<S, O, V> implements IExpansion<S, O, V> {
 
 	private static final String fix(String id) {
 		id = id.toLowerCase().trim();
@@ -76,15 +77,15 @@ public abstract class Expansion<S, O, V> {
 	private URL url;
 
 	private final Class<? extends V> valueClass;
-	
+
 	public Class<? extends V> getValueClass() {
 		return valueClass;
 	}
-	
+
 	public Class<? extends S> getSourceClass() {
 		return sourceClass;
 	}
-	
+
 	public Class<? extends O> getObserverClass() {
 		return observerClass;
 	}

@@ -116,7 +116,7 @@ public interface ExpansionBuilder<S, O, V, B extends ExpansionBuilder<S, O, V, B
 	 * @throws Exception
 	 *             If the expansion cannot be created.
 	 */
-	Expansion<S, O, V> build() throws Exception;
+	IExpansion<S, O, V> build() throws Exception;
 
 	/**
 	 * This method will build the expansion and then attemp to register the

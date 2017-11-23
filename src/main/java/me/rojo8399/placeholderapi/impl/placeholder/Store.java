@@ -37,8 +37,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.spongepowered.api.Platform.Component;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.DataHolder;
+import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.text.channel.MessageReceiver;
 import org.spongepowered.api.world.Locatable;
@@ -49,6 +51,7 @@ import me.rojo8399.placeholderapi.NoValueException;
 import me.rojo8399.placeholderapi.Observer;
 import me.rojo8399.placeholderapi.Placeholder;
 import me.rojo8399.placeholderapi.Relational;
+import me.rojo8399.placeholderapi.Requires;
 import me.rojo8399.placeholderapi.Source;
 import me.rojo8399.placeholderapi.Token;
 import me.rojo8399.placeholderapi.impl.PlaceholderAPIPlugin;
@@ -160,6 +163,11 @@ public class Store {
 			case 4:
 				PlaceholderAPIPlugin.getInstance().getLogger().warn("Method contains incorrect or extra parameters!");
 				break;
+			case 8:
+				PlaceholderAPIPlugin.getInstance().getLogger().warn("Sponge Version not supported by placeholder!");
+				break;
+			case 9:
+				PlaceholderAPIPlugin.getInstance().getLogger().warn("Missing plugin dependency!");
 			}
 			return null;
 		}
@@ -449,6 +457,36 @@ public class Store {
 				return false;
 			}).filter(px -> px).count() != params.size()) {
 				return 4;
+			}
+			if (m.isAnnotationPresent(Requires.class)) {
+				Requires r = m.getAnnotation(Requires.class);
+				String spv = Sponge.getPlatform().getContainer(Component.API).getVersion().orElse("5.2");
+				if (!TypeUtils.matchVersion(r.spongeVersion(), spv)) {
+					return 8;
+				}
+				for (String pl : r.plugins()) {
+					if (!pl.contains(":")) {
+						// is only pl id
+						if (!Sponge.getPluginManager().isLoaded(pl)) {
+							return 9;
+						}
+					}
+					String pid = pl.split(":")[0];
+					String ver = pl.replace(pid + ":", "");
+					Optional<PluginContainer> plc = Sponge.getPluginManager().getPlugin(pid);
+					if (plc.isPresent()) {
+						PluginContainer pc = plc.get();
+						String pcv = pc.getVersion().orElse(null);
+						if (pcv == null) {
+							return 9;
+						}
+						if (!TypeUtils.matchVersion(ver, pcv)) {
+							return 9;
+						}
+					} else {
+						return 9;
+					}
+				}
 			}
 			return 0;
 		}
