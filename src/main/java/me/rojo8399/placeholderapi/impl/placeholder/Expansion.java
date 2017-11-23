@@ -251,6 +251,7 @@ public abstract class Expansion<S, O, V> implements IExpansion<S, O, V> {
 	/**
 	 * @return The author of the expansion.
 	 */
+	@Override
 	public final String author() {
 		return author;
 	}
@@ -294,6 +295,7 @@ public abstract class Expansion<S, O, V> implements IExpansion<S, O, V> {
 	/**
 	 * @return The description of the expansion.
 	 */
+	@Override
 	public final String description() {
 		return desc;
 	}
@@ -301,6 +303,7 @@ public abstract class Expansion<S, O, V> implements IExpansion<S, O, V> {
 	/**
 	 * Disable this expansion.
 	 */
+	@Override
 	public final void disable() {
 		setEnabled(false);
 	}
@@ -308,6 +311,7 @@ public abstract class Expansion<S, O, V> implements IExpansion<S, O, V> {
 	/**
 	 * Enable this expansion.
 	 */
+	@Override
 	public final void enable() {
 		setEnabled(true);
 	}
@@ -330,10 +334,12 @@ public abstract class Expansion<S, O, V> implements IExpansion<S, O, V> {
 	/**
 	 * @return The holding plugin.
 	 */
+	@Override
 	public Object getPlugin() {
 		return plugin;
 	}
 
+	@Override
 	public List<String> getSuggestions(String token) {
 		if (this.tokens.isEmpty()) {
 			return new ArrayList<>();
@@ -347,6 +353,7 @@ public abstract class Expansion<S, O, V> implements IExpansion<S, O, V> {
 	/**
 	 * @return The id of the expansion.
 	 */
+	@Override
 	public final String id() {
 		return id;
 	}
@@ -354,6 +361,7 @@ public abstract class Expansion<S, O, V> implements IExpansion<S, O, V> {
 	/**
 	 * @return Whether this expansion is enabled.
 	 */
+	@Override
 	public final boolean isEnabled() {
 		return this.enabled;
 	}
@@ -371,6 +379,7 @@ public abstract class Expansion<S, O, V> implements IExpansion<S, O, V> {
 	 * @throws Exception
 	 *             Thrown if anyting goes wrong.
 	 */
+	@Override
 	public abstract V parse(S source, O observer, Optional<String> token) throws Exception;
 
 	/**
@@ -378,14 +387,13 @@ public abstract class Expansion<S, O, V> implements IExpansion<S, O, V> {
 	 * when calling getConfiguration().
 	 */
 	public void populateConfig() {
-		populateConfigObject();
 		ConfigurationNode node = Store.get().getNode(this);
-		if (node.isVirtual()) {
+		if (node.getParent().isVirtual()) {
 			node.getParent().getNode("enabled").setValue(enabled);
 		} else {
 			this.enabled = node.getParent().getNode("enabled").getBoolean(true);
-			node.getParent().getNode("enabled").setValue(enabled);
 		}
+		populateConfigObject();
 	}
 
 	protected void populateConfigObject() {
@@ -424,6 +432,7 @@ public abstract class Expansion<S, O, V> implements IExpansion<S, O, V> {
 	/**
 	 * @return Whether the expansion is relational.
 	 */
+	@Override
 	public final boolean relational() {
 		return this.relational;
 	}
@@ -472,6 +481,7 @@ public abstract class Expansion<S, O, V> implements IExpansion<S, O, V> {
 	 * @param enabled
 	 *            Whether the expansion is enabled.
 	 */
+	@Override
 	public final void setEnabled(boolean enabled) {
 		this.enabled = enabled;
 		saveConfig();
@@ -535,6 +545,7 @@ public abstract class Expansion<S, O, V> implements IExpansion<S, O, V> {
 	/**
 	 * @return The url of the expansion.
 	 */
+	@Override
 	public final URL url() {
 		return url;
 	}
@@ -563,6 +574,7 @@ public abstract class Expansion<S, O, V> implements IExpansion<S, O, V> {
 	/**
 	 * @return The version of the expansion.
 	 */
+	@Override
 	public final String version() {
 		return ver;
 	}

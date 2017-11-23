@@ -315,7 +315,8 @@ public class PlaceholderAPIPlugin {
 			}
 		}
 		Messages.init(msgs);
-		this.formatter = DateTimeFormatter.ofPattern(config.dateFormat);
+		this.formatter = DateTimeFormatter
+				.ofPattern(config.dateFormat == null ? "uuuu LLL dd HH:mm:ss" : config.dateFormat);
 		s = PlaceholderServiceImpl.get();
 		registerPlaceholders();
 		// Provide default implementation
@@ -444,7 +445,6 @@ public class PlaceholderAPIPlugin {
 				t.author("Wundero").plugin(this).buildAndRegister();
 				Store.get().get(i, r).ifPresent(e -> e.reloadListeners());
 			} catch (Exception e) {
-				e.printStackTrace();
 			}
 		});
 	}

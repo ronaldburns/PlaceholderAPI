@@ -390,6 +390,9 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 	@SuppressWarnings({ "rawtypes" })
 	private ExpansionBuilderImpl frommethod(Object o, Method m, Object p) {
 		Expansion<?, ?, ?> exp = Store.get().createForMethod(m, o, p);
+		if (exp == null) {
+			return this;
+		}
 		return from(this.id(exp.id()).plugin(p), exp);
 	}
 

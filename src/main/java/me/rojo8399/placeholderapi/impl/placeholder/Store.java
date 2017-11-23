@@ -348,10 +348,7 @@ public class Store {
 	}
 
 	private boolean reload(Expansion<?, ?, ?> e, String id, boolean rel) {
-		if (!(e instanceof Expansion)) {
-			return false;
-		}
-		if (!((Expansion<?, ?, ?>) e).refresh()) {
+		if (!e.refresh()) {
 			return false;
 		}
 		boolean out = true;

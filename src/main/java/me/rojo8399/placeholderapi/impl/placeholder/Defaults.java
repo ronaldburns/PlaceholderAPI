@@ -740,10 +740,10 @@ public class Defaults {
 		if (this.useUptimes) {
 			current.finish();
 			uptimes.add(current);
+			Store.get().get("server", false).ifPresent(Expansion::saveConfig);
 		} else {
 			uptimes.clear();
 		}
-		Store.get().get("server", false).ifPresent(Expansion::saveConfig);
 	}
 
 	private void putCur(Currency c) {
