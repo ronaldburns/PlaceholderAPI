@@ -36,7 +36,18 @@ public class Version implements Comparable<Version> {
 		private int intVal;
 
 		public SubVersion(String val) {
-			this.intVal = Integer.parseInt(val);
+			try {
+				this.intVal = Integer.parseInt(val);
+			} catch (Exception e) {
+				String top = "";
+				for (Character c : val.toCharArray()) {
+					if (c.charValue() < 48 || c.charValue() > 57) {
+						break;
+					}
+					top += c.charValue();
+				}
+				this.intVal = Integer.parseInt(top);
+			}
 		}
 
 		@Override
@@ -70,8 +81,8 @@ public class Version implements Comparable<Version> {
 			}
 		}
 		if (svx.size() > subs.size()) {
-			for(int i = subs.size(); i < svx.size();i++) {
-				if(svx.get(i).intVal!=0) {
+			for (int i = subs.size(); i < svx.size(); i++) {
+				if (svx.get(i).intVal != 0) {
 					return -svx.get(i).intVal;
 				}
 			}
