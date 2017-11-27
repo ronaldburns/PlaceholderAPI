@@ -277,7 +277,8 @@ public class PlaceholderAPIPlugin {
 			}
 		}
 		try {
-			config = root.getValue(Config.type);
+			// default config object should now properly load i hope
+			config = root.getValue(Config.type, new Config());
 		} catch (ObjectMappingException ex) {
 			logger.error("Invalid config file!");
 			try {
