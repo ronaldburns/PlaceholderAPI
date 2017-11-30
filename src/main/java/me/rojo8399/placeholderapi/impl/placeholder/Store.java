@@ -458,7 +458,7 @@ public class Store {
 			if (m.isAnnotationPresent(Requires.class)) {
 				Requires r = m.getAnnotation(Requires.class);
 				String spv = Sponge.getPlatform().getContainer(Component.API).getVersion().orElse("5.1");
-				if (!TypeUtils.matchVersion(r.spongeVersion(), spv)) {
+				if (!r.spongeVersion().isEmpty() && !TypeUtils.matchVersion(r.spongeVersion(), spv)) {
 					return 8;
 				}
 				for (String pl : r.plugins()) {
