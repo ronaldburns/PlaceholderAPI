@@ -287,6 +287,10 @@ public class PlaceholderAPIPlugin {
 				mapDefault();
 			}
 		}
+		if (config == null) {
+			config = new Config();
+			this.root.setValue(Config.type, config);
+		}
 		File msgFile = new File(configDir.toFile(), "messages.conf");
 		msgloader = HoconConfigurationLoader.builder().setFile(msgFile).build();
 		try {
