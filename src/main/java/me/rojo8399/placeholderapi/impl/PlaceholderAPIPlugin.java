@@ -290,6 +290,10 @@ public class PlaceholderAPIPlugin {
 		if (config == null) {
 			config = new Config();
 			this.root.setValue(Config.type, config);
+			try {
+				this.loader.save(root);
+			} catch (Exception e) {
+			}
 		}
 		File msgFile = new File(configDir.toFile(), "messages.conf");
 		msgloader = HoconConfigurationLoader.builder().setFile(msgFile).build();
