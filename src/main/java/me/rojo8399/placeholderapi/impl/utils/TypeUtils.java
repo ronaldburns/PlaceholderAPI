@@ -346,7 +346,8 @@ public class TypeUtils {
 			if (opt.isPresent()) {
 				return opt;
 			}
-			opt = deserializers.entrySet().stream().filter(e -> e.getKey().isAssignableFrom(expected))
+			opt = deserializers.entrySet().stream()
+					.filter(e -> e.getKey().isSubtypeOf(expected) || e.getKey().getRawType().equals(expected))
 					.map(e -> e.getValue()).map(f -> tryOptional(() -> f.apply((String) val))).flatMap(unmapOptional())
 					.findAny().flatMap(o -> tryOptional(() -> expected.cast(o)));
 			if (opt.isPresent()) {
@@ -373,7 +374,7 @@ public class TypeUtils {
 					final MethodHandle mh = MethodHandles.publicLookup().unreflect(method);
 					PlaceholderServiceImpl.get().registerTypeDeserializer(TypeToken.of(expected), str -> {
 						try {
-							return (T) expected.cast(mh.invokeExact((String) val));
+							return expected.cast(mh.invokeExact((String) val));
 						} catch (Throwable e1) {
 							throw new RuntimeException(e1);
 						}
@@ -393,7 +394,7 @@ public class TypeUtils {
 						PlaceholderServiceImpl.get().registerTypeDeserializer(TypeToken.of(expected), str -> {
 							try {
 								Optional<?> optx = (Optional<?>) mh.invokeExact((String) val);
-								return (T) expected.cast(optx.get());
+								return expected.cast(optx.get());
 							} catch (Throwable e1) {
 								throw new RuntimeException(e1);
 							}

@@ -63,6 +63,7 @@ import org.spongepowered.api.service.economy.Currency;
 import org.spongepowered.api.service.economy.EconomyService;
 import org.spongepowered.api.service.economy.account.UniqueAccount;
 import org.spongepowered.api.service.permission.Subject;
+import org.spongepowered.api.service.permission.SubjectReference;
 import org.spongepowered.api.service.user.UserStorageService;
 import org.spongepowered.api.statistic.Statistics;
 import org.spongepowered.api.text.Text;
@@ -225,17 +226,29 @@ public class Defaults {
 		return "ERROR";
 	}
 
-	private static Subject getParentGroup(Subject subject) {
-		List<Subject> parents = subject.getParents();
-		return parents.stream().sorted((s1, s2) -> {
-			if (s1.isChildOf(s2)) {
-				return 1;
+	private static Subject getParentGroup(Subject subject) throws NoValueException {
+		List<SubjectReference> allParents = subject.getParents();
+		Subject temp;
+		List<Subject> loadedParents = new ArrayList<>();
+		for (SubjectReference ref : allParents) {
+			if ((temp = ref.resolve().getNow(null)) == null) {
+				throw new NoValueException("Parent groups not present for subject, consult permissions plugin!");
 			}
-			if (s2.isChildOf(s1)) {
+			loadedParents.add(temp);
+		}
+		if (loadedParents.isEmpty()) {
+			return subject;
+		}
+		loadedParents.sort((s1, s2) -> {
+			if (s1.isChildOf(s2.asSubjectReference())) {
 				return -1;
 			}
+			if (s2.isChildOf(s1.asSubjectReference())) {
+				return 1;
+			}
 			return 0;
-		}).findFirst().orElse(parents.isEmpty() ? subject : parents.get(0));
+		});
+		return loadedParents.get(0);
 	}
 
 	private static double getTime(Player player, TimeUnit unit) {
@@ -553,15 +566,15 @@ public class Defaults {
 			throw new NoValueException();
 		}
 		if (token.equalsIgnoreCase("greater_than")) {
-			if (underrank.isChildOf(overrank)) {
+			if (underrank.isChildOf(overrank.asSubjectReference())) {
 				return true;
 			}
-			return getParentGroup(underrank).isChildOf(getParentGroup(overrank));
+			return getParentGroup(underrank).isChildOf(getParentGroup(overrank).asSubjectReference());
 		} else {
-			if (overrank.isChildOf(underrank)) {
+			if (overrank.isChildOf(underrank.asSubjectReference())) {
 				return true;
 			}
-			return getParentGroup(overrank).isChildOf(getParentGroup(underrank));
+			return getParentGroup(overrank).isChildOf(getParentGroup(underrank).asSubjectReference());
 		}
 	}
 
@@ -753,7 +766,8 @@ public class Defaults {
 	@Placeholder(id = "rank")
 	public Object rank(@Source User player, @Token(fix = true) @Nullable String token) throws NoValueException {
 		if (token == null) {
-			return getParentGroup(player).getIdentifier();
+			Subject s = getParentGroup(player);
+			return s.getFriendlyIdentifier().orElse(s.getIdentifier());
 		}
 		Subject rank = getParentGroup(player);
 		String t = token;
