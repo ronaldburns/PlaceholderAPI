@@ -46,6 +46,7 @@ public class ParseCommand implements CommandExecutor {
 		PlaceholderService service = PlaceholderAPIPlugin.getInstance().getGame().getServiceManager()
 				.provide(PlaceholderService.class)
 				.orElseThrow(() -> new CommandException(Messages.get().plugin.serviceUnavailable.t()));
+
 		Text t = service.replacePlaceholders(placeholder, p, src);
 		if (t == null) {
 			t = Text.EMPTY;

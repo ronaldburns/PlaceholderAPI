@@ -90,7 +90,21 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	@Override
 	public Map<String, Object> fillPlaceholders(TextTemplate template, Object source, Object observer) {
 		validate(source, observer);
-		return rpt(source, observer, template, new HashMap<>());
+		Map<String, Object> rpt = rpt(source, observer, template, new HashMap<>());
+		return rpt;
+	}
+
+	private Map<String, Text> fillToText(TextTemplate template, Object source, Object observer) {
+		validate(source, observer);
+		Map<String, Object> rpt = rpt(source, observer, template, new HashMap<>());
+		Map<String, Text> map = new HashMap<>();
+		rpt.entrySet().forEach(e -> {
+			Optional<Text> obj = TypeUtils.tryCast(e.getValue(), Text.class);
+			if (obj.isPresent()) {
+				map.put(e.getKey(), obj.get());
+			}
+		});
+		return map;
 	}
 
 	Store getStore() {
@@ -150,7 +164,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 		if (!replacement.containsKey(placeholder)) {
 			return null;
 		}
-		return replacement.containsKey(placeholder);
+		return replacement.get(placeholder);
 	}
 
 	public void refreshAll() {
@@ -189,7 +203,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	 */
 	@Override
 	public Text replacePlaceholders(TextTemplate template, Object source, Object observer) {
-		return template.apply(fillPlaceholders(template, source, observer)).build();
+		return template.apply(fillToText(template, source, observer)).build();
 	}
 
 	/*
@@ -241,12 +255,12 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 				continue;
 			}
 			String token = noToken ? null : format.substring(index + 1);
-			Text value = null;
+			Object value = null;
 			boolean empty = true;
 			Text errorMsg = Messages.get().placeholder.tokenNeeded.t();
 			List<String> suggestions = new ArrayList<>();
 			try {
-				value = store.parse(id, rel, s, o, Optional.ofNullable(token), Text.class).orElse(null);
+				value = store.parse(id, rel, s, o, Optional.ofNullable(token));
 			} catch (Exception e) {
 				if (e instanceof NoValueException) {
 					value = null;
@@ -269,7 +283,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			if (value == null && PlaceholderAPIPlugin.getInstance().getConfig().relationaltoregular && rel) {
 				empty = true;
 				try {
-					value = store.parse(id, false, o, s, Optional.ofNullable(token), Text.class).orElse(null);
+					value = store.parse(id, false, o, s, Optional.ofNullable(token));
 				} catch (Exception e) {
 					if (e instanceof NoValueException) {
 						value = null;
@@ -294,7 +308,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 				Text arg;
 				if (noToken) {
 					if (enabled) {
-						arg = Text.of(TextColors.RED, TextActions.showText(errorMsg), a);
+						arg = Text.of(TextColors.RED, TextActions.showText(Text.of(TextColors.RED, errorMsg)), a);
 					} else {
 						arg = Text.of(TextColors.RED, TextActions.showText(Messages.get().placeholder.notEnabled.t()),
 								a);
