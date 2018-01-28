@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'me.rojo8399.placeholderapi'
-version = '4.4'
+version = '4.5'
 description = 'An API for all of your placeholders.'
 
 compileJava.options.encoding = 'UTF-8'
