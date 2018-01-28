@@ -76,8 +76,8 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	 * @see me.rojo8399.placeholderapi.PlaceholderService#builder()
 	 */
 	@Override
-	public <S, O, V> ExpansionBuilder<S, O, V, ? extends ExpansionBuilder<S, O, V, ?>> builder(Class<? extends S> s, Class<? extends O> o,
-			Class<? extends V> v) {
+	public <S, O, V> ExpansionBuilder<S, O, V, ? extends ExpansionBuilder<S, O, V, ?>> builder(Class<? extends S> s,
+			Class<? extends O> o, Class<? extends V> v) {
 		return ExpansionBuilderImpl.builder(s, o, v);
 	}
 
@@ -143,42 +143,14 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	public Object parse(String placeholder, Object source, Object observer) {
 		validate(source, observer);
 		placeholder = placeholder.trim().toLowerCase();
-		if (placeholder.contains("_")) {
-			String id = placeholder.substring(0, placeholder.indexOf('_'));
-			String token = placeholder.substring(id.indexOf('-'));
-			if (!store.has(id)) {
-				return null;
-			}
-			try {
-				Object out = store.parse(id, store.isRelational(id), source, observer,
-						Optional.ofNullable(token.isEmpty() ? null : token));
-				if (out == null && store.isNormal(id)
-						&& PlaceholderAPIPlugin.getInstance().getConfig().relationaltoregular) {
-					return store.parse(id, false, observer, source,
-							Optional.ofNullable(token.isEmpty() ? null : token));
-				} else {
-					return out;
-				}
-			} catch (Exception e) {
-				return null;
-			}
-		} else {
-			if (!store.has(placeholder)) {
-				return null;
-			}
-			try {
-				Object out = store.parse(placeholder, store.isRelational(placeholder), source, observer,
-						Optional.empty());
-				if (out == null && store.isNormal(placeholder)
-						&& PlaceholderAPIPlugin.getInstance().getConfig().relationaltoregular) {
-					return store.parse(placeholder, false, observer, source, Optional.empty());
-				} else {
-					return out;
-				}
-			} catch (Exception e) {
-				return null;
-			}
+		Map<String, Object> replacement = rpt(source, observer, TextTemplate.of(TextTemplate.arg(placeholder)), null);
+		if (replacement == null || replacement.isEmpty()) {
+			return null;
 		}
+		if (!replacement.containsKey(placeholder)) {
+			return null;
+		}
+		return replacement.containsKey(placeholder);
 	}
 
 	public void refreshAll() {
