@@ -172,16 +172,16 @@ public class PlaceholderAPIPlugin {
 		CommandSpec parseCmd = CommandSpec.builder()
 				.arguments(GenericArguments.onlyOne(GenericArguments.player(Text.of("player"))),
 						GenericArguments.remainingJoinedStrings(Text.of("placeholders")))
-				.executor(new ParseCommand()).permission("placeholderapi.admin").build();
+				.executor(new ParseCommand()).permission("placeholderapi.admin.parse").build();
 		// papi list
-		CommandSpec listCmd = CommandSpec.builder().permission("placeholderapi.admin").executor(new ListCommand())
+		CommandSpec listCmd = CommandSpec.builder().permission("placeholderapi.admin.list").executor(new ListCommand())
 				.build();
 		// papi info {expansion}
 		CommandSpec infoCmd = CommandSpec.builder().arguments(GenericArguments.string(Text.of("placeholder")))
-				.permission("placeholderapi.admin").executor(new InfoCommand()).build();
+				.permission("placeholderapi.admin.info").executor(new InfoCommand()).build();
 		CommandSpec reloadCommand = CommandSpec.builder()
 				.arguments(GenericArguments.optional(GenericArguments.string(Text.of("id"))))
-				.permission("placeholderapi.admin").executor(new RefreshCommand()).build();
+				.permission("placeholderapi.admin.reload").executor(new RefreshCommand()).build();
 		CommandSpec enable = CommandSpec.builder().executor((src, params) -> {
 			String id = params.<String>getOne("id").orElse(null);
 			if (!Store.get().has(id)) {
@@ -205,7 +205,7 @@ public class PlaceholderAPIPlugin {
 			}
 		}).arguments(GenericArguments.string(Text.of("id")),
 				GenericArguments.optional(GenericArguments.bool(Text.of("relational"))))
-				.permission("placeholderapi.admin").build();
+				.permission("placeholderapi.admin.enable").build();
 
 		CommandSpec disable = CommandSpec.builder().executor((src, params) -> {
 			String id = params.<String>getOne("id").orElse(null);
@@ -230,7 +230,7 @@ public class PlaceholderAPIPlugin {
 			}
 		}).arguments(GenericArguments.string(Text.of("id")),
 				GenericArguments.optional(GenericArguments.bool(Text.of("relational"))))
-				.permission("placeholderapi.admin").build();
+				.permission("placeholderapi.admin.disable").build();
 		// placeholderapi
 		CommandSpec baseCmd = CommandSpec.builder().executor(new CommandExecutor() {
 			// send plugin name + version
