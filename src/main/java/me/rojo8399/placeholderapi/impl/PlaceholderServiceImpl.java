@@ -283,7 +283,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 			if (value == null && PlaceholderAPIPlugin.getInstance().getConfig().relationaltoregular && rel) {
 				empty = true;
 				try {
-					value = store.parse(id, false, o, s, Optional.ofNullable(token));
+					value = store.parse(id, false, s, o, Optional.ofNullable(token));
 				} catch (Exception e) {
 					if (e instanceof NoValueException) {
 						value = null;
