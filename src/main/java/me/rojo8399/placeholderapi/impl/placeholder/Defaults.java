@@ -619,10 +619,28 @@ public class Defaults {
 		}
 	}
 
+	@Placeholder(id = "user")
+	public Object user(@Source User user, @Token(fix = true) @Nullable String token) throws NoValueException {
+		if (token == null) {
+			return user.getName();
+		}
+
+		switch (token) {
+			case "name":
+				return user.getName();
+			case "displayname":
+				return user.getOrElse(Keys.DISPLAY_NAME, Text.of(user.getName()));
+			case "uuid":
+				return user.getUniqueId();
+		}
+
+		throw new NoValueException();
+	}
+
 	@Placeholder(id = "player")
 	public Object normalPlayer(@Source Player p, @Token(fix = true) @Nullable String token) throws NoValueException {
 		if (token == null) {
-			return p.getName();
+			return user(p, null);
 		}
 		if (token.startsWith("option_")) {
 			String op = token.substring("option_".length());
@@ -636,12 +654,6 @@ public class Defaults {
 		case "prefix":
 		case "suffix":
 			return p.getOption(token).orElse("");
-		case "name":
-			return p.getName();
-		case "displayname":
-			return p.getOrElse(Keys.DISPLAY_NAME, Text.of(p.getName()));
-		case "uuid":
-			return p.getUniqueId();
 		case "can_fly":
 			return p.getOrElse(Keys.CAN_FLY, false);
 		case "world":
@@ -730,9 +742,9 @@ public class Defaults {
 				out += f.format(s) + " s";
 			}
 			return out.trim();
-		default:
-			throw new NoValueException();
 		}
+
+		return user(p, token);
 	}
 
 	@Listener
