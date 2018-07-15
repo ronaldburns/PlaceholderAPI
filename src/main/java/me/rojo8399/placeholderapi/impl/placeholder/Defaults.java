@@ -55,6 +55,7 @@ import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.filter.Getter;
+import org.spongepowered.api.event.game.state.GameStartingServerEvent;
 import org.spongepowered.api.event.game.state.GameStoppingEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.event.service.ChangeServiceProviderEvent;
@@ -94,10 +95,10 @@ import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
  * The default placeholders provided by the plugin. These also server as
  * examples of many, though not all, possibilities for the plugin to use as
  * placeholders.
- * 
+ *
  * The class is a listener class AND a configurable class, allowing the
  * placeholders to be attached directly to PlaceholderAPI.
- * 
+ *
  * @author Wundero
  *
  */
@@ -188,7 +189,7 @@ public class Defaults {
 	private static Runtime runtime = Runtime.getRuntime();
 
 	/*
-	 * Begin utilities methods: these methods are used throughout the class 
+	 * Begin utilities methods: these methods are used throughout the class
 	 * but do not play major roles in explaining the plugin.
 	 */
 
@@ -350,7 +351,6 @@ public class Defaults {
 			manager.reloadScripts();
 		} catch (Exception e) {
 		}
-		server = PlaceholderAPIPlugin.getInstance().getGame().getServer();
 		this.s = s;
 		Optional<UserStorageService> o = Sponge.getServiceManager().provide(UserStorageService.class);
 		if (o.isPresent()) {
@@ -360,6 +360,11 @@ public class Defaults {
 		}
 		current = new Uptime();
 		current.start();
+	}
+
+	@Listener
+	public void onServerStarting(GameStartingServerEvent event) {
+		server = Sponge.getServer();
 	}
 
 	private void calculateBalTop(Currency cur) {
@@ -385,18 +390,18 @@ public class Defaults {
 	 * This is the first placeholder in the object. This handles how the placeholder
 	 * "economy" parses. I return an object to allow me to return any value without
 	 * having to make a nice supertype.
-	 * 
+	 *
 	 * The parameters in this method are annotated with Nullable. If they have this
 	 * annotation, they can have null values and you should handle accordingly; if
 	 * they do not have this annotation, you can safely assume those parameters will
 	 * NEVER be null.
-	 * 
+	 *
 	 * @param token
 	 *            This parameter is the part in the placeholder after the first _.
 	 *            For example, {economy_balance} gives a token of "balance". The
 	 *            'fix = true' parameter tells PlaceholderAPI to make the token
 	 *            lower case and remove excess characters.
-	 * 
+	 *
 	 *            For the token, you can request types other than String if you
 	 *            want. If you know your token will have multiple _ separated
 	 *            sections, you can request a String[]. If you want a number, you
@@ -540,13 +545,13 @@ public class Defaults {
 	/**
 	 * This is another example of a placeholder. This one is simple in comparison to
 	 * the others.
-	 * 
+	 *
 	 * The Relational annotation forces this to be used with the rel_ prefix in the
 	 * placeholder, like this: {rel_rank_greater_than}. This provides no guarantees
 	 * that it will actually need or use both source and observer. Again, all
 	 * parameters here are null-safe (will not call the method if those parameters
 	 * are null).
-	 * 
+	 *
 	 * @param token
 	 *            This is the token, like in all other placeholders.
 	 * @param underrank
