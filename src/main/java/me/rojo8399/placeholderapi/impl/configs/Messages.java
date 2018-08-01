@@ -40,6 +40,8 @@ public class Messages {
         @Setting
         public String value;
 
+        public Message(){}
+
         public Message(String s) {
             this.value = s;
         }

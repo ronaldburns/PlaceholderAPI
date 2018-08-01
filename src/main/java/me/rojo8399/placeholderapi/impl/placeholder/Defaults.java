@@ -832,9 +832,9 @@ public class Defaults {
             Game g = PlaceholderAPIPlugin.getInstance().getGame();
             if (g.isServerAvailable()) {
                 server = g.getServer();
+            } else {
+                throw new NoValueException(Messages.get().misc.noValue.t());
             }
-        } else {
-            throw new NoValueException(Messages.get().misc.noValue.t());
         }
         if (gt) {
             Optional<WorldProperties> w = server.getDefaultWorld();
