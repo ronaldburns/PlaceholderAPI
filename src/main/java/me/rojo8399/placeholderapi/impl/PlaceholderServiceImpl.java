@@ -90,25 +90,18 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 	@Override
 	public Map<String, Object> fillPlaceholders(TextTemplate template, Object source, Object observer) {
 		validate(source, observer);
-		Map<String, Object> rpt = rpt(source, observer, template, new HashMap<>());
-		return rpt;
+		return rpt(source, observer, template, new HashMap<>());
 	}
 
 	private Map<String, Text> fillToText(TextTemplate template, Object source, Object observer) {
 		validate(source, observer);
 		Map<String, Object> rpt = rpt(source, observer, template, new HashMap<>());
 		Map<String, Text> map = new HashMap<>();
-		rpt.entrySet().forEach(e -> {
-			Optional<Text> obj = TypeUtils.tryCast(e.getValue(), Text.class);
-			if (obj.isPresent()) {
-				map.put(e.getKey(), obj.get());
-			}
+		rpt.forEach((key, value) -> {
+			Optional<Text> obj = TypeUtils.tryCast(value, Text.class);
+			obj.ifPresent(text -> map.put(key, text));
 		});
 		return map;
-	}
-
-	Store getStore() {
-		return store;
 	}
 
 	/*
@@ -255,7 +248,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 				continue;
 			}
 			String token = noToken ? null : format.substring(index + 1);
-			Object value = null;
+			Object value;
 			boolean empty = true;
 			Text errorMsg = Messages.get().placeholder.tokenNeeded.t();
 			List<String> suggestions = new ArrayList<>();
@@ -271,7 +264,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 					String cl = "";
 					try {
 						cl = e.getCause().getMessage() + " ";
-					} catch (Exception xe) {
+					} catch (Exception ignored) {
 					}
 					value = Text.of(TextColors.RED,
 							TextActions.showText(Text.of(TextColors.RED, "Check the console for details!")),
@@ -280,8 +273,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 				}
 			}
 
-			if (value == null && PlaceholderAPIPlugin.getInstance().getConfig().relationaltoregular && rel) {
-				empty = true;
+			if (value == null && PlaceholderAPIPlugin.getInstance().getConfig().relationaltoregular && rel && empty) {
 				try {
 					value = store.parse(id, false, o, s, Optional.ofNullable(token));
 				} catch (Exception e) {
@@ -294,7 +286,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 						String cl = "";
 						try {
 							cl = e.getCause().getMessage() + " ";
-						} catch (Exception xe) {
+						} catch (Exception ignored) {
 						}
 						value = Text.of(TextColors.RED,
 								TextActions.showText(Text.of(TextColors.RED, "Check the console for details!")),
@@ -315,7 +307,7 @@ public class PlaceholderServiceImpl implements PlaceholderService {
 					}
 
 				} else {
-					TextColor idCol = TextColors.WHITE;
+					TextColor idCol;
 					if (store.has(id)) {
 						idCol = enabled ? TextColors.WHITE : TextColors.RED;
 					} else {

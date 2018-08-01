@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
@@ -49,7 +50,7 @@ import me.rojo8399.placeholderapi.impl.utils.TypeUtils;
 
 public class InfoCommand implements CommandExecutor {
 
-	private static final Pattern OPT = Pattern.compile("[\\<\\[\\(\\{]([^ \\<\\>\\[\\]\\{\\}\\(\\)]+)[\\>\\}\\]\\)]",
+	private static final Pattern OPT = Pattern.compile("[<\\[({]([^ <>\\[\\]{}()]+)[>}\\])]",
 			Pattern.CASE_INSENSITIVE);
 
 	private static Text format(Expansion<?, ?, ?> e, CommandSource src) {
@@ -74,7 +75,7 @@ public class InfoCommand implements CommandExecutor {
 					return token(s2, src, rel);
 				}).collect(Collectors.toList());
 		boolean seeall = false;
-		List<Text> t2 = new ArrayList<Text>(supportedTokens);
+		List<Text> t2 = new ArrayList<>(supportedTokens);
 		if (supportedTokens.size() > 20) {
 			supportedTokens = supportedTokens.subList(0, 20);
 			seeall = true;
@@ -93,7 +94,7 @@ public class InfoCommand implements CommandExecutor {
 	}
 
 	private static Text formatExpansion(String e, CommandSource src) {
-		List<Expansion<?, ?, ?>> conts = Arrays.asList(Store.get().get(e, true), Store.get().get(e, false)).stream()
+		List<Expansion<?, ?, ?>> conts = Stream.of(Store.get().get(e, true), Store.get().get(e, false))
 				.flatMap(TypeUtils.unmapOptional()).collect(Collectors.toList());
 		Expansion<?, ?, ?> norm;
 		try {

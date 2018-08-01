@@ -67,11 +67,8 @@ public class VersionRange {
 			return false;
 		VersionRange other = (VersionRange) obj;
 		if (actual == null) {
-			if (other.actual != null)
-				return false;
-		} else if (!actual.equals(other.actual))
-			return false;
-		return true;
+			return other.actual == null;
+		} else return actual.equals(other.actual);
 	}
 
 	public boolean isInRange(Version ver) {
@@ -83,9 +80,7 @@ public class VersionRange {
 		int leftbound = leftExc ? -1 : 0;
 		int rightbound = rightExc ? 1 : 0;
 		if (leftcomp <= leftbound || leftSide == null) {
-			if (rightcomp >= rightbound || rightSide == null) {
-				return true;
-			}
+			return rightcomp >= rightbound || rightSide == null;
 		}
 		return false;
 	}

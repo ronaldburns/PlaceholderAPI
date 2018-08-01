@@ -55,7 +55,7 @@ public interface ExpansionBuilder<S, O, V, B extends ExpansionBuilder<S, O, V, B
 	 *            The value return type.
 	 */
 	@FunctionalInterface
-	public static interface ExpansionFunction<S, O, V> {
+	interface ExpansionFunction<S, O, V> {
 		/**
 		 * Parse the placeholder for the provided arguments.
 		 * 
@@ -69,7 +69,7 @@ public interface ExpansionBuilder<S, O, V, B extends ExpansionBuilder<S, O, V, B
 		 * @throws Exception
 		 *             Thrown if anyting goes wrong.
 		 */
-		public V parse(S source, O observer, Optional<String> token) throws Exception;
+		V parse(S source, O observer, Optional<String> token) throws Exception;
 	}
 
 	/**
@@ -213,7 +213,7 @@ public interface ExpansionBuilder<S, O, V, B extends ExpansionBuilder<S, O, V, B
 	 *            The description of the expansion.
 	 * @return This builder.
 	 */
-	B description(String desc);
+	B description(String description);
 
 	/**
 	 * Copy settings from the expansion provided in order to modify it.
@@ -240,7 +240,7 @@ public interface ExpansionBuilder<S, O, V, B extends ExpansionBuilder<S, O, V, B
 	 * The provided id must exist on at least one method. Any repeated ids will be
 	 * ignored unless they are of different relational status.
 	 * 
-	 * @param obj
+	 * @param handle
 	 *            The object containing the placeholder method.
 	 * @param id
 	 *            The id of the placeholder method.
@@ -269,7 +269,7 @@ public interface ExpansionBuilder<S, O, V, B extends ExpansionBuilder<S, O, V, B
 	 * Execute a function for the parsing of this expansion. ExpansionFunction is a
 	 * functional interface, meaning the method code may use lambdas.
 	 * 
-	 * @param exec
+	 * @param function
 	 *            The function to execute.
 	 * @return This builder.
 	 */

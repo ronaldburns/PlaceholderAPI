@@ -39,14 +39,14 @@ public class Version implements Comparable<Version> {
 			try {
 				this.intVal = Integer.parseInt(val);
 			} catch (Exception e) {
-				String top = "";
+				StringBuilder top = new StringBuilder();
 				for (Character c : val.toCharArray()) {
-					if (c.charValue() < 48 || c.charValue() > 57) {
+					if (c < 48 || c > 57) {
 						break;
 					}
-					top += c.charValue();
+					top.append(c);
 				}
-				this.intVal = Integer.parseInt(top);
+				this.intVal = Integer.parseInt(top.toString());
 			}
 		}
 

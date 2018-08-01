@@ -36,6 +36,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import me.rojo8399.placeholderapi.ExpansionBuilder;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.Sponge;
@@ -88,7 +89,7 @@ public class PlaceholderAPIPlugin {
 	private static PlaceholderAPIPlugin instance;
 	public static final String PLUGIN_ID = "placeholderapi";
 	public static final String PLUGIN_NAME = "PlaceholderAPI";
-	public static final String PLUGIN_VERSION = "4.5";
+	public static final String PLUGIN_VERSION = "4.5.1";
 
 	public static PlaceholderAPIPlugin getInstance() {
 		return instance;
@@ -232,14 +233,11 @@ public class PlaceholderAPIPlugin {
 				GenericArguments.optional(GenericArguments.bool(Text.of("relational"))))
 				.permission("placeholderapi.admin.disable").build();
 		// placeholderapi
-		CommandSpec baseCmd = CommandSpec.builder().executor(new CommandExecutor() {
-			// send plugin name + version
-			@Override
-			public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
-				src.sendMessage(Text.of(TextColors.GREEN, PLUGIN_NAME, TextColors.GRAY, " ",
-						Messages.get().misc.version.t(), " ", TextColors.AQUA, PLUGIN_VERSION, TextColors.GRAY, "."));
-				return CommandResult.success();
-			}
+		// send plugin name + version
+		CommandSpec baseCmd = CommandSpec.builder().executor((src, args) -> {
+			src.sendMessage(Text.of(TextColors.GREEN, PLUGIN_NAME, TextColors.GRAY, " ",
+					Messages.get().misc.version.t(), " ", TextColors.AQUA, PLUGIN_VERSION, TextColors.GRAY, "."));
+			return CommandResult.success();
 		}).child(parseCmd, "parse", "p").child(listCmd, "list", "l").child(infoCmd, "info", "i")
 				.child(reloadCommand, "reload", "r").child(enable, "enable").child(disable, "disable").build();
 		game.getCommandManager().register(plugin, baseCmd, "placeholderapi", "papi");
@@ -292,7 +290,7 @@ public class PlaceholderAPIPlugin {
 			this.root.setValue(Config.type, config);
 			try {
 				this.loader.save(root);
-			} catch (Exception e) {
+			} catch (Exception ignored) {
 			}
 		}
 		File msgFile = new File(configDir.toFile(), "messages.conf");
@@ -304,17 +302,8 @@ public class PlaceholderAPIPlugin {
 				msgRoot.setValue(Messages.type, msgs);
 				msgloader.save(msgRoot);
 			}
-		} catch (IOException ex) {
+		} catch (IOException | ObjectMappingException ex) {
 			logger.error("Could not load the messages file!");
-			try {
-				throw ex;
-			} finally {
-				msgs = new Messages();
-				msgRoot.setValue(Messages.type, msgs);
-				msgloader.save(msgRoot);
-			}
-		} catch (ObjectMappingException ex) {
-			logger.error("Invalid messages file!");
 			try {
 				throw ex;
 			} finally {
@@ -346,7 +335,7 @@ public class PlaceholderAPIPlugin {
 				}
 				List<String> exp = new ArrayList<>();
 				rids.forEach(e -> exp.add("rel_" + e));
-				ids.forEach(exp::add);
+				exp.addAll(ids);
 				return (HashMap<String, Integer>) exp.stream().collect(Collectors.toMap(e -> e, e -> 1));
 			}
 		});
@@ -355,6 +344,8 @@ public class PlaceholderAPIPlugin {
 	@Listener
 	public void onReload(GameReloadEvent event) throws IOException, ObjectMappingException {
 		reloadConfig();
+
+		Store.get().reloadAll(); // refresh all placeholders on reload event
 
 		// Send Messages to console and player
 		event.getCause().first(Player.class).ifPresent(p -> p.sendMessage(Messages.get().plugin.reloadSuccess.t()));
@@ -402,6 +393,10 @@ public class PlaceholderAPIPlugin {
 							.version("2.0");
 				}
 			}
+			case "user": {
+				return builder.description(Messages.get().placeholder.userdesc.value)
+                        .tokens(null, "name", "displayname", "uuid").version("1.0").author("RandomByte-Developer");
+			}
 			case "rank": {
 				if (builder.isRelational()) {
 					return builder.description(Messages.get().placeholder.relrankdesc.value)
@@ -440,7 +435,7 @@ public class PlaceholderAPIPlugin {
 						.version("2.0");
 			case "sound":
 				return builder.description(Messages.get().placeholder.sounddesc.value)
-						.tokens("[sound]-[volume]-[pitch]", "[sound]-[volume]-[pitch]_all").version("2.0");
+						.tokens("[sound]-[volume]-[pitch]", "[sound]-[volume]-[pitch]_all").version("2.0").author("rojo8399");
 			case "statistic":
 				return builder.description(Messages.get().placeholder.statdesc.value).version("2.0");
 			case "time":
@@ -451,9 +446,12 @@ public class PlaceholderAPIPlugin {
 			try {
 				String i = t.getId();
 				boolean r = t.isRelational();
-				t.author("Wundero").plugin(this).buildAndRegister();
-				Store.get().get(i, r).ifPresent(e -> e.reloadListeners());
-			} catch (Exception e) {
+				if(t.getAuthor() == null) {
+                    t.author("Wundero");
+                }
+				t.plugin(this).buildAndRegister();
+				Store.get().get(i, r).ifPresent(Expansion::reloadListeners);
+			} catch (Exception ignored) {
 			}
 		});
 	}
@@ -488,7 +486,7 @@ public class PlaceholderAPIPlugin {
 	public void saveConfig() {
 		try {
 			loader.save(root);
-		} catch (Exception e) {
+		} catch (Exception ignored) {
 		}
 	}
 

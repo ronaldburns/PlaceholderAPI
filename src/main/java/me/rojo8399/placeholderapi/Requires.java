@@ -69,7 +69,7 @@ public @interface Requires {
 	 * 
 	 * The version matching is the same as described in the spongeVersion javadoc.
 	 * 
-	 * @see {@link #spongeVersion()}
+	 * @see {@code #spongeVersion()}
 	 */
 	public String[] plugins() default {};
 }

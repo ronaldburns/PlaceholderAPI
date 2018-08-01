@@ -23,74 +23,28 @@
  */
 package me.rojo8399.placeholderapi.impl.placeholder.gen;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.objectweb.asm.Opcodes.ACC_FINAL;
-import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
-import static org.objectweb.asm.Opcodes.ACC_SUPER;
-import static org.objectweb.asm.Opcodes.ACONST_NULL;
-import static org.objectweb.asm.Opcodes.ALOAD;
-import static org.objectweb.asm.Opcodes.ARETURN;
-import static org.objectweb.asm.Opcodes.ASTORE;
-import static org.objectweb.asm.Opcodes.CHECKCAST;
-import static org.objectweb.asm.Opcodes.DLOAD;
-import static org.objectweb.asm.Opcodes.DRETURN;
-import static org.objectweb.asm.Opcodes.DSTORE;
-import static org.objectweb.asm.Opcodes.FLOAD;
-import static org.objectweb.asm.Opcodes.FRETURN;
-import static org.objectweb.asm.Opcodes.FSTORE;
-import static org.objectweb.asm.Opcodes.GETFIELD;
-import static org.objectweb.asm.Opcodes.GETSTATIC;
-import static org.objectweb.asm.Opcodes.GOTO;
-import static org.objectweb.asm.Opcodes.I2B;
-import static org.objectweb.asm.Opcodes.I2C;
-import static org.objectweb.asm.Opcodes.I2S;
-import static org.objectweb.asm.Opcodes.IFNONNULL;
-import static org.objectweb.asm.Opcodes.IFNULL;
-import static org.objectweb.asm.Opcodes.ILOAD;
-import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
-import static org.objectweb.asm.Opcodes.INVOKESTATIC;
-import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
-import static org.objectweb.asm.Opcodes.IRETURN;
-import static org.objectweb.asm.Opcodes.ISTORE;
-import static org.objectweb.asm.Opcodes.LLOAD;
-import static org.objectweb.asm.Opcodes.LRETURN;
-import static org.objectweb.asm.Opcodes.LSTORE;
-import static org.objectweb.asm.Opcodes.RETURN;
-import static org.objectweb.asm.Opcodes.V1_8;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import me.rojo8399.placeholderapi.*;
+import me.rojo8399.placeholderapi.Observer;
+import me.rojo8399.placeholderapi.impl.placeholder.Expansion;
+import me.rojo8399.placeholderapi.impl.utils.TypeUtils;
+import org.objectweb.asm.*;
+import org.spongepowered.api.world.Locatable;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-import javax.annotation.Nullable;
-
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
-import org.spongepowered.api.world.Locatable;
-
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-
-import me.rojo8399.placeholderapi.NoValueException;
-import me.rojo8399.placeholderapi.Observer;
-import me.rojo8399.placeholderapi.Placeholder;
-import me.rojo8399.placeholderapi.Source;
-import me.rojo8399.placeholderapi.Token;
-import me.rojo8399.placeholderapi.impl.placeholder.Expansion;
-import me.rojo8399.placeholderapi.impl.utils.TypeUtils;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.objectweb.asm.Opcodes.*;
 
 /**
  * @author Wundero
@@ -208,7 +162,7 @@ public class ClassPlaceholderFactory {
 			load = DLOAD;
 			store = DSTORE;
 		}
-		if (typeName == null || boxName == null) {
+		if (typeName == null) {
 			return;
 		}
 		mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/" + boxName, value + "Value", "()" + typeName, false);
@@ -327,7 +281,7 @@ public class ClassPlaceholderFactory {
 			boxName = "Double";
 			typeName = "D";
 		}
-		if (typeName == null || boxName == null) {
+		if (typeName == null) {
 			return;
 		}
 		mv.visitMethodInsn(INVOKESTATIC, "java/lang/" + boxName, "valueOf",
@@ -377,7 +331,7 @@ public class ClassPlaceholderFactory {
 		return this.cache.get(method).getConstructor(method.getDeclaringClass()).newInstance(handle);
 	}
 
-	Class<? extends Expansion<?, ?, ?>> createClass(Method method) throws Exception {
+	Class<? extends Expansion<?, ?, ?>> createClass(Method method) {
 		Class<?> handle = method.getDeclaringClass();
 		if (!Modifier.isPublic(handle.getModifiers())) {
 			throw new IllegalArgumentException("Class must be public!");
@@ -422,7 +376,7 @@ public class ClassPlaceholderFactory {
 		final boolean tokNullable = token && !optionalTokenType && pm.stream()
 				.filter(p -> p.isAnnotationPresent(Token.class)).anyMatch(p -> p.isAnnotationPresent(Nullable.class));
 		final boolean fixToken = token && pm.stream().filter(p -> p.isAnnotationPresent(Token.class))
-				.map(p -> p.getAnnotation(Token.class)).anyMatch(t -> t.fix());
+				.map(p -> p.getAnnotation(Token.class)).anyMatch(Token::fix);
 		final Optional<Class<?>> sourceType = pm.stream().filter(p -> p.isAnnotationPresent(Source.class)).findFirst()
 				.map(Parameter::getType);
 		final Optional<Class<?>> observerType = pm.stream().filter(p -> p.isAnnotationPresent(Observer.class))
@@ -498,7 +452,7 @@ public class ClassPlaceholderFactory {
 				}
 			}
 			for (int i = 0; i < method.getParameterCount(); i++) {
-				int x = 0;
+				int x;
 				Parameter p = method.getParameters()[i];
 				x = getOrder(p);
 				if (x == 2 && !optionalTokenType) {
@@ -517,10 +471,10 @@ public class ClassPlaceholderFactory {
 					nullable = tokNullable;
 					break;
 				}
-				final int y = x;
-				nullCheck(mv, nullable, mv2 -> mv2.visitVarInsn(ALOAD, y + 1), x == 3 && token);
+				final int x1 = x;
+				nullCheck(mv, nullable, mv2 -> mv2.visitVarInsn(ALOAD, x1 + 1), x == 3 && token);
 				mv.visitTypeInsn(CHECKCAST, Type.getInternalName(boxedPrim(p.getType())));
-				boxToPrim(mv, p.getType(), y + 1);
+				boxToPrim(mv, p.getType(), x1 + 1);
 			}
 			mv.visitMethodInsn(INVOKEVIRTUAL, handleName, method.getName(), methodDescriptor, false);
 			if (method.getReturnType().equals(Void.TYPE)) {

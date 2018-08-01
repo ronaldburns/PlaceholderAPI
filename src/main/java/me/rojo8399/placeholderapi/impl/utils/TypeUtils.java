@@ -31,12 +31,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -98,10 +93,7 @@ public class TypeUtils {
 		if (a.contains(b) && b.length() > 1) {
 			return true;
 		}
-		if (b.contains(a) && a.length() > 1) {
-			return true;
-		}
-		return false;
+		return b.contains(a) && a.length() > 1;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -327,7 +319,7 @@ public class TypeUtils {
 					return Optional.empty();
 				}
 				if (!v.contains("_")) {
-					return tryOptional(() -> expected.cast(Arrays.asList(v)));
+					return tryOptional(() -> expected.cast(Collections.singletonList(v)));
 				}
 				String[] x = v.split("_");
 				if (x.length == 0) {
@@ -348,7 +340,7 @@ public class TypeUtils {
 			}
 			opt = deserializers.entrySet().stream()
 					.filter(e -> e.getKey().isSubtypeOf(expected) || e.getKey().getRawType().equals(expected))
-					.map(e -> e.getValue()).map(f -> tryOptional(() -> f.apply((String) val))).flatMap(unmapOptional())
+					.map(Map.Entry::getValue).map(f -> tryOptional(() -> f.apply((String) val))).flatMap(unmapOptional())
 					.findAny().flatMap(o -> tryOptional(() -> expected.cast(o)));
 			if (opt.isPresent()) {
 				return opt;
@@ -358,10 +350,9 @@ public class TypeUtils {
 
 				// for now im filtering against method names as well just to avoid issues where
 				// expected result is not obtained due to weird methods, might change in future
-				Method method = Arrays.asList(expected.getDeclaredMethods()).stream()
+				Method method = Arrays.stream(expected.getDeclaredMethods())
 						.filter(m -> Modifier.isStatic(m.getModifiers()) && Modifier.isPublic(m.getModifiers()))
-						.filter(m -> Arrays.asList(m.getParameterTypes()).stream().filter(c -> c.equals(String.class))
-								.findAny().isPresent())
+						.filter(m -> Arrays.stream(m.getParameterTypes()).anyMatch(c -> c.equals(String.class)))
 						.filter(m -> m.getReturnType().equals(expected) || m.getReturnType().equals(Optional.class))
 						.filter(m -> STRING_TO_VAL_PATTERN.matcher(m.getName()).find()).findAny().get(); // error if no
 				Object valout = method.invoke(null, (String) val);
@@ -511,7 +502,7 @@ public class TypeUtils {
 			}
 			return Arrays.asList((Object[]) primArr);
 		} else {
-			return Arrays.asList(primArr);
+			return Collections.singletonList(primArr);
 		}
 	}
 

@@ -23,8 +23,18 @@
  */
 package me.rojo8399.placeholderapi;
 
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
 /**
  * This annotation denotes whether the class should be registered for listeners.
  */
+@Documented
+@Retention(RUNTIME)
+@Target(TYPE)
 public @interface Listening {
 }

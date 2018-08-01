@@ -61,7 +61,7 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 	 */
 	public static <S, O, V> ExpansionBuilderImpl<S, O, V> builder(Class<? extends S> s, Class<? extends O> o,
 			Class<? extends V> v) {
-		return new ExpansionBuilderImpl<S, O, V>(true, s, o, v);
+		return new ExpansionBuilderImpl<>(true, s, o, v);
 	}
 
 	private static String fix(String id) {
@@ -78,16 +78,15 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 		if (!exp.verify()) {
 			return (ExpansionBuilderImpl<S, O, V>) builder;
 		}
-		ExpansionBuilderImpl<?, ?, ?> b = builder;
 		ExpansionBuilderImpl<S, O, V> n = unverified(src(exp, builder), obs(exp, builder), val(exp, builder));
-		n.relational(b.relational).id(b.id).author(b.auth).description(b.desc).config(b.config).tokens(b.tokens)
-				.version(b.ver);
+		n.relational(builder.relational).id(builder.id).author(builder.auth).description(builder.desc).config(builder.config).tokens(builder.tokens)
+				.version(builder.ver);
 		try {
-			n.url(b.url);
-		} catch (Exception e) {
+			n.url(builder.url);
+		} catch (Exception ignored) {
 		}
-		if (b.plugin != null) {
-			n.plugin(b.plugin);
+		if (builder.plugin != null) {
+			n.plugin(builder.plugin);
 		}
 		if (n.config == null) {
 			n.config = exp.getConfiguration();
@@ -163,7 +162,7 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 
 	public static <S, O, V> ExpansionBuilderImpl<S, O, V> unverified(Class<? extends S> s, Class<? extends O> o,
 			Class<? extends V> v) {
-		return new ExpansionBuilderImpl<S, O, V>(false, s, o, v);
+		return new ExpansionBuilderImpl<>(false, s, o, v);
 	}
 
 	private static boolean verifySource(Class<?> param) {
@@ -181,7 +180,7 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 	private Class<? extends V> returnClass;
 	private Class<? extends S> sourceClass;
 	private List<String> tokens = new ArrayList<>();
-	private boolean verify = true;
+	private boolean verify;
 
 	private ExpansionBuilderImpl(boolean verify, Class<? extends S> s, Class<? extends O> o, Class<? extends V> v) {
 		this.verify = verify;
@@ -654,7 +653,7 @@ public class ExpansionBuilderImpl<S, O, V> implements ExpansionBuilder<S, O, V, 
 		boolean out = false;
 		try {
 			out = verifySource(sourceClass) && verifySource(observerClass);
-		} catch (Exception e) {
+		} catch (Exception ignored) {
 		}
 		if (out) {
 			verify = false;

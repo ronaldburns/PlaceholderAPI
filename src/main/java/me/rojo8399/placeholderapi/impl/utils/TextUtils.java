@@ -75,14 +75,16 @@ public class TextUtils {
 		if (text.getChildren().isEmpty()) {
 			return text.getFormat();
 		}
-		return text.getChildren().stream().map(t -> t.getFormat()).reduce((t, t2) -> t.merge(t2))
+		return text.getChildren().stream().map(Text::getFormat).reduce(TextFormat::merge)
 				.orElse(text.getFormat());
 	}
 
 	private static TextTemplate multi(String p, Pattern pattern, Text t) {
 		TextTemplate out = TextTemplate.of();
 		Matcher m = pattern.matcher(p);
-		m.find();
+		if(!m.find()) {
+			return TextTemplate.of(t);
+		}
 		String p2 = m.group();
 		String ex = m.group(1);
 		String pre = p2.substring(0, p2.indexOf(ex));
@@ -191,10 +193,10 @@ public class TextUtils {
 
 	public static Text replace(Text original, String o, String n) {
 		List<Text> texts = flatten(original);
-		return texts.stream().map(text -> replace(text, o, n, true)).reduce(Text.of(), Text::concat);
+		return texts.stream().map(text -> replace0(text, o, n)).reduce(Text.of(), Text::concat);
 	}
 
-	private static Text replace(Text or, String o, String n, boolean priv) {
+	private static Text replace0(Text or, String o, String n) {
 		if (!(or instanceof LiteralText)) {
 			return or;
 		}

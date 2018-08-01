@@ -106,7 +106,7 @@ public class Store {
 		return out;
 	}
 
-	private static final String fix(String id) {
+	private static String fix(String id) {
 		id = id.toLowerCase().trim();
 		if (id.startsWith("rel_")) {
 			id = id.substring(4);
@@ -265,7 +265,7 @@ public class Store {
 
 	private Optional<Class<?>> getType(Method m, Class<? extends Annotation> annotation) {
 		List<Parameter> params = Arrays.asList(m.getParameters());
-		if (!params.stream().anyMatch(p -> p.isAnnotationPresent(annotation))) {
+		if (params.stream().noneMatch(p -> p.isAnnotationPresent(annotation))) {
 			return Optional.empty();
 		}
 		return Optional.of(params.stream().filter(p -> p.isAnnotationPresent(annotation)).findAny().get().getType());
@@ -374,7 +374,7 @@ public class Store {
 		Optional<Expansion<?, ?, ?>> norm = get(id, false);
 		boolean out = true;
 		if (rel.isPresent()) {
-			out = out && reload(rel.get(), id, true);
+			out = reload(rel.get(), id, true);
 		}
 		if (norm.isPresent()) {
 			out = out && reload(norm.get(), id, false);

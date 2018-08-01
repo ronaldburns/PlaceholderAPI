@@ -41,7 +41,7 @@ import me.rojo8399.placeholderapi.impl.utils.TypeUtils;
 
 public interface PlaceholderService {
 
-	static final Pattern DEFAULT_PATTERN = Pattern.compile("[%\\{]([^ \\{\\}%]+)[\\}%]");
+	Pattern DEFAULT_PATTERN = Pattern.compile("[%{]([^ {}%]+)[}%]");
 
 	/**
 	 * Create a new ExpansionBuilder to build an expansion.
@@ -55,7 +55,7 @@ public interface PlaceholderService {
 	 * 
 	 * @return the expansion builder.
 	 */
-	public <S, O, V> ExpansionBuilder<S, O, V, ? extends ExpansionBuilder<S, O, V, ?>> builder(
+	<S, O, V> ExpansionBuilder<S, O, V, ? extends ExpansionBuilder<S, O, V, ?>> builder(
 			Class<? extends S> source, Class<? extends O> observer, Class<? extends V> value);
 
 	/**
@@ -78,7 +78,7 @@ public interface PlaceholderService {
 	 *            throw an exception.
 	 * @return The filled map.
 	 */
-	public Map<String, Object> fillPlaceholders(TextTemplate template, Object source, Object observer);
+	Map<String, Object> fillPlaceholders(TextTemplate template, Object source, Object observer);
 
 	/**
 	 * Gets the default placeholder pattern for use with other parsers. Group 1 is
@@ -87,7 +87,7 @@ public interface PlaceholderService {
 	 * 
 	 * @return The default pattern.
 	 */
-	public default Pattern getDefaultPattern() {
+	default Pattern getDefaultPattern() {
 		return DEFAULT_PATTERN;
 	}
 
@@ -98,7 +98,7 @@ public interface PlaceholderService {
 	 *            The id of the placeholder to check.
 	 * @return Whether the placeholder has been registered.
 	 */
-	public boolean isRegistered(String id);
+	boolean isRegistered(String id);
 
 	/**
 	 * Create an expansion builder based off of the '@Placeholder' annotated method
@@ -110,7 +110,7 @@ public interface PlaceholderService {
 	 * 
 	 * @return the expansion builder.
 	 */
-	public ExpansionBuilder<?, ?, ?, ? extends ExpansionBuilder<?, ?, ?, ?>> load(Object handle, String id, Object plugin);
+	ExpansionBuilder<?, ?, ?, ? extends ExpansionBuilder<?, ?, ?, ?>> load(Object handle, String id, Object plugin);
 
 	/**
 	 * Create new ExpansionBuilders for all methods annotated with '@Placeholder' in
@@ -136,7 +136,7 @@ public interface PlaceholderService {
 	 *            The plugin which holds the placeholders.
 	 * @return The list of builders matching the methods.
 	 */
-	public List<? extends ExpansionBuilder<?, ?, ?, ? extends ExpansionBuilder<?, ?, ?, ?>>> loadAll(Object handle, Object plugin);
+	List<? extends ExpansionBuilder<?, ?, ?, ? extends ExpansionBuilder<?, ?, ?, ?>>> loadAll(Object handle, Object plugin);
 
 	/**
 	 * Parse a placeholder.
@@ -156,7 +156,7 @@ public interface PlaceholderService {
 	 *            throw an exception.
 	 * @return The parsed object.
 	 */
-	public Object parse(String placeholder, Object source, Object observer);
+	Object parse(String placeholder, Object source, Object observer);
 
 	/**
 	 * Parse a placeholder.
@@ -182,7 +182,7 @@ public interface PlaceholderService {
 	 *            object's toString method. Any other objects will just be casted.
 	 * @return The parsed object, if available.
 	 */
-	public default <T> Optional<T> parse(String placeholder, Object source, Object observer, Class<T> expected) {
+	default <T> Optional<T> parse(String placeholder, Object source, Object observer, Class<T> expected) {
 		return TypeUtils.tryCast(parse(placeholder, source, observer), expected);
 	}
 
@@ -204,7 +204,7 @@ public interface PlaceholderService {
 	 *            throw an exception.
 	 * @return The parsed placeholders mapped to their identifiers.
 	 */
-	public default Map<String, Object> parseAll(List<String> placeholders, Object source, Object observer) {
+	default Map<String, Object> parseAll(List<String> placeholders, Object source, Object observer) {
 		return placeholders.stream().collect(Collectors.toMap(s -> s, s -> parse(s, source, observer)));
 	}
 
@@ -232,7 +232,7 @@ public interface PlaceholderService {
 	 *            object's toString method. Any other objects will just be casted.
 	 * @return The parsed object.
 	 */
-	public default <T> T parseNullable(String placeholder, Object source, Object observer, Class<T> expected) {
+	default <T> T parseNullable(String placeholder, Object source, Object observer, Class<T> expected) {
 		return parse(placeholder, source, observer, expected).orElse(null);
 	}
 
@@ -250,7 +250,7 @@ public interface PlaceholderService {
 	 * 
 	 * @return whether the expansion was successfully registered.
 	 */
-	public boolean registerExpansion(Expansion<?, ?, ?> expansion);
+	boolean registerExpansion(Expansion<?, ?, ?> expansion);
 
 	/**
 	 * Register a deserializer for type T to the plugin.
@@ -263,7 +263,7 @@ public interface PlaceholderService {
 	 * (basic numbers + char and boolean) deserializer as those are handled by the
 	 * plugin by default.
 	 */
-	public <T> void registerTypeDeserializer(TypeToken<T> token, Function<String, T> deserializer);
+	<T> void registerTypeDeserializer(TypeToken<T> token, Function<String, T> deserializer);
 
 	/**
 	 * Replace placeholders in a text with parsed values.
@@ -284,7 +284,7 @@ public interface PlaceholderService {
 	 *            throw an exception.
 	 * @return The parsed text.
 	 */
-	public default Text replacePlaceholders(String text, Object source, Object observer) {
+	default Text replacePlaceholders(String text, Object source, Object observer) {
 		return replacePlaceholders(text, source, observer, DEFAULT_PATTERN);
 	}
 
@@ -311,7 +311,7 @@ public interface PlaceholderService {
 	 *            the placeholders in the pattern should be non-capturing.
 	 * @return The parsed text.
 	 */
-	public default Text replacePlaceholders(String text, Object source, Object observer, Pattern pattern) {
+	default Text replacePlaceholders(String text, Object source, Object observer, Pattern pattern) {
 		return replacePlaceholders(TextUtils.parse(text, pattern), source, observer);
 	}
 
@@ -334,7 +334,7 @@ public interface PlaceholderService {
 	 *            throw an exception.
 	 * @return The parsed text.
 	 */
-	public default Text replacePlaceholders(Text text, Object source, Object observer) {
+	default Text replacePlaceholders(Text text, Object source, Object observer) {
 		return replacePlaceholders(text, source, observer, DEFAULT_PATTERN);
 	}
 
@@ -361,7 +361,7 @@ public interface PlaceholderService {
 	 *            the placeholders in the pattern should be non-capturing.
 	 * @return The parsed text.
 	 */
-	public default Text replacePlaceholders(Text text, Object source, Object observer, Pattern pattern) {
+	default Text replacePlaceholders(Text text, Object source, Object observer, Pattern pattern) {
 		return replacePlaceholders(TextUtils.toTemplate(text, pattern), source, observer);
 	}
 
@@ -385,7 +385,7 @@ public interface PlaceholderService {
 	 *            throw an exception.
 	 * @return The parsed text.
 	 */
-	public Text replacePlaceholders(TextTemplate template, Object source, Object observer);
+	Text replacePlaceholders(TextTemplate template, Object source, Object observer);
 
 	/**
 	 * Replace placeholders in a text with parsed values.
@@ -401,7 +401,7 @@ public interface PlaceholderService {
 	 *            both the source and the observer.
 	 * @return The parsed text.
 	 */
-	public default Text replaceSourcePlaceholders(String text, Object source) {
+	default Text replaceSourcePlaceholders(String text, Object source) {
 		return replaceSourcePlaceholders(text, source, DEFAULT_PATTERN);
 	}
 
@@ -423,7 +423,7 @@ public interface PlaceholderService {
 	 *            the placeholders in the pattern should be non-capturing.
 	 * @return The parsed text.
 	 */
-	public default Text replaceSourcePlaceholders(String text, Object source, Pattern pattern) {
+	default Text replaceSourcePlaceholders(String text, Object source, Pattern pattern) {
 		return replacePlaceholders(text, source, source, pattern);
 	}
 
@@ -441,7 +441,7 @@ public interface PlaceholderService {
 	 *            both the source and the observer.
 	 * @return The parsed text.
 	 */
-	public default Text replaceSourcePlaceholders(Text text, Object source) {
+	default Text replaceSourcePlaceholders(Text text, Object source) {
 		return replaceSourcePlaceholders(text, source, DEFAULT_PATTERN);
 	}
 
@@ -463,7 +463,7 @@ public interface PlaceholderService {
 	 *            the placeholders in the pattern should be non-capturing.
 	 * @return The parsed text.
 	 */
-	public default Text replaceSourcePlaceholders(Text text, Object source, Pattern pattern) {
+	default Text replaceSourcePlaceholders(Text text, Object source, Pattern pattern) {
 		return replacePlaceholders(text, source, source, pattern);
 	}
 
@@ -482,7 +482,7 @@ public interface PlaceholderService {
 	 *            both the source and the observer.
 	 * @return The parsed text.
 	 */
-	public default Text replaceSourcePlaceholders(TextTemplate template, Object source) {
+	default Text replaceSourcePlaceholders(TextTemplate template, Object source) {
 		return replacePlaceholders(template, source, source);
 	}
 
@@ -493,11 +493,11 @@ public interface PlaceholderService {
 	 * provide is correct. This method is identical to verifySource, but is provided
 	 * for the sake of differentiation and potential change in the future.
 	 * 
-	 * @param source
+	 * @param target
 	 *            The object to verify.
 	 * @return Whether the object is valid.
 	 */
-	public default boolean verifyObserver(Object target) {
+	default boolean verifyObserver(Object target) {
 		return verifySource(target);
 	}
 
@@ -511,6 +511,6 @@ public interface PlaceholderService {
 	 *            The object to verify.
 	 * @return Whether the object is valid.
 	 */
-	public boolean verifySource(Object source);
+	boolean verifySource(Object source);
 
 }

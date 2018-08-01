@@ -42,6 +42,6 @@ public @interface Placeholder {
 	/**
 	 * @return The id of the placeholder.
 	 */
-	public String id();
+	String id();
 
 }

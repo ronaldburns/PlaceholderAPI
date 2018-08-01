@@ -23,11 +23,11 @@ public @interface Attach {
 	/**
 	 * Whether the placeholder is relational.
 	 */
-	public boolean relational() default false;
+	boolean relational() default false;
 
 	/**
 	 * The placeholder to attach to.
 	 */
-	public String value();
+	String value();
 
 }

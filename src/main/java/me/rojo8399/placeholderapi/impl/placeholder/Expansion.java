@@ -50,7 +50,7 @@ import ninja.leaping.configurate.ConfigurationNode;
  */
 public abstract class Expansion<S, O, V> implements IExpansion<S, O, V> {
 
-	private static final String fix(String id) {
+	private static String fix(String id) {
 		id = id.toLowerCase().trim();
 		if (id.startsWith("rel_")) {
 			id = id.substring(4);
@@ -58,7 +58,7 @@ public abstract class Expansion<S, O, V> implements IExpansion<S, O, V> {
 		return id.replace("_", "").replace(" ", "");
 	}
 
-	private static final boolean verifySource(Class<?> param) {
+	private static boolean verifySource(Class<?> param) {
 		return MessageReceiver.class.isAssignableFrom(param) || Locatable.class.isAssignableFrom(param)
 				|| Subject.class.isAssignableFrom(param) || DataHolder.class.isAssignableFrom(param);
 	}
@@ -405,7 +405,7 @@ public abstract class Expansion<S, O, V> implements IExpansion<S, O, V> {
 		if (node.isVirtual()) {
 			try {
 				saveConfigObject();
-			} catch (Exception e2) {
+			} catch (Exception ignored) {
 			}
 		}
 		try {
@@ -413,7 +413,7 @@ public abstract class Expansion<S, O, V> implements IExpansion<S, O, V> {
 		} catch (Exception e1) {
 			try {
 				saveConfigObject();
-			} catch (Exception e2) {
+			} catch (Exception ignored) {
 			}
 		}
 	}
@@ -467,7 +467,7 @@ public abstract class Expansion<S, O, V> implements IExpansion<S, O, V> {
 		try {
 			Store.get().saveExpansionConfig(this);
 			PlaceholderAPIPlugin.getInstance().saveConfig();
-		} catch (Exception e2) {
+		} catch (Exception ignored) {
 		}
 	}
 
@@ -558,9 +558,8 @@ public abstract class Expansion<S, O, V> implements IExpansion<S, O, V> {
 	 */
 	public final boolean verify() {
 		Class<?> clazz = this.getClass();
-		List<Class<?>> params = Arrays.asList(clazz.getDeclaredMethods()).stream()
-				.filter(m -> m.getName().equalsIgnoreCase("parse") && Arrays.asList(m.getGenericParameterTypes())
-						.stream().map(Type::getTypeName).anyMatch(s -> s.contains("java.util.Optional")))
+		List<Class<?>> params = Arrays.stream(clazz.getDeclaredMethods())
+				.filter(m -> m.getName().equalsIgnoreCase("parse") && Arrays.stream(m.getGenericParameterTypes()).map(Type::getTypeName).anyMatch(s -> s.contains("java.util.Optional")))
 				.map(m -> Arrays.asList(m.getParameterTypes())).map(List::stream).reduce(Stream.empty(), Stream::concat)
 				.collect(Collectors.toList());
 		try {

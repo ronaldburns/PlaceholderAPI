@@ -93,7 +93,7 @@ public class JavascriptManager {
 					return null;
 				}
 				// skip script name in args
-				List<String> l = Arrays.asList(arr).stream().skip(1).collect(Collectors.toList());
+				List<String> l = Arrays.stream(arr).skip(1).collect(Collectors.toList());
 				// put args as array
 				engine.put("args", l.toArray(new String[l.size() - 1]));
 				try {
@@ -126,9 +126,7 @@ public class JavascriptManager {
 	}
 
 	public List<String> getScriptNames() {
-		List<String> out = new ArrayList<>();
-		out.addAll(scripts.keySet());
-		return out;
+		return new ArrayList<>(scripts.keySet());
 	}
 
 	public void reloadScripts() throws IOException {
