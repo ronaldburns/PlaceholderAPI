@@ -243,9 +243,6 @@ public class Store {
 	}
 
 	public ConfigurationNode getNode(Expansion<?, ?, ?> exp) {
-		if (exp.getConfiguration() == null) {
-			return null;
-		}
 		String plid = Sponge.getPluginManager().fromInstance(exp.getPlugin()).get().getId();
 		return PlaceholderAPIPlugin.getInstance().getRootConfig().getNode("expansions", plid,
 				(exp.relational() ? "rel_" : "") + exp.id(), "data");
